@@ -27,7 +27,7 @@ def get_metadata(url):
     """Pull video metadata via yt-dlp (no download)."""
     try:
         r = subprocess.run(
-            ["yt-dlp", "--dump-json", "--no-download", url],
+            ["yt-dlp", "--dump-json", "--no-download", "--no-playlist", url],
             capture_output=True, text=True, timeout=60
         )
         if r.returncode != 0:
@@ -46,6 +46,8 @@ def get_metadata(url):
             "thumbnail": info.get("thumbnail", ""),
             "id": info.get("id", ""),
         }
+    except json.JSONDecodeError:
+        return {"error": "No video found at this URL. Make sure it's a video, not an image or carousel."}
     except subprocess.TimeoutExpired:
         return {"error": "Timed out fetching video info"}
     except Exception as e:
@@ -61,6 +63,7 @@ def download_audio(url):
         r = subprocess.run(
             [
                 "yt-dlp",
+                "--no-playlist",
                 "-f", "bestaudio/best",
                 "--extract-audio",
                 "--audio-format", "mp3",

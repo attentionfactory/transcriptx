@@ -210,6 +210,390 @@ def api_logout():
     return jsonify({"status": "ok"})
 
 
+# ── Admin ───────────────────────────────────────────────────
+
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "changeme")
+
+@app.route("/admin")
+def admin():
+    """Admin dashboard — protected by ?key= param."""
+    if request.args.get("key") != ADMIN_KEY:
+        return "Not found", 404
+
+    from database import get_db
+    with get_db() as db:
+        users = [dict(r) for r in db.execute(
+            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users ORDER BY created_at DESC"
+        ).fetchall()]
+
+        sessions = [dict(r) for r in db.execute(
+            "SELECT session_id, credits_used, credits_reset_at, created_at FROM free_sessions ORDER BY created_at DESC LIMIT 100"
+        ).fetchall()]
+
+        stats = {
+            "total_users": db.execute("SELECT COUNT(*) FROM users").fetchone()[0],
+            "paid_users": db.execute("SELECT COUNT(*) FROM users WHERE plan != 'free'").fetchone()[0],
+            "starter": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'starter'").fetchone()[0],
+            "pro": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'pro'").fetchone()[0],
+            "free_sessions": db.execute("SELECT COUNT(*) FROM free_sessions").fetchone()[0],
+            "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM free_sessions").fetchone()[0],
+            "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users").fetchone()[0],
+        }
+
+    return render_template_string(ADMIN_TEMPLATE, users=users, sessions=sessions, stats=stats)
+
+
+ADMIN_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --orange: #F0A860;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; }
+
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; display:block; }
+        .panel { border-radius:var(--radius); padding:2rem; position:relative; overflow:hidden; }
+
+        @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+        /* ── Nav ── */
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
+        }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; text-decoration:none; color:var(--ink); }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        .nav-right { display:flex; align-items:center; gap:0.8rem; }
+        .nav-right a {
+            color:var(--ink); text-decoration:none; font-size:0.7rem; font-weight:700;
+            text-transform:uppercase; padding:0.5rem 1rem; border-radius:4px;
+            border:1px solid transparent; transition:all 0.2s;
+        }
+        .nav-right a:hover { border-color:var(--ink); background:rgba(0,0,0,0.05); }
+        .nav-badge {
+            font-size:0.6rem; padding:0.4rem 0.8rem; border-radius:4px;
+            font-weight:700; text-transform:uppercase; background:rgba(0,0,0,0.08);
+        }
+
+        /* ── Revenue ── */
+        .revenue { background:var(--green); display:flex; align-items:center; justify-content:space-between; animation:slideUp 0.4s ease both; }
+        .revenue-amount { font-family:var(--f-wide); font-size:2rem; }
+        .revenue-amount .currency { font-size:1.2rem; }
+        .revenue-label { font-size:0.65rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.05em; margin-top:4px; }
+        .revenue-breakdown { font-size:0.7rem; text-align:right; line-height:2; }
+        .revenue-breakdown strong { font-weight:700; }
+
+        /* ── Stats ── */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+        .stat-card {
+            background:var(--grey); border-radius:var(--radius); padding:1.5rem; text-align:center;
+            animation:slideUp 0.4s ease both;
+        }
+        .stat-card:nth-child(1) { animation-delay:0.05s; }
+        .stat-card:nth-child(2) { animation-delay:0.1s; }
+        .stat-card:nth-child(3) { animation-delay:0.15s; }
+        .stat-card:nth-child(4) { animation-delay:0.2s; }
+        .stat-card:nth-child(5) { animation-delay:0.25s; }
+        .stat-card:nth-child(6) { animation-delay:0.3s; }
+        .stat-num {
+            font-family:var(--f-wide); font-size:1.6rem;
+            font-variant-numeric:tabular-nums; margin-bottom:4px;
+        }
+        .stat-lbl { font-size:0.55rem; text-transform:uppercase; letter-spacing:1.5px; opacity:0.5; }
+
+        /* ── Charts ── */
+        .chart-row { display:flex; gap:1rem; animation:slideUp 0.4s 0.3s ease both; }
+        .chart-card {
+            background:var(--grey); border-radius:var(--radius); padding:1.5rem;
+            flex:1; display:flex; align-items:center; gap:1.2rem;
+        }
+        .circle-wrap { width:70px; height:70px; position:relative; flex-shrink:0; }
+        .circle-bg { fill:none; stroke:rgba(0,0,0,0.1); stroke-width:6; }
+        .circle-fg {
+            fill:none; stroke-width:6; stroke-linecap:round;
+            transform:rotate(-90deg); transform-origin:center;
+            transition:stroke-dashoffset 1.5s ease;
+        }
+        .circle-fg.orange { stroke:var(--orange); }
+        .circle-fg.green { stroke:var(--green); }
+        .circle-label {
+            position:absolute; inset:0; display:flex; align-items:center;
+            justify-content:center; font-size:0.8rem; font-weight:700;
+        }
+        .chart-title { font-family:var(--f-wide); font-size:0.65rem; text-transform:uppercase; margin-bottom:4px; }
+        .chart-sub { font-size:0.7rem; opacity:0.6; }
+
+        /* ── Section head ── */
+        .section-head {
+            display:flex; align-items:center; justify-content:space-between;
+            color:var(--grey); padding:0 0.5rem; animation:slideUp 0.4s 0.35s ease both;
+        }
+        .section-title { font-family:var(--f-wide); font-size:0.75rem; text-transform:uppercase; }
+        .section-count {
+            font-size:0.6rem; padding:0.3rem 0.7rem; border:var(--bw) solid var(--grey);
+            color:var(--grey); text-transform:uppercase;
+        }
+
+        /* ── Tables ── */
+        .table-wrap {
+            background:var(--grey); border-radius:var(--radius); overflow:hidden;
+            animation:slideUp 0.4s 0.4s ease both;
+        }
+        table { width:100%; border-collapse:collapse; }
+        thead { background:rgba(0,0,0,0.05); }
+        th {
+            text-align:left; padding:1rem 1.2rem; font-size:0.55rem; font-weight:700;
+            text-transform:uppercase; letter-spacing:1.2px; opacity:0.5;
+        }
+        td {
+            padding:0.8rem 1.2rem; font-size:0.75rem;
+            border-top:var(--bw) solid rgba(0,0,0,0.08); vertical-align:middle;
+        }
+        tr:hover td { background:rgba(0,0,0,0.03); }
+        .email-cell { font-weight:700; }
+
+        .badge {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:4px 10px; font-size:0.55rem; font-weight:700;
+            text-transform:uppercase; letter-spacing:0.5px; border:var(--bw) solid var(--ink);
+        }
+        .badge::before { content:''; width:6px; height:6px; border-radius:50%; }
+        .badge.starter { border-color:var(--orange); }
+        .badge.starter::before { background:var(--orange); }
+        .badge.pro { border-color:var(--green); }
+        .badge.pro::before { background:var(--green); }
+        .badge.free { border-color:rgba(0,0,0,0.3); }
+        .badge.free::before { background:rgba(0,0,0,0.3); }
+
+        .mono { font-size:0.7rem; opacity:0.5; }
+        .usage-bar-wrap { display:flex; align-items:center; gap:8px; }
+        .usage-bar { width:50px; height:3px; background:rgba(0,0,0,0.12); overflow:hidden; }
+        .usage-bar-fill { height:100%; transition:width 1s ease; }
+        .usage-bar-fill.orange { background:var(--orange); }
+        .usage-bar-fill.green { background:var(--green); }
+        .usage-bar-fill.red { background:var(--red); }
+
+        .empty-row { text-align:center; opacity:0.4; padding:2rem 1rem; font-size:0.75rem; }
+
+        /* ── Footer ── */
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between; letter-spacing:0.05em;
+        }
+
+        @media (max-width:700px) {
+            .layout { padding:0.6rem; gap:0.6rem; }
+            .revenue { flex-direction:column; gap:1rem; text-align:center; border-radius:1.2rem; padding:1.5rem; }
+            .revenue-breakdown { text-align:center; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); gap:0.6rem; }
+            .stat-card { border-radius:1.2rem; padding:1.2rem; }
+            .chart-row { flex-direction:column; }
+            .chart-card { border-radius:1.2rem; }
+            .table-wrap { border-radius:1.2rem; }
+            .section-head { padding:0 0.3rem; }
+            .tech-footer { flex-direction:column; gap:0.8rem; text-align:center; padding:1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Nav -->
+        <nav>
+            <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
+            <div class="nav-right">
+                <span class="nav-badge">Admin</span>
+                <a href="/">← App</a>
+            </div>
+        </nav>
+
+        <!-- Revenue -->
+        <div class="panel revenue">
+            <div>
+                <div class="revenue-amount"><span class="currency">$</span>{{ stats.starter * 2 + stats.pro * 4 }}</div>
+                <div class="revenue-label">Estimated MRR</div>
+            </div>
+            <div class="revenue-breakdown">
+                <div><strong>{{ stats.starter }}</strong> Starter &times; $2</div>
+                <div><strong>{{ stats.pro }}</strong> Pro &times; $4</div>
+                <div><strong>{{ stats.total_paid_transcripts + stats.total_free_transcripts }}</strong> total transcripts</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.paid_users }}">0</div>
+                <div class="stat-lbl">Paid Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.starter }}">0</div>
+                <div class="stat-lbl">Starter</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.pro }}">0</div>
+                <div class="stat-lbl">Pro</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.free_sessions }}">0</div>
+                <div class="stat-lbl">Free Sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.total_paid_transcripts }}">0</div>
+                <div class="stat-lbl">Paid Transcripts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.total_free_transcripts }}">0</div>
+                <div class="stat-lbl">Free Transcripts</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="circle-wrap">
+                    <svg viewBox="0 0 36 36" width="70" height="70">
+                        <circle class="circle-bg" cx="18" cy="18" r="15.9"/>
+                        <circle class="circle-fg orange" cx="18" cy="18" r="15.9"
+                            stroke-dasharray="100"
+                            stroke-dashoffset="{{ 100 - ([((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) if (stats.paid_users + stats.free_sessions) > 0 else 0, 100] | min) }}"/>
+                    </svg>
+                    <div class="circle-label">{{ ((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) | int if (stats.paid_users + stats.free_sessions) > 0 else 0 }}%</div>
+                </div>
+                <div>
+                    <div class="chart-title">Conversion Rate</div>
+                    <div class="chart-sub">{{ stats.paid_users }} paid / {{ stats.paid_users + stats.free_sessions }} total</div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="circle-wrap">
+                    <svg viewBox="0 0 36 36" width="70" height="70">
+                        <circle class="circle-bg" cx="18" cy="18" r="15.9"/>
+                        <circle class="circle-fg green" cx="18" cy="18" r="15.9"
+                            stroke-dasharray="100"
+                            stroke-dashoffset="{{ 100 - ([((stats.pro / stats.paid_users) * 100) if stats.paid_users > 0 else 0, 100] | min) }}"/>
+                    </svg>
+                    <div class="circle-label">{{ ((stats.pro / stats.paid_users) * 100) | int if stats.paid_users > 0 else 0 }}%</div>
+                </div>
+                <div>
+                    <div class="chart-title">Pro Upgrade Rate</div>
+                    <div class="chart-sub">{{ stats.pro }} Pro / {{ stats.paid_users }} paid</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="section-head">
+            <div class="section-title">Paid Users</div>
+            <div class="section-count">{{ stats.total_users }}</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Email</th><th>Plan</th><th>Usage</th><th>Since</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="email-cell">{{ u.email or '—' }}</td>
+                        <td><span class="badge {{ u.plan }}">{{ u.plan }}</span></td>
+                        <td>
+                            <div class="usage-bar-wrap">
+                                <span class="mono">{{ u.credits_used }}</span>
+                                {% if u.plan == 'pro' %}
+                                <div class="usage-bar"><div class="usage-bar-fill green" style="width:100%"></div></div>
+                                <span class="mono">&infin;</span>
+                                {% elif u.plan == 'starter' %}
+                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (u.credits_used / 50 * 100) | int }}%"></div></div>
+                                <span class="mono">/ 50</span>
+                                {% else %}
+                                <div class="usage-bar"><div class="usage-bar-fill red" style="width:{{ (u.credits_used / 3 * 100) | int }}%"></div></div>
+                                <span class="mono">/ 3</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="mono">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not users %}<tr><td colspan="4" class="empty-row">No users yet</td></tr>{% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Free Sessions -->
+        <div class="section-head">
+            <div class="section-title">Free Sessions</div>
+            <div class="section-count">{{ stats.free_sessions }}</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Session</th><th>Usage</th><th>Resets</th><th>Created</th></tr>
+                </thead>
+                <tbody>
+                    {% for s in sessions %}
+                    <tr>
+                        <td class="mono" style="opacity:1">{{ s.session_id[:16] }}…</td>
+                        <td>
+                            <div class="usage-bar-wrap">
+                                <span class="mono">{{ s.credits_used }}</span>
+                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (s.credits_used / 3 * 100) | int }}%"></div></div>
+                                <span class="mono">/ 3</span>
+                            </div>
+                        </td>
+                        <td class="mono">{{ s.credits_reset_at[:10] if s.credits_reset_at else '—' }}</td>
+                        <td class="mono">{{ s.created_at[:10] if s.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not sessions %}<tr><td colspan="4" class="empty-row">No free sessions yet</td></tr>{% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <footer class="tech-footer">
+            <div>TranscriptX Admin<br>System Dashboard</div>
+            <div style="text-align:right;">Built by Attention Factory</div>
+        </footer>
+    </div>
+
+    <script>
+        document.querySelectorAll('[data-count]').forEach(el => {
+            const target = parseInt(el.dataset.count);
+            if (target === 0) return;
+            let count = 0;
+            const step = Math.max(1, Math.ceil(target / 40));
+            const interval = setInterval(() => {
+                count = Math.min(count + step, target);
+                el.textContent = count;
+                if (count >= target) clearInterval(interval);
+            }, 32);
+        });
+    </script>
+</body>
+</html>
+"""
+
+
 # ── UI ──────────────────────────────────────────────────────
 
 @app.route("/")
@@ -222,7 +606,17 @@ def index():
     })
 
 
-# ── HTML Template ───────────────────────────────────────────
+@app.route("/pricing")
+def pricing():
+    user = _get_current_user()
+    return render_template_string(PRICING_TEMPLATE, user=user, config={
+        "checkout_starter": POLAR_CHECKOUT_STARTER,
+        "checkout_pro": POLAR_CHECKOUT_PRO,
+        "customer_portal": POLAR_CUSTOMER_PORTAL,
+    })
+
+
+# ── Main Template ──────────────────────────────────────────
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -231,513 +625,359 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #06060a;
-            --bg-card: #0d0d14;
-            --bg-input: #0a0a10;
-            --accent: #5046e5;
-            --accent-bright: #7c6ff7;
-            --accent-glow: rgba(80, 70, 229, 0.25);
-            --green: #10b981;
-            --green-glow: rgba(16, 185, 129, 0.2);
-            --orange: #f59e0b;
-            --red: #ef4444;
-            --text: #eeeef5;
-            --text-dim: #7a7a95;
-            --text-faint: #44445a;
-            --border: #1a1a2e;
-            --border-light: #25253a;
+            --bg: #050505;
+            --orange: #F0A860;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
         }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; overflow-x:hidden; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
 
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
+        /* ── Nav ── */
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
         }
-
-        /* ── Noise texture overlay ── */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: -1;
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        .nav-links { display:flex; align-items:center; gap:0.5rem; }
+        .nav-links a {
+            color:var(--ink); text-decoration:none; font-size:0.7rem; font-weight:700;
+            text-transform:uppercase; padding:0.5rem 1rem; border-radius:4px;
+            border:1px solid transparent; transition:all 0.2s;
         }
-
-        /* ── Ambient glow ── */
-        .glow-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
-            z-index: -1;
+        .nav-links a:hover { border-color:var(--ink); background:rgba(0,0,0,0.05); }
+        .nav-badge {
+            font-size:0.6rem; padding:0.4rem 0.8rem; border-radius:4px;
+            font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
         }
-        .glow-orb.one { width: 500px; height: 500px; background: rgba(80,70,229,0.08); top: -10%; left: -5%; }
-        .glow-orb.two { width: 400px; height: 400px; background: rgba(16,185,129,0.05); bottom: -10%; right: -5%; }
+        .nav-badge.free { background:rgba(0,0,0,0.08); }
+        .nav-badge.starter { background:rgba(66,85,212,0.15); color:#4255d4; }
+        .nav-badge.pro { background:rgba(112,148,114,0.3); }
 
-        .container { max-width: 820px; margin: 0 auto; padding: 40px 20px 60px; }
+        /* ── Panels ── */
+        .panel { border-radius:var(--radius); padding:2rem; position:relative; overflow:hidden; display:flex; flex-direction:column; min-width:0; }
+        .p-orange { background:var(--orange); }
+        .p-red { background:var(--red); }
+        .p-green { background:var(--green); }
+        .p-grey { background:var(--grey); }
 
-        /* ── Header ── */
-        .header { text-align: center; margin-bottom: 40px; }
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; margin-bottom:0.3rem; display:block; }
 
-        .logo {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: -2px;
+        /* ── Hero split ── */
+        .hero { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:1rem; min-height:65vh; }
+
+        .hero-main { justify-content:space-between; }
+        .hero-top { display:flex; justify-content:space-between; border-bottom:var(--bw) solid var(--ink); padding-bottom:1rem; margin-bottom:2rem; }
+
+        .hero-h1 { font-family:var(--f-wide); font-size:clamp(2rem,4.2vw,3.8rem); line-height:0.92; text-transform:uppercase; margin-bottom:1.5rem; letter-spacing:-0.02em; }
+        .hero-sub { font-size:0.85rem; max-width:38ch; border-left:2px solid var(--ink); padding-left:1rem; line-height:1.6; }
+
+        /* ── Input machine ── */
+        .input-machine { border:var(--bw) solid var(--ink); display:grid; grid-template-columns:1fr auto; margin-top:1rem; }
+        .input-machine input {
+            background:transparent; border:none; padding:1.3rem 1.5rem;
+            font-family:var(--f-tech); font-size:1rem; color:var(--ink); outline:none; width:100%;
         }
-        .logo em { font-style: normal; color: var(--accent-bright); }
-
-        .tagline { color: var(--text-dim); font-size: 0.95rem; margin-top: 6px; font-weight: 300; }
-
-        /* ── Platform ticker ── */
-        .ticker-wrap {
-            margin-top: 18px;
-            overflow: hidden;
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+        .input-machine input::placeholder { color:rgba(10,10,10,0.35); }
+        .input-machine button {
+            background:var(--ink); color:var(--orange); border:none; padding:0 2rem;
+            font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer; transition:background 0.2s;
         }
-        .ticker-wrap::before, .ticker-wrap::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            width: 60px;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
+        .input-machine button:hover { background:#333; }
+        .input-machine button:disabled { opacity:0.4; cursor:not-allowed; }
+        .input-machine button.loading { color:transparent; position:relative; }
+        .input-machine button.loading::after {
+            content:''; position:absolute; width:16px; height:16px;
+            border:2px solid rgba(240,168,96,0.3); border-top-color:var(--orange);
+            border-radius:50%; top:50%; left:50%; margin:-8px 0 0 -8px;
+            animation:spin 0.5s linear infinite;
         }
-        .ticker-wrap::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
-        .ticker-wrap::after { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
+        @keyframes spin { to { transform:rotate(360deg); } }
 
-        .ticker { overflow: hidden; }
-        .ticker-items {
-            display: flex;
-            gap: 6px;
-            animation: tickerScroll 30s linear infinite;
-            width: max-content;
+        .barcode {
+            height:16px; width:80px; display:inline-block;
+            background:repeating-linear-gradient(90deg, var(--ink), var(--ink) 2px, transparent 2px, transparent 4px);
+            opacity:0.4;
         }
-        .ticker-items:hover { animation-play-state: paused; }
+        .input-footer { margin-top:1rem; display:flex; gap:1rem; align-items:center; }
 
-        @keyframes tickerScroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        /* ── Controls row ── */
+        .controls { display:flex; align-items:center; justify-content:space-between; margin-top:0.8rem; flex-wrap:wrap; gap:0.5rem; }
+        .controls select {
+            background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:0.4rem 0.6rem; font-family:var(--f-tech); font-size:0.65rem;
         }
-
-        .ticker-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 12px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: var(--text-dim);
-            white-space: nowrap;
-            transition: border-color 0.2s, color 0.2s;
-        }
-        .ticker-item:hover { border-color: var(--accent); color: var(--accent-bright); }
-        .ti-icon { font-size: 0.65rem; color: var(--text-faint); }
-
-        /* ── User bar ── */
-        .user-bar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-
-        .credit-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .credit-badge.free { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--orange); }
-        .credit-badge.starter { background: var(--accent-glow); border: 1px solid rgba(80,70,229,0.3); color: var(--accent-bright); }
-        .credit-badge.pro { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
-
-        .plan-link {
-            font-size: 0.75rem;
-            color: var(--text-faint);
-            text-decoration: none;
-            border-bottom: 1px dashed var(--text-faint);
-            transition: color 0.2s;
-        }
-        .plan-link:hover { color: var(--accent-bright); border-color: var(--accent-bright); }
-
-        /* ── Input card ── */
-        .input-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
-            margin-bottom: 28px;
-        }
-
-        .input-row { display: flex; gap: 10px; }
-
-        .url-input {
-            flex: 1;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 13px 16px;
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.82rem;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .url-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .url-input::placeholder { color: var(--text-faint); }
-        .url-input:disabled { opacity: 0.5; }
-
-        .go-btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 13px 24px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            letter-spacing: 0.5px;
-        }
-        .go-btn:hover:not(:disabled) { background: var(--accent-bright); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
-        .go-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .go-btn.loading { color: transparent; position: relative; }
-        .go-btn.loading::after {
-            content: '';
-            position: absolute;
-            width: 18px; height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            top: 50%; left: 50%;
-            margin: -9px 0 0 -9px;
-            animation: spin 0.5s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 14px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .model-picker {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            color: var(--text-faint);
-        }
-        .model-picker select {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            padding: 5px 8px;
-            border-radius: 5px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.75rem;
-            outline: none;
-        }
-
-        /* Batch toggle */
         .toggle-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            color: var(--text-faint);
-            cursor: pointer;
+            display:flex; align-items:center; gap:6px; font-size:0.65rem;
+            text-transform:uppercase; letter-spacing:0.05em; cursor:pointer; opacity:0.7;
         }
-        .toggle-wrap input { display: none; }
-        .toggle-track {
-            width: 32px; height: 18px;
-            background: var(--border);
-            border-radius: 9px;
-            position: relative;
-            transition: background 0.2s;
-        }
-        .toggle-track::after {
-            content: '';
-            width: 14px; height: 14px;
-            background: var(--text-faint);
-            border-radius: 50%;
-            position: absolute;
-            top: 2px; left: 2px;
-            transition: all 0.2s;
-        }
-        .toggle-wrap input:checked + .toggle-track { background: var(--accent); }
-        .toggle-wrap input:checked + .toggle-track::after { left: 16px; background: #fff; }
+        .toggle-wrap input { display:none; }
+        .toggle-track { width:28px; height:16px; background:rgba(0,0,0,0.2); border-radius:8px; position:relative; transition:0.2s; }
+        .toggle-track::after { content:''; width:12px; height:12px; background:var(--ink); border-radius:50%; position:absolute; top:2px; left:2px; transition:0.2s; opacity:0.5; }
+        .toggle-wrap input:checked + .toggle-track { background:rgba(0,0,0,0.4); }
+        .toggle-wrap input:checked + .toggle-track::after { left:14px; opacity:1; }
 
-        .batch-area { display: none; margin-top: 14px; }
-        .batch-area.open { display: block; }
-        .batch-textarea {
-            width: 100%;
-            min-height: 100px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px 14px;
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            line-height: 1.6;
-            outline: none;
-            resize: vertical;
+        .batch-area { display:none; margin-top:0.8rem; }
+        .batch-area.open { display:block; }
+        .batch-area textarea {
+            width:100%; min-height:80px; background:transparent; border:var(--bw) solid var(--ink);
+            padding:1rem; font-family:var(--f-tech); font-size:0.75rem; color:var(--ink); resize:vertical; outline:none;
         }
-        .batch-textarea:focus { border-color: var(--accent); }
-        .batch-textarea::placeholder { color: var(--text-faint); }
+        .batch-area textarea::placeholder { color:rgba(10,10,10,0.3); }
 
-        /* ── Status ── */
-        .status { display: none; margin-bottom: 20px; }
-        .status.on { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 0.82rem; color: var(--text-dim); }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-bright); animation: blink 1.2s ease infinite; }
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
-        .progress-track { flex:1; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
-        .progress-bar { height:100%; background:var(--accent); border-radius:2px; transition: width 0.4s; width:0; }
+        /* ── Side panels ── */
+        .hero-side { display:flex; flex-direction:column; gap:1rem; }
+
+        .stat-block { flex-grow:1; }
+        .stat-block h2 { font-family:var(--f-wide); font-size:1.4rem; text-transform:uppercase; }
+        .meter-box { border:var(--bw) solid var(--ink); padding:0.8rem 1rem; margin-top:0.8rem; display:flex; justify-content:space-between; align-items:center; }
+        .digital { font-size:1rem; font-weight:700; border:var(--bw) solid var(--ink); padding:0.2rem 0.6rem; background:rgba(255,255,255,0.1); }
+
+        .ticker-wrap { overflow:hidden; border-top:var(--bw) solid var(--ink); padding-top:1rem; margin-top:auto; }
+        .ticker-items { display:flex; gap:6px; animation:scroll 25s linear infinite; width:max-content; }
+        .ticker-items:hover { animation-play-state:paused; }
+        @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        .ticker-item {
+            padding:4px 10px; border:var(--bw) solid var(--ink); font-size:0.55rem;
+            font-weight:700; text-transform:uppercase; white-space:nowrap; letter-spacing:0.03em;
+        }
+
+        .blink { animation:blinker 2s linear infinite; }
+        @keyframes blinker { 50%{opacity:0} }
+
+        /* ── Status bar ── */
+        .status-bar { display:none; }
+        .status-bar.on {
+            display:flex; align-items:center; gap:12px;
+            background:var(--grey); border-radius:var(--radius); padding:1rem 2rem;
+        }
+        .status-dot { width:6px; height:6px; border-radius:50%; background:var(--ink); animation:blinker 1s ease infinite; }
+        .prog-track { flex:1; height:3px; background:rgba(0,0,0,0.15); }
+        .prog-bar { height:100%; background:var(--ink); transition:width 0.4s; width:0; }
 
         /* ── Export bar ── */
-        .export-bar { display:none; justify-content:center; gap:10px; margin-bottom:20px; }
+        .export-bar { display:none; gap:8px; justify-content:center; }
         .export-bar.on { display:flex; }
         .export-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            background:var(--grey); border:none; color:var(--ink); padding:0.6rem 1.2rem;
+            border-radius:4px; font-family:var(--f-tech); font-size:0.65rem; cursor:pointer;
+            text-transform:uppercase; letter-spacing:0.05em; transition:0.2s;
         }
-        .export-btn:hover { border-color: var(--accent); color: var(--accent-bright); }
+        .export-btn:hover { background:var(--orange); }
 
         /* ── Result cards ── */
         .result-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 24px;
-            margin-bottom: 14px;
-            animation: cardIn 0.4s ease;
+            background:var(--grey); border-radius:var(--radius); padding:2rem;
+            animation:cardUp 0.4s ease;
         }
-        @keyframes cardIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        .result-card.err { border-left: 3px solid var(--red); }
+        .result-card + .result-card { margin-top:1rem; }
+        .result-card.err { border-left:4px solid var(--red); }
+        @keyframes cardUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
 
-        .result-url { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-faint); margin-bottom:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .result-url a { color:var(--accent-bright); text-decoration:none; }
+        .result-url { font-size:0.6rem; opacity:0.5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:1rem; }
+        .result-url a { color:var(--ink); text-decoration:none; }
 
-        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:10px; margin-bottom:16px; }
-        .stat { text-align:center; padding:10px; background:var(--bg-input); border-radius:8px; }
-        .stat-val { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:700; }
-        .stat-lbl { font-size:0.6rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+        .spec-grid { display:grid; border:var(--bw) solid var(--ink); background:var(--ink); gap:var(--bw); margin-bottom:1.2rem; }
+        .spec-grid.cols-4 { grid-template-columns:repeat(4,1fr); }
+        .spec-cell { background:var(--grey); padding:1rem; text-align:center; }
+        .spec-val { font-size:1.1rem; font-weight:700; }
+        .spec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; opacity:0.5; margin-top:4px; }
 
-        .transcript-box { background:var(--bg-input); border:1px solid var(--border); border-radius:8px; padding:16px; }
-        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-        .transcript-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-faint); }
+        .transcript-box { border:var(--bw) solid var(--ink); padding:1.2rem; }
+        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; }
         .copy-btn {
-            background:none; border:1px solid var(--border); color:var(--text-faint);
-            padding:3px 10px; border-radius:4px; font-size:0.65rem; cursor:pointer;
-            font-family:'Outfit',sans-serif; transition:all 0.2s;
+            background:none; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:3px 10px; font-size:0.55rem; cursor:pointer; font-family:var(--f-tech);
+            text-transform:uppercase; transition:0.2s;
         }
-        .copy-btn:hover { border-color:var(--accent); color:var(--accent-bright); }
-        .copy-btn.ok { border-color:var(--green); color:var(--green); }
-
-        .transcript-text { font-size:0.88rem; line-height:1.7; color:var(--text-dim); }
-
-        /* ── Pricing section ── */
-        .pricing { margin-top: 40px; text-align: center; }
-        .pricing h2 { font-size: 1.3rem; margin-bottom: 6px; }
-        .pricing .sub { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 24px; }
-
-        .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-
-        .plan-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            transition: border-color 0.2s;
-        }
-        .plan-card:hover { border-color: var(--border-light); }
-        .plan-card.featured { border-color: var(--accent); box-shadow: 0 0 30px var(--accent-glow); }
-
-        .plan-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-        .plan-price { font-family:'JetBrains Mono',monospace; font-size: 1.8rem; font-weight: 700; }
-        .plan-price span { font-size: 0.8rem; font-weight: 400; color: var(--text-dim); }
-        .plan-features { list-style: none; margin: 16px 0; font-size: 0.8rem; color: var(--text-dim); }
-        .plan-features li { padding: 4px 0; }
-        .plan-features li::before { content: '✓ '; color: var(--green); }
-
-        .plan-btn {
-            display: inline-block;
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            font-size: 0.82rem;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-        .plan-btn.outline { background: none; border: 1px solid var(--border); color: var(--text-dim); }
-        .plan-btn.primary { background: var(--accent); color: #fff; }
-        .plan-btn.green { background: var(--green); color: #fff; }
-        .plan-btn.primary:hover { background: var(--accent-bright); }
-        .plan-btn.green:hover { background: #34d399; }
-
-        .footer { text-align:center; padding:40px 0 10px; color:var(--text-faint); font-size:0.7rem; }
+        .copy-btn:hover { background:var(--ink); color:var(--orange); }
+        .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
+        .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
 
         /* ── Login modal ── */
-        .modal-overlay {
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
-            z-index:100; justify-content:center; align-items:center;
-        }
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-overlay.open { display:flex; }
-        .modal-box {
-            background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
-            padding:28px; width:90%; max-width:380px; text-align:center;
+        .modal-box { background:var(--grey); border-radius:var(--radius); padding:2rem; width:90%; max-width:380px; text-align:center; }
+        .modal-title { font-family:var(--f-wide); font-size:0.9rem; text-transform:uppercase; margin-bottom:4px; }
+        .modal-sub { font-size:0.75rem; opacity:0.6; }
+        .modal-input {
+            width:100%; margin-top:1rem; background:transparent; border:var(--bw) solid var(--ink);
+            padding:1rem; font-family:var(--f-tech); font-size:0.85rem; color:var(--ink); outline:none;
         }
-        .modal-title { font-weight:700; font-size:1.1rem; margin-bottom:4px; }
-        .modal-sub { color:var(--text-dim); font-size:0.82rem; }
-        .modal-err { color:var(--red); font-size:0.75rem; margin-top:8px; min-height:1.2em; }
+        .modal-input::placeholder { color:rgba(10,10,10,0.35); }
+        .modal-btn {
+            width:100%; margin-top:0.8rem; background:var(--ink); color:var(--orange); border:none;
+            padding:1rem; font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer;
+        }
+        .modal-err { color:var(--red); font-size:0.7rem; margin-top:0.5rem; min-height:1.2em; }
 
-        @media (max-width:600px) {
-            .container { padding: 20px 14px 40px; }
-            .input-row { flex-direction:column; }
-            .logo { font-size: 1.6rem; }
-            .stats-grid { grid-template-columns: repeat(2,1fr); }
+        /* ── Footer ── */
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between; letter-spacing:0.05em;
+        }
+        .tech-footer a { color:#555; text-decoration:none; }
+        .tech-footer a:hover { color:var(--orange); }
+
+        @media (max-width:800px) {
+            .hero { grid-template-columns:1fr; min-height:auto; }
+            .hero-h1 { font-size:2rem; }
+            .nav { padding:0.8rem 1.2rem; }
+            .nav-links a { display:none; }
+            .nav-links .nav-badge { display:inline-block; }
+            .spec-grid.cols-4 { grid-template-columns:repeat(2,1fr); }
+            .layout { padding:0.6rem; gap:0.6rem; }
+            .panel { padding:1.2rem; border-radius:1.2rem; }
+            .hero-top { flex-direction:column; gap:0.3rem; padding-bottom:0.6rem; margin-bottom:1rem; }
+            .hero-sub { font-size:0.78rem; }
+            .input-machine input { padding:1rem; font-size:0.85rem; }
+            .input-machine button { padding:0 1.2rem; font-size:0.6rem; }
+            .controls { font-size:0.6rem; }
+            .stat-block h2 { font-size:1.1rem; }
+            .meter-box { padding:0.6rem 0.8rem; font-size:0.7rem; }
+            .digital { font-size:0.8rem; padding:0.15rem 0.5rem; }
+            .ticker-item { font-size:0.5rem; padding:3px 8px; }
+            .tech-footer { flex-direction:column; gap:0.8rem; padding:1.2rem; font-size:0.55rem; text-align:center; }
+            .tech-footer div { text-align:center !important; }
+            .modal-box { padding:1.5rem; border-radius:1.2rem; }
+            .result-card { padding:1.2rem; border-radius:1.2rem; }
+            .export-btn { padding:0.5rem 0.8rem; font-size:0.6rem; }
         }
     </style>
 </head>
 <body>
-    <div class="glow-orb one"></div>
-    <div class="glow-orb two"></div>
+    <div class="layout">
+        <!-- Nav -->
+        <nav>
+            <div class="nav-logo">TRANSCRIPTX<em>®</em></div>
+            <div class="nav-links">
+                <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
+                {% if user.type == 'paid' %}
+                <a href="{{ config.customer_portal }}">Billing</a>
+                <a href="#" onclick="logout();return false">Logout</a>
+                {% else %}
+                <a href="#" onclick="showLogin();return false">Login</a>
+                <a href="/pricing">Pricing</a>
+                {% endif %}
+            </div>
+        </nav>
 
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">Transcript<em>X</em></div>
-            <div class="tagline">Instant transcripts from any video. Just paste the link.</div>
+        <!-- Hero -->
+        <div class="hero">
+            <div class="panel p-orange hero-main">
+                <div class="hero-top">
+                    <span class="label">System Status: Online</span>
+                    <span class="label">TX-{{ user.credits_label }} remaining</span>
+                </div>
 
-            <!-- Platform ticker -->
-            <div class="ticker-wrap">
-                <div class="ticker">
-                    <div class="ticker-items">
-                        <span class="ticker-item"><span class="ti-icon">▶</span> YouTube</span>
-                        <span class="ticker-item"><span class="ti-icon">♪</span> TikTok</span>
-                        <span class="ticker-item"><span class="ti-icon">◉</span> Instagram</span>
-                        <span class="ticker-item"><span class="ti-icon">✕</span> X / Twitter</span>
-                        <span class="ticker-item"><span class="ti-icon">▣</span> Facebook</span>
-                        <span class="ticker-item"><span class="ti-icon">◈</span> LinkedIn</span>
-                        <span class="ticker-item"><span class="ti-icon">⬡</span> Reddit</span>
-                        <span class="ticker-item"><span class="ti-icon">◎</span> Vimeo</span>
-                        <span class="ticker-item"><span class="ti-icon">⬢</span> Twitch</span>
-                        <span class="ticker-item"><span class="ti-icon">◆</span> Dailymotion</span>
-                        <span class="ticker-item"><span class="ti-icon">▸</span> SoundCloud</span>
-                        <span class="ticker-item"><span class="ti-icon">◇</span> Rumble</span>
-                        <span class="ticker-item"><span class="ti-icon">✦</span> Threads</span>
-                        <span class="ticker-item"><span class="ti-icon">◐</span> Pinterest</span>
-                        <span class="ticker-item"><span class="ti-icon">▶</span> Bilibili</span>
-                        <span class="ticker-item"><span class="ti-icon">◉</span> Snapchat</span>
-                        <span class="ticker-item"><span class="ti-icon">♦</span> 1000+ more</span>
-                        <!-- duplicate for seamless loop -->
-                        <span class="ticker-item"><span class="ti-icon">▶</span> YouTube</span>
-                        <span class="ticker-item"><span class="ti-icon">♪</span> TikTok</span>
-                        <span class="ticker-item"><span class="ti-icon">◉</span> Instagram</span>
-                        <span class="ticker-item"><span class="ti-icon">✕</span> X / Twitter</span>
-                        <span class="ticker-item"><span class="ti-icon">▣</span> Facebook</span>
-                        <span class="ticker-item"><span class="ti-icon">◈</span> LinkedIn</span>
-                        <span class="ticker-item"><span class="ti-icon">⬡</span> Reddit</span>
-                        <span class="ticker-item"><span class="ti-icon">◎</span> Vimeo</span>
-                        <span class="ticker-item"><span class="ti-icon">⬢</span> Twitch</span>
-                        <span class="ticker-item"><span class="ti-icon">◆</span> Dailymotion</span>
-                        <span class="ticker-item"><span class="ti-icon">▸</span> SoundCloud</span>
-                        <span class="ticker-item"><span class="ti-icon">◇</span> Rumble</span>
-                        <span class="ticker-item"><span class="ti-icon">✦</span> Threads</span>
-                        <span class="ticker-item"><span class="ti-icon">◐</span> Pinterest</span>
-                        <span class="ticker-item"><span class="ti-icon">▶</span> Bilibili</span>
-                        <span class="ticker-item"><span class="ti-icon">◉</span> Snapchat</span>
-                        <span class="ticker-item"><span class="ti-icon">♦</span> 1000+ more</span>
+                <div>
+                    <h1 class="hero-h1">Instant<br>Transcripts</h1>
+                    <div class="hero-sub">
+                        Paste any video link. Get a perfect transcript in seconds. YouTube, TikTok, Instagram, X — 1000+ platforms.
+                    </div>
+                </div>
+
+                <div style="margin-top:auto; padding-top:2rem;">
+                    <span class="label">Initialize Transcription</span>
+                    <div class="input-machine">
+                        <input type="text" id="urlInput" placeholder="PASTE_VIDEO_URL" onkeydown="if(event.key==='Enter')go()">
+                        <button id="goBtn" onclick="go()">EXTRACT ➔</button>
+                    </div>
+                    <div class="controls">
+                        <label class="toggle-wrap" {% if not user.batch %}style="opacity:0.3;pointer-events:none"{% endif %}>
+                            <input type="checkbox" id="batchToggle" onchange="toggleBatch()">
+                            <div class="toggle-track"></div>
+                            Batch {% if not user.batch %}(paid){% endif %}
+                        </label>
+                        <select id="modelSel">
+                            <option value="whisper-large-v3-turbo">TURBO (FAST)</option>
+                            <option value="whisper-large-v3">LARGE-V3 (BEST)</option>
+                        </select>
+                    </div>
+                    <div class="batch-area" id="batchArea">
+                        <textarea id="batchUrls" placeholder="One URL per line..."></textarea>
+                    </div>
+                    <div class="input-footer">
+                        <div class="barcode"></div>
+                        <span class="label" style="margin:0">Groq Whisper • 216x Realtime</span>
                     </div>
                 </div>
             </div>
-            <div class="user-bar">
-                <div class="credit-badge {{ user.plan }}" id="creditBadge">
-                    {{ user.plan_name }} — {{ user.credits_label }} credits
-                </div>
-                {% if user.type == 'paid' %}
-                <a href="{{ config.customer_portal }}" class="plan-link">Manage billing</a>
-                <a href="#" class="plan-link" onclick="logout();return false">Log out</a>
-                {% else %}
-                <a href="#" class="plan-link" onclick="showLogin();return false">Already subscribed?</a>
-                <a href="#pricing" class="plan-link">Upgrade</a>
-                {% endif %}
-            </div>
-        </div>
 
-        <!-- Input -->
-        <div class="input-card">
-            <div class="input-row">
-                <input type="text" class="url-input" id="urlInput"
-                       placeholder="Paste any video URL — Instagram, TikTok, YouTube, X..."
-                       onkeydown="if(event.key==='Enter')go()">
-                <button class="go-btn" id="goBtn" onclick="go()">Transcribe</button>
-            </div>
-            <div class="controls">
-                <label class="toggle-wrap" id="batchWrap" style="{% if not user.batch %}opacity:0.4;pointer-events:none{% endif %}">
-                    <input type="checkbox" id="batchToggle" onchange="toggleBatch()">
-                    <div class="toggle-track"></div>
-                    Batch {% if not user.batch %}(Starter+){% endif %}
-                </label>
-                <div class="model-picker">
-                    <span>Model:</span>
-                    <select id="modelSel">
-                        <option value="whisper-large-v3-turbo" selected>turbo (fast)</option>
-                        <option value="whisper-large-v3">large-v3 (best)</option>
-                    </select>
+            <div class="hero-side">
+                <div class="panel p-grey stat-block">
+                    <span class="label">Supported Platforms</span>
+                    <h2>1000+</h2>
+                    <p style="font-size:0.75rem; opacity:0.7; margin-top:0.3rem;">Any public video URL</p>
+                    <div class="meter-box">
+                        <span class="label" style="margin:0">Engine</span>
+                        <span class="digital">WHISPER</span>
+                    </div>
+                    <div class="meter-box" style="margin-top:4px;">
+                        <span class="label" style="margin:0">Accuracy</span>
+                        <span class="digital">99.2%</span>
+                    </div>
+                    <div class="ticker-wrap">
+                        <div class="ticker-items">
+                            <span class="ticker-item">YouTube</span>
+                            <span class="ticker-item">TikTok</span>
+                            <span class="ticker-item">Instagram</span>
+                            <span class="ticker-item">X / Twitter</span>
+                            <span class="ticker-item">Facebook</span>
+                            <span class="ticker-item">LinkedIn</span>
+                            <span class="ticker-item">Reddit</span>
+                            <span class="ticker-item">Vimeo</span>
+                            <span class="ticker-item">Twitch</span>
+                            <span class="ticker-item">Rumble</span>
+                            <span class="ticker-item">Threads</span>
+                            <span class="ticker-item">SoundCloud</span>
+                            <span class="ticker-item">Bilibili</span>
+                            <span class="ticker-item">Snapchat</span>
+                            <span class="ticker-item">1000+ more</span>
+                            <span class="ticker-item">YouTube</span>
+                            <span class="ticker-item">TikTok</span>
+                            <span class="ticker-item">Instagram</span>
+                            <span class="ticker-item">X / Twitter</span>
+                            <span class="ticker-item">Facebook</span>
+                            <span class="ticker-item">LinkedIn</span>
+                            <span class="ticker-item">Reddit</span>
+                            <span class="ticker-item">Vimeo</span>
+                            <span class="ticker-item">Twitch</span>
+                            <span class="ticker-item">Rumble</span>
+                            <span class="ticker-item">Threads</span>
+                            <span class="ticker-item">SoundCloud</span>
+                            <span class="ticker-item">Bilibili</span>
+                            <span class="ticker-item">Snapchat</span>
+                            <span class="ticker-item">1000+ more</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="batch-area" id="batchArea">
-                <textarea class="batch-textarea" id="batchUrls" placeholder="One URL per line..."></textarea>
+                <div class="panel p-red" style="justify-content:center; align-items:center; text-align:center; padding:1.5rem;">
+                    <span class="label">Transcription Engine</span>
+                    <h3 class="blink" style="font-family:var(--f-wide); text-transform:uppercase;">READY</h3>
+                </div>
             </div>
         </div>
 
         <!-- Status -->
-        <div class="status" id="status">
+        <div class="status-bar" id="status">
             <div class="status-dot"></div>
-            <span id="statusMsg">Processing...</span>
-            <div class="progress-track"><div class="progress-bar" id="prog"></div></div>
+            <span id="statusMsg" style="font-size:0.75rem;">Processing...</span>
+            <div class="prog-track"><div class="prog-bar" id="prog"></div></div>
         </div>
 
         <!-- Export -->
@@ -750,59 +990,22 @@ HTML_TEMPLATE = """
         <!-- Results -->
         <div id="results"></div>
 
-        <!-- Pricing -->
-        <div class="pricing" id="pricing">
-            <h2>Simple pricing</h2>
-            <div class="sub">Works with Instagram, TikTok, YouTube, X, and 1000+ more. Start free.</div>
-            <div class="plans">
-                <div class="plan-card">
-                    <div class="plan-name">Free</div>
-                    <div class="plan-price">$0</div>
-                    <ul class="plan-features">
-                        <li>3 transcripts / month</li>
-                        <li>Any platform, any video</li>
-                        <li>Groq Whisper large-v3</li>
-                    </ul>
-                    <div class="plan-btn outline" style="cursor:default">Current</div>
-                </div>
-                <div class="plan-card featured">
-                    <div class="plan-name">Starter</div>
-                    <div class="plan-price">$2<span>/mo</span></div>
-                    <ul class="plan-features">
-                        <li>50 transcripts / month</li>
-                        <li>All 1000+ platforms</li>
-                        <li>Batch mode</li>
-                        <li>CSV + JSON export</li>
-                    </ul>
-                    <a href="{{ config.checkout_starter }}" class="plan-btn primary">Get Starter</a>
-                </div>
-                <div class="plan-card">
-                    <div class="plan-name">Pro</div>
-                    <div class="plan-price">$4<span>/mo</span></div>
-                    <ul class="plan-features">
-                        <li>Unlimited transcripts</li>
-                        <li>All 1000+ platforms</li>
-                        <li>Batch mode</li>
-                        <li>CSV + JSON export</li>
-                    </ul>
-                    <a href="{{ config.checkout_pro }}" class="plan-btn green">Get Pro</a>
-                </div>
-            </div>
-        </div>
-
         <!-- Login modal -->
         <div class="modal-overlay" id="loginModal" onclick="if(event.target===this)hideLogin()">
             <div class="modal-box">
-                <div class="modal-title">Restore your subscription</div>
-                <div class="modal-sub">Enter the email you used at checkout</div>
-                <input type="email" class="url-input" id="loginEmail" placeholder="you@email.com"
-                       onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;margin-top:12px">
+                <div class="modal-title">Restore Subscription</div>
+                <div class="modal-sub">Enter the email used at checkout</div>
+                <input type="email" class="modal-input" id="loginEmail" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()">
                 <div class="modal-err" id="loginErr"></div>
-                <button class="go-btn" style="width:100%;margin-top:10px" onclick="doLogin()">Restore</button>
+                <button class="modal-btn" onclick="doLogin()">RESTORE ➔</button>
             </div>
         </div>
 
-        <div class="footer">TranscriptX — 1000+ platforms. Powered by Groq Whisper. Built by Attention Factory.</div>
+        <!-- Footer -->
+        <footer class="tech-footer">
+            <div>TranscriptX Systems<br>Powered by Groq Whisper</div>
+            <div style="text-align:right;">Built by <a href="#">Attention Factory</a><br>1000+ platforms supported</div>
+        </footer>
     </div>
 
     <script>
@@ -870,11 +1073,10 @@ HTML_TEMPLATE = """
         }
 
         function showUpgrade(msg) {
-            const c = document.getElementById('results');
-            c.insertAdjacentHTML('afterbegin', `
-                <div class="result-card" style="text-align:center;border-color:var(--orange);">
-                    <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">${msg}</div>
-                    <a href="#pricing" style="color:var(--accent-bright);">View plans →</a>
+            document.getElementById('results').insertAdjacentHTML('afterbegin', `
+                <div class="result-card" style="text-align:center;border-left:4px solid var(--orange);">
+                    <div style="font-family:var(--f-wide);font-size:0.9rem;text-transform:uppercase;margin-bottom:8px;">${msg}</div>
+                    <a href="/pricing" style="color:var(--ink);">View Plans →</a>
                 </div>
             `);
         }
@@ -883,8 +1085,8 @@ HTML_TEMPLATE = """
             try {
                 const r = await fetch('/api/me');
                 const u = await r.json();
-                document.getElementById('creditBadge').textContent = `${u.plan_name} — ${u.credits_label} credits`;
-                document.getElementById('creditBadge').className = `credit-badge ${u.plan}`;
+                document.querySelector('.nav-badge').textContent = `${u.plan_name} — ${u.credits_label}`;
+                document.querySelector('.nav-badge').className = `nav-badge ${u.plan}`;
             } catch(e) {}
         }
 
@@ -901,7 +1103,7 @@ HTML_TEMPLATE = """
                 c.insertAdjacentHTML('afterbegin', `
                     <div class="result-card err">
                         <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
-                        <div style="color:var(--red);">${d.error||'Unknown error'}</div>
+                        <div style="color:var(--red);font-size:0.85rem;">${d.error||'Unknown error'}</div>
                     </div>`);
                 return;
             }
@@ -909,16 +1111,16 @@ HTML_TEMPLATE = """
             c.insertAdjacentHTML('afterbegin', `
                 <div class="result-card">
                     <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
-                    <div class="stats-grid">
-                        <div class="stat"><div class="stat-val">${fmt(d.views)}</div><div class="stat-lbl">Views</div></div>
-                        <div class="stat"><div class="stat-val">${fmt(d.likes)}</div><div class="stat-lbl">Likes</div></div>
-                        <div class="stat"><div class="stat-val">${fmt(d.comments)}</div><div class="stat-lbl">Comments</div></div>
-                        <div class="stat"><div class="stat-val">${d.duration_formatted||'N/A'}</div><div class="stat-lbl">Duration</div></div>
+                    <div class="spec-grid cols-4">
+                        <div class="spec-cell"><div class="spec-val">${fmt(d.views)}</div><div class="spec-lbl">Views</div></div>
+                        <div class="spec-cell"><div class="spec-val">${fmt(d.likes)}</div><div class="spec-lbl">Likes</div></div>
+                        <div class="spec-cell"><div class="spec-val">${fmt(d.comments)}</div><div class="spec-lbl">Comments</div></div>
+                        <div class="spec-cell"><div class="spec-val">${d.duration_formatted||'N/A'}</div><div class="spec-lbl">Duration</div></div>
                     </div>
                     <div class="transcript-box">
                         <div class="transcript-head">
-                            <span class="transcript-label">Transcript (${d.language||'auto'})</span>
-                            <button class="copy-btn" onclick="clip(this,'${id}')">Copy</button>
+                            <span class="label" style="margin:0">${d.language||'auto'}</span>
+                            <button class="copy-btn" onclick="clip(this,'${id}')">COPY</button>
                         </div>
                         <div class="transcript-text" id="${id}">${d.transcript||'No transcript'}</div>
                     </div>
@@ -927,8 +1129,8 @@ HTML_TEMPLATE = """
 
         function clip(btn, id) {
             navigator.clipboard.writeText(document.getElementById(id).innerText);
-            btn.textContent='Copied!'; btn.classList.add('ok');
-            setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('ok');},1500);
+            btn.textContent='COPIED'; btn.classList.add('ok');
+            setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('ok');},1500);
         }
 
         function expCSV() {
@@ -968,8 +1170,165 @@ HTML_TEMPLATE = """
 """
 
 
+# ── Pricing Template ───────────────────────────────────────
+
+PRICING_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Pricing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --orange: #F0A860;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; }
+
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
+        }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; text-decoration:none; color:var(--ink); }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        nav a.back { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--ink); text-decoration:none; border:1px solid transparent; padding:0.5rem 1rem; border-radius:4px; }
+        nav a.back:hover { border-color:var(--ink); }
+
+        .panel { border-radius:var(--radius); padding:2rem; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+        .p-orange { background:var(--orange); }
+        .p-green { background:var(--green); }
+        .p-grey { background:var(--grey); }
+
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; margin-bottom:0.3rem; display:block; }
+
+        .pricing-head { text-align:center; color:var(--grey); padding:3rem 0 1rem; }
+        .pricing-head h1 { font-family:var(--f-wide); font-size:clamp(1.5rem,3vw,2.5rem); text-transform:uppercase; }
+        .pricing-head p { font-size:0.8rem; opacity:0.6; margin-top:0.5rem; }
+
+        .plans { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+
+        .plan-name { font-family:var(--f-wide); font-size:0.85rem; text-transform:uppercase; margin-bottom:0.5rem; }
+        .plan-price { font-size:2.2rem; font-weight:700; font-family:var(--f-wide); }
+        .plan-price span { font-size:0.8rem; font-weight:400; }
+        .plan-features { list-style:none; margin:1.5rem 0; font-size:0.75rem; line-height:2.2; }
+        .plan-features li::before { content:'→ '; opacity:0.5; }
+
+        .plan-btn {
+            display:block; width:100%; padding:1rem; text-align:center;
+            font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase;
+            text-decoration:none; cursor:pointer; border:none; transition:0.2s;
+        }
+        .plan-btn.dark { background:var(--ink); color:var(--orange); }
+        .plan-btn.dark:hover { background:#333; }
+        .plan-btn.outline { background:transparent; border:var(--bw) solid var(--ink); color:var(--ink); }
+        .plan-btn.green { background:var(--ink); color:var(--green); }
+        .plan-btn.green:hover { background:#333; }
+
+        .spec-grid { display:grid; border:var(--bw) solid var(--ink); background:var(--ink); gap:var(--bw); margin-top:1rem; }
+        .spec-grid.cols-2 { grid-template-columns:1fr 1fr; }
+        .spec-cell { padding:1rem; text-align:center; }
+        .p-orange .spec-cell { background:var(--orange); }
+        .p-green .spec-cell { background:var(--green); }
+        .p-grey .spec-cell { background:var(--grey); }
+
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between;
+        }
+
+        @media (max-width:800px) {
+            .plans { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <nav>
+            <a class="nav-logo" href="/">TRANSCRIPTX<em>®</em></a>
+            <a class="back" href="/">← Back</a>
+        </nav>
+
+        <div class="pricing-head">
+            <h1>Simple Pricing</h1>
+            <p>Instagram, TikTok, YouTube, X, and 1000+ more. Start free.</p>
+        </div>
+
+        <div class="plans">
+            <div class="panel p-grey">
+                <span class="label">Free Tier</span>
+                <div class="plan-name">Free</div>
+                <div class="plan-price">$0</div>
+                <ul class="plan-features">
+                    <li>3 transcripts / month</li>
+                    <li>Any platform, any video</li>
+                    <li>Groq Whisper large-v3</li>
+                    <li>Copy to clipboard</li>
+                </ul>
+                <div class="plan-btn outline" style="cursor:default; margin-top:auto;">Current</div>
+            </div>
+
+            <div class="panel p-orange">
+                <span class="label">Most Popular</span>
+                <div class="plan-name">Starter</div>
+                <div class="plan-price">$2<span>/mo</span></div>
+                <ul class="plan-features">
+                    <li>50 transcripts / month</li>
+                    <li>All 1000+ platforms</li>
+                    <li>Batch mode</li>
+                    <li>CSV + JSON export</li>
+                </ul>
+                <a href="{{ config.checkout_starter }}" class="plan-btn dark" style="margin-top:auto;">GET STARTER ➔</a>
+                <div class="spec-grid cols-2">
+                    <div class="spec-cell"><span class="label">Cost Per</span><div>$0.04</div></div>
+                    <div class="spec-cell"><span class="label">Speed</span><div>216x RT</div></div>
+                </div>
+            </div>
+
+            <div class="panel p-green">
+                <span class="label">Unlimited</span>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$4<span>/mo</span></div>
+                <ul class="plan-features">
+                    <li>Unlimited transcripts</li>
+                    <li>All 1000+ platforms</li>
+                    <li>Batch mode</li>
+                    <li>CSV + JSON export</li>
+                </ul>
+                <a href="{{ config.checkout_pro }}" class="plan-btn green" style="margin-top:auto;">GET PRO ➔</a>
+                <div class="spec-grid cols-2">
+                    <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
+                    <div class="spec-cell"><span class="label">Speed</span><div>216x RT</div></div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="tech-footer">
+            <div>TranscriptX Systems<br>Powered by Groq Whisper</div>
+            <div style="text-align:right;">Built by Attention Factory</div>
+        </footer>
+    </div>
+</body>
+</html>
+"""
+
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5600))
+    port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_ENV") != "production"
 
     if not os.environ.get("GROQ_API_KEY"):
