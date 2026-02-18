@@ -3,3 +3,5 @@ groq>=0.25.0
 gunicorn==23.0.0
 yt-dlp
 python-dotenv
+bcrypt
+requests

@@ -2,18 +2,32 @@
 app.py — TranscriptX
 ======================
 Flask app with Polar payments, SQLite credits, Groq transcription.
+Email + password + OTP auth via bcrypt + Resend.
 """
 
 import os
 import uuid
 import json
+import random
+import re
+import subprocess
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()  # Load .env file automatically
 
-from flask import Flask, request, jsonify, session, redirect, render_template_string
-from database import init_db, PLANS, get_free_credits, use_free_credit
-from database import create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit
+import bcrypt
+import requests as http_requests
+from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context
+from database import (
+    init_db, PLANS,
+    get_free_credits, use_free_credit,
+    create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit,
+    create_user, get_user_by_email, get_user_by_id,
+    set_verify_code, verify_email,
+    get_credits_for_user, use_credit_for_user,
+    link_polar_to_user,
+)
 from transcribe import process_url
 
 app = Flask(__name__)
@@ -26,6 +40,10 @@ POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
+
+# Resend config
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "TranscriptX <onboarding@resend.dev>")
 
 # Initialize DB on startup
 init_db()
@@ -41,16 +59,17 @@ def _get_session_id():
 
 
 def _get_current_user():
-    """Get current user info (paid or free)."""
-    polar_id = session.get("polar_customer_id")
+    """Get current user info. Checks session['user_id'] first (auth'd user)."""
+    user_id = session.get("user_id")
 
-    if polar_id:
-        user = get_user(polar_id)
+    if user_id:
+        user = get_user_by_id(user_id)
         if user:
             plan = PLANS.get(user["plan"], PLANS["free"])
-            credits = get_user_credits(polar_id)
+            credits = get_credits_for_user(user_id)
             return {
-                "type": "paid",
+                "type": "paid" if user["plan"] != "free" else "authed_free",
+                "user_id": user["id"],
                 "email": user["email"],
                 "plan": user["plan"],
                 "plan_name": plan.get("name", user["plan"].title()),
@@ -58,28 +77,75 @@ def _get_current_user():
                 "credits_label": "Unlimited" if credits == -1 else str(credits),
                 "batch": plan["batch"],
                 "csv_export": plan["csv_export"],
+                "logged_in": True,
             }
 
-    # Free user
-    sid = _get_session_id()
-    credits = get_free_credits(sid)
+    # Not logged in
     return {
-        "type": "free",
+        "type": "anonymous",
+        "user_id": None,
         "email": None,
         "plan": "free",
         "plan_name": "Free",
-        "credits": credits,
-        "credits_label": str(credits),
+        "credits": 0,
+        "credits_label": "0",
         "batch": False,
         "csv_export": False,
+        "logged_in": False,
     }
+
+
+def _generate_otp():
+    """Generate a 6-digit OTP code."""
+    return str(random.randint(100000, 999999))
+
+
+def _send_otp_email(email, code):
+    """Send OTP via Resend API. Returns True on success."""
+    if not RESEND_API_KEY:
+        print(f"⚠️  RESEND_API_KEY not set. OTP for {email}: {code}")
+        return True  # Dev mode — just print
+
+    try:
+        resp = http_requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": RESEND_FROM_EMAIL,
+                "to": [email],
+                "subject": f"TranscriptX — Your verification code is {code}",
+                "html": f"""
+                    <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
+                        <h2 style="margin:0 0 1rem;">TranscriptX</h2>
+                        <p>Your verification code:</p>
+                        <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
+                        <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
+                    </div>
+                """,
+            },
+            timeout=10,
+        )
+        return resp.status_code == 200
+    except Exception as e:
+        print(f"❌ Resend error: {e}")
+        return False
+
+
+EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
 
 
 # ── API Routes ──────────────────────────────────────────────
 
 @app.route("/api/extract", methods=["POST"])
 def api_extract():
-    """Extract transcript from a URL. Deducts 1 credit."""
+    """Extract transcript from a URL. Deducts 1 credit. Requires auth."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Please sign up or log in to transcribe."}), 401
+
     data = request.json or {}
     url = data.get("url", "").strip()
 
@@ -89,19 +155,11 @@ def api_extract():
     if not url.startswith(("https://", "http://")):
         return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
 
-    # Check credits
-    user = _get_current_user()
-    polar_id = session.get("polar_customer_id")
-
-    if polar_id and user["type"] == "paid":
-        if user["credits"] != -1 and user["credits"] <= 0:
-            return jsonify({"status": "error", "error": "No credits remaining. Please upgrade your plan."}), 403
-        if not use_user_credit(polar_id):
-            return jsonify({"status": "error", "error": "No credits remaining."}), 403
-    else:
-        sid = _get_session_id()
-        if not use_free_credit(sid):
-            return jsonify({"status": "error", "error": "Free credits used up. Upgrade to keep transcribing!"}), 403
+    # Check + deduct credits
+    if user["credits"] != -1 and user["credits"] <= 0:
+        return jsonify({"status": "error", "error": "No credits remaining. Upgrade your plan!"}), 403
+    if not use_credit_for_user(user["user_id"]):
+        return jsonify({"status": "error", "error": "No credits remaining."}), 403
 
     # Process
     model = data.get("model", "whisper-large-v3-turbo")
@@ -112,10 +170,173 @@ def api_extract():
     return jsonify(result)
 
 
+@app.route("/api/profile-links")
+def api_profile_links():
+    """Stream video URLs from a profile using yt-dlp. 1 credit per 20 links."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"error": "Login required"}), 401
+
+    url = request.args.get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    try:
+        limit = int(request.args.get("limit", "0"))
+    except ValueError:
+        limit = 0
+
+    cmd = [
+        "yt-dlp", "--flat-playlist", "--print", "url",
+        "--no-warnings", "--no-download",
+    ]
+    if limit > 0:
+        cmd += ["--playlist-end", str(limit)]
+    cmd.append(url)
+
+    user_id = user["user_id"]
+    is_unlimited = user["credits"] == -1
+
+    def generate():
+        if not is_unlimited:
+            if not use_credit_for_user(user_id):
+                yield f"data: {json.dumps({'type':'error','msg':'No credits remaining.'})}\n\n"
+                return
+        credits_charged = 1
+
+        proc = None
+        try:
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True, bufsize=1,
+            )
+            count = 0
+            for line in proc.stdout:
+                link = line.strip()
+                if not link:
+                    continue
+                count += 1
+
+                needed = (count + 4) // 5
+                if needed > credits_charged and not is_unlimited:
+                    if not use_credit_for_user(user_id):
+                        yield f"data: {json.dumps({'type':'done','count':count - 1,'credits_used':credits_charged,'msg':'Credit limit reached'})}\n\n"
+                        return
+                    credits_charged = needed
+
+                yield f"data: {json.dumps({'type':'link','url':link,'n':count})}\n\n"
+
+            proc.wait()
+            if count == 0:
+                stderr = proc.stderr.read()
+                if "login" in stderr.lower() or "cookie" in stderr.lower():
+                    yield f"data: {json.dumps({'type':'error','msg':'This profile requires login/cookies. Try a public profile.'})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type':'error','msg': stderr[:200] or 'No videos found. Check the URL.'})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type':'done','count':count,'credits_used':credits_charged})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type':'error','msg':str(e)})}\n\n"
+        finally:
+            if proc and proc.poll() is None:
+                proc.kill()
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.route("/api/me")
 def api_me():
     """Get current user info + credits."""
     return jsonify(_get_current_user())
+
+
+# ── Auth Routes ─────────────────────────────────────────────
+
+@app.route("/api/signup", methods=["POST"])
+def api_signup():
+    """Register with email + password, send OTP."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if len(password) < 6:
+        return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
+
+    # Check if email already exists
+    existing = get_user_by_email(email)
+    if existing and existing.get("email_verified"):
+        return jsonify({"status": "error", "error": "Account already exists. Log in instead."}), 409
+    if existing and not existing.get("email_verified"):
+        # Re-signup for unverified account — update password + resend code
+        pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        from database import get_db
+        with get_db() as db:
+            db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, existing["id"]))
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code)
+        return jsonify({"status": "ok", "step": "verify"})
+
+    pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    user_id = create_user(email, pw_hash)
+
+    if not user_id:
+        return jsonify({"status": "error", "error": "Account already exists."}), 409
+
+    # Generate + send OTP
+    code = _generate_otp()
+    expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    set_verify_code(email, code, expires)
+    _send_otp_email(email, code)
+
+    return jsonify({"status": "ok", "step": "verify"})
+
+
+@app.route("/api/verify", methods=["POST"])
+def api_verify():
+    """Verify OTP code, log user in."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+
+    if not email or not code:
+        return jsonify({"status": "error", "error": "Email and code required"}), 400
+
+    user = verify_email(email, code)
+    if not user:
+        return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
+
+    session["user_id"] = user["id"]
+    session.pop("polar_customer_id", None)  # clean up legacy
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/resend-code", methods=["POST"])
+def api_resend_code():
+    """Resend OTP to email."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"status": "error", "error": "Email required"}), 400
+
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({"status": "error", "error": "No account found"}), 404
+
+    code = _generate_otp()
+    expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    set_verify_code(email, code, expires)
+    _send_otp_email(email, code)
+
+    return jsonify({"status": "ok"})
 
 
 # ── Polar Webhooks ──────────────────────────────────────────
@@ -124,15 +345,9 @@ def api_me():
 def polar_webhook():
     """
     Handle Polar subscription events.
-    Polar uses Standard Webhooks (svix) for signatures.
-    For production, install `standardwebhooks` package for proper verification.
+    Links polar_customer_id to existing auth'd user by email.
     """
     payload = request.get_data()
-
-    # TODO: For production, verify with standardwebhooks package:
-    #   from standardwebhooks.webhooks import Webhook
-    #   wh = Webhook(POLAR_WEBHOOK_SECRET)
-    #   wh.verify(payload, request.headers)
 
     try:
         data = json.loads(payload)
@@ -173,39 +388,54 @@ def polar_webhook():
 
 @app.route("/auth/polar/callback")
 def polar_callback():
-    """After Polar checkout, link the customer to this session."""
+    """After Polar checkout, link the Polar customer to the logged-in user."""
     customer_id = request.args.get("customer_id", "")
-    if customer_id:
-        session["polar_customer_id"] = customer_id
+    user_id = session.get("user_id")
+
+    if customer_id and user_id:
+        user = get_user_by_id(user_id)
+        if user:
+            link_polar_to_user(user["email"], customer_id, user.get("plan", "starter"))
+
     return redirect("/")
 
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    """Link session to existing paid account by email."""
+    """Authenticate with email + password."""
     data = request.json or {}
     email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
     if not email:
         return jsonify({"status": "error", "error": "Enter your email"}), 400
+    if not password:
+        return jsonify({"status": "error", "error": "Enter your password"}), 400
 
-    from database import get_db
-    with get_db() as db:
-        row = db.execute(
-            "SELECT polar_customer_id, plan FROM users WHERE LOWER(email) = ?",
-            (email,)
-        ).fetchone()
+    user = get_user_by_email(email)
 
-    if not row or row["plan"] == "free":
-        return jsonify({"status": "error", "error": "No active subscription found for this email."}), 404
+    if not user or not user.get("password_hash"):
+        return jsonify({"status": "error", "error": "Invalid email or password"}), 401
 
-    session["polar_customer_id"] = row["polar_customer_id"]
-    return jsonify({"status": "ok", "plan": row["plan"]})
+    if not bcrypt.checkpw(password.encode(), user["password_hash"].encode()):
+        return jsonify({"status": "error", "error": "Invalid email or password"}), 401
+
+    if not user.get("email_verified"):
+        # Resend OTP automatically
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code)
+        return jsonify({"status": "verify", "error": "Email not verified. Code sent."}), 200
+
+    session["user_id"] = user["id"]
+    return jsonify({"status": "ok", "plan": user["plan"]})
 
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
     """Clear session."""
+    session.pop("user_id", None)
     session.pop("polar_customer_id", None)
     return jsonify({"status": "ok"})
 
@@ -213,34 +443,38 @@ def api_logout():
 # ── Admin ───────────────────────────────────────────────────
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "changeme")
+ADMIN_EMAILS = [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()]
 
 @app.route("/admin")
 def admin():
-    """Admin dashboard — protected by ?key= param."""
-    if request.args.get("key") != ADMIN_KEY:
+    """Admin dashboard — protected by login+email whitelist OR ?key= param."""
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    has_admin_key = request.args.get("key") == ADMIN_KEY
+    if not has_admin_email and not has_admin_key:
         return "Not found", 404
 
     from database import get_db
     with get_db() as db:
         users = [dict(r) for r in db.execute(
-            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users ORDER BY created_at DESC"
+            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
         ).fetchall()]
 
-        sessions = [dict(r) for r in db.execute(
-            "SELECT session_id, credits_used, credits_reset_at, created_at FROM free_sessions ORDER BY created_at DESC LIMIT 100"
+        free_users = [dict(r) for r in db.execute(
+            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC LIMIT 100"
         ).fetchall()]
 
         stats = {
-            "total_users": db.execute("SELECT COUNT(*) FROM users").fetchone()[0],
+            "total_users": db.execute("SELECT COUNT(*) FROM users WHERE email_verified = 1").fetchone()[0],
             "paid_users": db.execute("SELECT COUNT(*) FROM users WHERE plan != 'free'").fetchone()[0],
             "starter": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'starter'").fetchone()[0],
             "pro": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'pro'").fetchone()[0],
-            "free_sessions": db.execute("SELECT COUNT(*) FROM free_sessions").fetchone()[0],
-            "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM free_sessions").fetchone()[0],
-            "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users").fetchone()[0],
+            "free_users": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'free' AND email_verified = 1").fetchone()[0],
+            "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan = 'free'").fetchone()[0],
+            "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
         }
 
-    return render_template_string(ADMIN_TEMPLATE, users=users, sessions=sessions, stats=stats)
+    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats)
 
 
 ADMIN_TEMPLATE = """
@@ -454,8 +688,8 @@ ADMIN_TEMPLATE = """
                 <div class="stat-lbl">Pro</div>
             </div>
             <div class="stat-card">
-                <div class="stat-num" data-count="{{ stats.free_sessions }}">0</div>
-                <div class="stat-lbl">Free Sessions</div>
+                <div class="stat-num" data-count="{{ stats.free_users }}">0</div>
+                <div class="stat-lbl">Free Users</div>
             </div>
             <div class="stat-card">
                 <div class="stat-num" data-count="{{ stats.total_paid_transcripts }}">0</div>
@@ -475,13 +709,13 @@ ADMIN_TEMPLATE = """
                         <circle class="circle-bg" cx="18" cy="18" r="15.9"/>
                         <circle class="circle-fg orange" cx="18" cy="18" r="15.9"
                             stroke-dasharray="100"
-                            stroke-dashoffset="{{ 100 - ([((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) if (stats.paid_users + stats.free_sessions) > 0 else 0, 100] | min) }}"/>
+                            stroke-dashoffset="{{ 100 - ([((stats.paid_users / (stats.paid_users + stats.free_users)) * 100) if (stats.paid_users + stats.free_users) > 0 else 0, 100] | min) }}"/>
                     </svg>
-                    <div class="circle-label">{{ ((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) | int if (stats.paid_users + stats.free_sessions) > 0 else 0 }}%</div>
+                    <div class="circle-label">{{ ((stats.paid_users / (stats.paid_users + stats.free_users)) * 100) | int if (stats.paid_users + stats.free_users) > 0 else 0 }}%</div>
                 </div>
                 <div>
                     <div class="chart-title">Conversion Rate</div>
-                    <div class="chart-sub">{{ stats.paid_users }} paid / {{ stats.paid_users + stats.free_sessions }} total</div>
+                    <div class="chart-sub">{{ stats.paid_users }} paid / {{ stats.paid_users + stats.free_users }} total</div>
                 </div>
             </div>
             <div class="chart-card">
@@ -539,32 +773,32 @@ ADMIN_TEMPLATE = """
             </table>
         </div>
 
-        <!-- Free Sessions -->
+        <!-- Free Users -->
         <div class="section-head">
-            <div class="section-title">Free Sessions</div>
-            <div class="section-count">{{ stats.free_sessions }}</div>
+            <div class="section-title">Free Users</div>
+            <div class="section-count">{{ stats.free_users }}</div>
         </div>
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Session</th><th>Usage</th><th>Resets</th><th>Created</th></tr>
+                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th></tr>
                 </thead>
                 <tbody>
-                    {% for s in sessions %}
+                    {% for u in free_users %}
                     <tr>
-                        <td class="mono" style="opacity:1">{{ s.session_id[:16] }}…</td>
+                        <td class="email-cell">{{ u.email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
-                                <span class="mono">{{ s.credits_used }}</span>
-                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (s.credits_used / 3 * 100) | int }}%"></div></div>
+                                <span class="mono">{{ u.credits_used }}</span>
+                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (u.credits_used / 3 * 100) | int }}%"></div></div>
                                 <span class="mono">/ 3</span>
                             </div>
                         </td>
-                        <td class="mono">{{ s.credits_reset_at[:10] if s.credits_reset_at else '—' }}</td>
-                        <td class="mono">{{ s.created_at[:10] if s.created_at else '—' }}</td>
+                        <td class="mono">{{ u.credits_reset_at[:10] if u.credits_reset_at else '—' }}</td>
+                        <td class="mono">{{ u.created_at[:10] if u.created_at else '—' }}</td>
                     </tr>
                     {% endfor %}
-                    {% if not sessions %}<tr><td colspan="4" class="empty-row">No free sessions yet</td></tr>{% endif %}
+                    {% if not free_users %}<tr><td colspan="4" class="empty-row">No free users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -610,6 +844,16 @@ def index():
 def pricing():
     user = _get_current_user()
     return render_template_string(PRICING_TEMPLATE, user=user, config={
+        "checkout_starter": POLAR_CHECKOUT_STARTER,
+        "checkout_pro": POLAR_CHECKOUT_PRO,
+        "customer_portal": POLAR_CUSTOMER_PORTAL,
+    })
+
+
+@app.route("/profile-links")
+def profile_links():
+    user = _get_current_user()
+    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, config={
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
@@ -712,7 +956,17 @@ HTML_TEMPLATE = """
             height:16px; width:80px; display:inline-block;
             background:repeating-linear-gradient(90deg, var(--ink), var(--ink) 2px, transparent 2px, transparent 4px);
             opacity:0.4;
+            position:relative;
         }
+        .barcode::after {
+            content:'';
+            position:absolute;
+            right:0; top:0;
+            width:2px; height:100%;
+            background:var(--ink);
+            animation:barBlink 1s ease-in-out infinite;
+        }
+        @keyframes barBlink { 0%,100%{opacity:1} 50%{opacity:0} }
         .input-footer { margin-top:1rem; display:flex; gap:1rem; align-items:center; }
 
         /* ── Controls row ── */
@@ -810,7 +1064,7 @@ HTML_TEMPLATE = """
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
 
-        /* ── Login modal ── */
+        /* ── Auth modal ── */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-overlay.open { display:flex; }
         .modal-box { background:var(--grey); border-radius:var(--radius); padding:2rem; width:90%; max-width:380px; text-align:center; }
@@ -825,7 +1079,14 @@ HTML_TEMPLATE = """
             width:100%; margin-top:0.8rem; background:var(--ink); color:var(--orange); border:none;
             padding:1rem; font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer;
         }
+        .modal-btn:disabled { opacity:0.4; cursor:not-allowed; }
         .modal-err { color:var(--red); font-size:0.7rem; margin-top:0.5rem; min-height:1.2em; }
+        .auth-tab {
+            flex:1; background:transparent; border:var(--bw) solid var(--ink); padding:0.7rem;
+            font-family:var(--f-wide); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            color:var(--ink); opacity:0.4; transition:all 0.2s;
+        }
+        .auth-tab.active { opacity:1; background:var(--ink); color:var(--orange); }
 
         /* ── Footer ── */
         .tech-footer {
@@ -883,13 +1144,19 @@ HTML_TEMPLATE = """
         <nav>
             <div class="nav-logo">TRANSCRIPTX<em>®</em></div>
             <div class="nav-links">
+                {% if user.logged_in %}
                 <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
-                {% if user.type == 'paid' %}
+                {% if user.plan != 'free' %}
                 <a href="{{ config.customer_portal }}">Billing</a>
+                {% else %}
+                <a href="/pricing">Upgrade</a>
+                {% endif %}
+                <a href="/profile-links">Links</a>
                 <a href="#" onclick="logout();return false">Logout</a>
                 {% else %}
-                <a href="#" onclick="showLogin();return false">Login</a>
-                <a href="/pricing">Pricing</a>
+                <a href="/profile-links">Links</a>
+                <a href="#" onclick="showAuth('login');return false">Login</a>
+                <a href="#" onclick="showAuth('signup');return false">Sign Up</a>
                 {% endif %}
             </div>
         </nav>
@@ -1001,14 +1268,42 @@ HTML_TEMPLATE = """
         <!-- Results -->
         <div id="results"></div>
 
-        <!-- Login modal -->
-        <div class="modal-overlay" id="loginModal" onclick="if(event.target===this)hideLogin()">
+        <!-- Auth modal -->
+        <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
             <div class="modal-box">
-                <div class="modal-title">Restore Subscription</div>
-                <div class="modal-sub">Enter the email used at checkout</div>
-                <input type="email" class="modal-input" id="loginEmail" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-                <div class="modal-err" id="loginErr"></div>
-                <button class="modal-btn" onclick="doLogin()">RESTORE ➔</button>
+                <!-- Tab toggle -->
+                <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+                </div>
+
+                <!-- Login form -->
+                <div id="loginForm">
+                    <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
+                    <div class="modal-err" id="loginErr"></div>
+                    <button class="modal-btn" onclick="doLogin()">LOG IN ➔</button>
+                </div>
+
+                <!-- Signup form -->
+                <div id="signupForm" style="display:none;">
+                    <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <div class="modal-err" id="signupErr"></div>
+                    <button class="modal-btn" onclick="doSignup()">SIGN UP ➔</button>
+                </div>
+
+                <!-- Verify form -->
+                <div id="verifyForm" style="display:none;">
+                    <div class="modal-title">Check Your Email</div>
+                    <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
+                    <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
+                    <div class="modal-err" id="verifyErr"></div>
+                    <button class="modal-btn" onclick="doVerify()">VERIFY ➔</button>
+                    <div style="margin-top:0.8rem;text-align:center;">
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;">Resend code</a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1035,6 +1330,11 @@ HTML_TEMPLATE = """
         }
 
         async function go() {
+            {% if not user.logged_in %}
+            showAuth('signup');
+            return;
+            {% endif %}
+
             const urls = getUrls();
             if (!urls.length) return;
 
@@ -1155,26 +1455,112 @@ HTML_TEMPLATE = """
         function dl(n,c,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
         function clearAll(){all=[];document.getElementById('results').innerHTML='';document.getElementById('exportBar').classList.remove('on');}
 
-        function showLogin(){document.getElementById('loginModal').classList.add('open');document.getElementById('loginEmail').focus();}
-        function hideLogin(){document.getElementById('loginModal').classList.remove('open');document.getElementById('loginErr').textContent='';}
+        let authEmail = '';
 
-        async function doLogin(){
-            const email=document.getElementById('loginEmail').value.trim();
-            const err=document.getElementById('loginErr');
-            if(!email){err.textContent='Enter your email';return;}
-            err.textContent='';
-            try{
-                const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
-                const d=await r.json();
-                if(r.ok){location.reload();}
-                else{err.textContent=d.error||'Not found';}
-            }catch(e){err.textContent='Something went wrong';}
+        function showAuth(tab) {
+            document.getElementById('authModal').classList.add('open');
+            switchTab(tab || 'login');
+        }
+        function hideAuth() {
+            document.getElementById('authModal').classList.remove('open');
+            document.getElementById('loginErr').textContent = '';
+            document.getElementById('signupErr').textContent = '';
+            document.getElementById('verifyErr').textContent = '';
+        }
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+            document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
+            document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+            if (tab === 'login') document.getElementById('loginEmail').focus();
+            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
 
-        async function logout(){
-            await fetch('/api/logout',{method:'POST'});
+        async function doSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const err = document.getElementById('signupErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
+            try {
+                const r = await fetch('/api/signup', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.step === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                } else {
+                    err.textContent = d.error || 'Something went wrong';
+                }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function doVerify() {
+            const code = document.getElementById('verifyCode').value.trim();
+            const err = document.getElementById('verifyErr');
+            err.textContent = '';
+            if (code.length !== 6) { err.textContent = 'Enter the 6-digit code'; return; }
+            try {
+                const r = await fetch('/api/verify', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail, code})
+                });
+                const d = await r.json();
+                if (r.ok) { location.reload(); }
+                else { err.textContent = d.error || 'Invalid code'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function resendCode() {
+            if (!authEmail) return;
+            try {
+                await fetch('/api/resend-code', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail})
+                });
+                document.getElementById('verifyErr').textContent = '';
+                document.getElementById('verifySub').textContent = 'New code sent to ' + authEmail;
+            } catch(e) {}
+        }
+
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const err = document.getElementById('loginErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (!password) { err.textContent = 'Enter your password'; return; }
+            try {
+                const r = await fetch('/api/login', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.status === 'ok') { location.reload(); }
+                else if (d.status === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                }
+                else { err.textContent = d.error || 'Login failed'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function logout() {
+            await fetch('/api/logout', {method:'POST'});
             location.reload();
         }
+
+        {% if not user.logged_in %}
+        showAuth('signup');
+        {% endif %}
     </script>
 </body>
 </html>
@@ -1271,7 +1657,10 @@ PRICING_TEMPLATE = """
     <div class="layout">
         <nav>
             <a class="nav-logo" href="/">TRANSCRIPTX<em>®</em></a>
-            <a class="back" href="/">← Back</a>
+            <div style="display:flex;gap:0.5rem;">
+                <a class="back" href="/profile-links">Links</a>
+                <a class="back" href="/">← Back</a>
+            </div>
         </nav>
 
         <div class="pricing-head">
@@ -1333,6 +1722,493 @@ PRICING_TEMPLATE = """
             <div style="text-align:right;">Built by Attention Factory</div>
         </footer>
     </div>
+</body>
+</html>
+"""
+
+
+# ── Profile Links Template ─────────────────────────────────
+
+PROFILE_LINKS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Profile Link Extractor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --orange: #F0A860;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; overflow-x:hidden; }
+
+        .layout { max-width:800px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
+        }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; text-decoration:none; color:var(--ink); }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        .nav-links { display:flex; align-items:center; gap:0.5rem; }
+        .nav-links a {
+            color:var(--ink); text-decoration:none; font-size:0.7rem; font-weight:700;
+            text-transform:uppercase; padding:0.5rem 1rem; border-radius:4px;
+            border:1px solid transparent; transition:all 0.2s;
+        }
+        .nav-links a:hover { border-color:var(--ink); background:rgba(0,0,0,0.05); }
+        .nav-badge {
+            font-size:0.6rem; padding:0.4rem 0.8rem; border-radius:4px;
+            font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+        }
+        .nav-badge.free { background:rgba(0,0,0,0.08); }
+        .nav-badge.starter { background:rgba(66,85,212,0.15); color:#4255d4; }
+        .nav-badge.pro { background:rgba(112,148,114,0.3); }
+
+        .panel { border-radius:var(--radius); padding:2rem; }
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; display:block; margin-bottom:0.3rem; }
+        h1 { font-family:var(--f-wide); font-size:1.6rem; text-transform:uppercase; line-height:0.95; margin-bottom:1rem; }
+        .sub { font-size:0.8rem; border-left:2px solid var(--ink); padding-left:1rem; margin-bottom:2rem; line-height:1.6; opacity:0.8; }
+
+        .input-row { border:var(--bw) solid var(--ink); display:grid; grid-template-columns:1fr auto; }
+        .input-row input {
+            background:transparent; border:none; padding:1.2rem;
+            font-family:var(--f-tech); font-size:0.9rem; color:var(--ink); outline:none;
+        }
+        .input-row input::placeholder { color:rgba(10,10,10,0.3); }
+        .input-row button {
+            background:var(--ink); color:var(--orange); border:none; padding:0 1.8rem;
+            font-family:var(--f-wide); font-size:0.65rem; text-transform:uppercase; cursor:pointer;
+        }
+        .input-row button:hover { background:#333; }
+        .input-row button:disabled { opacity:0.4; cursor:wait; }
+
+        .options { display:flex; align-items:center; gap:1.2rem; margin-top:0.8rem; flex-wrap:wrap; }
+        .options select {
+            background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:0.4rem 0.6rem; font-family:var(--f-tech); font-size:0.65rem;
+        }
+
+        .status { background:var(--grey); border-radius:var(--radius); padding:1.2rem 2rem; margin-bottom:0; display:none; }
+        .status.on { display:flex; align-items:center; gap:10px; }
+        .dot { width:6px; height:6px; border-radius:50%; background:var(--ink); animation:blink 1s ease infinite; flex-shrink:0; }
+        @keyframes blink { 50%{opacity:0.2} }
+        .status-text { flex:1; font-size:0.75rem; }
+        .stop-btn {
+            background:var(--red); color:#fff; border:none; padding:6px 14px;
+            font-family:var(--f-tech); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            border-radius:4px;
+        }
+        .stop-btn:hover { opacity:0.8; }
+        .counter {
+            font-family:var(--f-wide); font-size:2rem; font-weight:700;
+            min-width:60px; text-align:center;
+        }
+
+        .results { background:var(--grey); border-radius:var(--radius); padding:2rem; display:none; }
+        .results.on { display:block; }
+        .results-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
+        .results-head h2 { font-family:var(--f-wide); font-size:0.9rem; text-transform:uppercase; }
+        .btn-row { display:flex; gap:6px; }
+        .btn-sm {
+            background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:4px 12px; font-family:var(--f-tech); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+        }
+        .btn-sm:hover { background:var(--ink); color:var(--orange); }
+        .btn-sm.green { border-color:var(--green); }
+        .btn-sm.green:hover { background:var(--green); color:#fff; }
+
+        .link-list {
+            max-height:50vh; overflow-y:auto; border:var(--bw) solid var(--ink);
+            padding:1rem; font-size:0.72rem; line-height:2; word-break:break-all;
+        }
+        .link-list a { color:var(--ink); text-decoration:none; display:block; opacity:0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .link-list a:hover { opacity:1; text-decoration:underline; }
+        .link-list a.new { animation:fadeIn 0.3s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:0.8;transform:none} }
+
+        .err { background:var(--red); color:#fff; border-radius:var(--radius); padding:1.2rem 2rem; font-size:0.8rem; display:none; }
+        .err.on { display:block; }
+
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between; letter-spacing:0.05em;
+        }
+        .tech-footer a { color:#555; text-decoration:none; }
+        .tech-footer a:hover { color:var(--orange); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
+        .modal-overlay.open { display:flex; }
+        .modal-box { background:var(--grey); border-radius:var(--radius); padding:2rem; width:90%; max-width:380px; text-align:center; }
+        .modal-title { font-family:var(--f-wide); font-size:0.9rem; text-transform:uppercase; margin-bottom:4px; }
+        .modal-sub { font-size:0.75rem; opacity:0.6; }
+        .modal-input {
+            width:100%; margin-top:1rem; background:transparent; border:var(--bw) solid var(--ink);
+            padding:1rem; font-family:var(--f-tech); font-size:0.85rem; color:var(--ink); outline:none;
+        }
+        .modal-input::placeholder { color:rgba(10,10,10,0.35); }
+        .modal-btn {
+            width:100%; margin-top:0.8rem; background:var(--ink); color:var(--orange); border:none;
+            padding:1rem; font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer;
+        }
+        .modal-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .modal-err { color:var(--red); font-size:0.7rem; margin-top:0.5rem; min-height:1.2em; }
+        .auth-tab {
+            flex:1; background:transparent; border:var(--bw) solid var(--ink); padding:0.7rem;
+            font-family:var(--f-wide); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            color:var(--ink); opacity:0.4; transition:all 0.2s;
+        }
+        .auth-tab.active { opacity:1; background:var(--ink); color:var(--orange); }
+
+        @media (max-width:600px) {
+            body { padding:0; }
+            .layout { padding:0.5rem; gap:0.5rem; }
+            nav { padding:0.6rem 1rem; border-radius:60px; }
+            .nav-logo { font-size:0.85rem; }
+            .nav-links { gap:0.2rem; }
+            .nav-links a { font-size:0.55rem; padding:0.35rem 0.5rem; }
+            .nav-badge { font-size:0.5rem; padding:0.3rem 0.5rem; }
+            .panel { padding:1.5rem; border-radius:1.2rem; }
+            h1 { font-size:1.2rem; }
+            .input-row { grid-template-columns:1fr; }
+            .input-row button { padding:0.9rem 1.5rem; }
+            .results { padding:1.2rem; border-radius:1.2rem; }
+            .status { border-radius:1.2rem; padding:1rem; }
+            .modal-box { padding:1.5rem; border-radius:1rem; width:95%; }
+            .tech-footer { flex-direction:column; gap:0.5rem; text-align:center; padding:1rem; font-size:0.55rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <nav>
+            <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
+            <div class="nav-links">
+                {% if user.logged_in %}
+                <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
+                {% if user.plan != 'free' %}
+                <a href="{{ config.customer_portal }}">Billing</a>
+                {% else %}
+                <a href="/pricing">Upgrade</a>
+                {% endif %}
+                <a href="/">Transcribe</a>
+                <a href="#" onclick="logout();return false">Logout</a>
+                {% else %}
+                <a href="/">Transcribe</a>
+                <a href="#" onclick="showAuth('login');return false">Login</a>
+                <a href="#" onclick="showAuth('signup');return false">Sign Up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <div class="panel" style="background:var(--orange);">
+            <span class="label">Profile Link Extractor</span>
+            <h1>Get All<br>Video Links</h1>
+            <div class="sub">Paste a TikTok, YouTube, Instagram, or X profile URL. Links stream in live — no waiting for all of them. <strong>1 credit per 5 links.</strong></div>
+            <span class="label">Profile URL</span>
+            <div class="input-row">
+                <input type="text" id="url" placeholder="https://tiktok.com/@username" onkeydown="if(event.key==='Enter')go()">
+                <button id="btn" onclick="go()">EXTRACT ➔</button>
+            </div>
+            <div class="options">
+                <span class="label" style="margin:0">Limit:</span>
+                <select id="limit">
+                    <option value="0">All videos</option>
+                    <option value="10" selected>Last 10</option>
+                    <option value="25">Last 25</option>
+                    <option value="50">Last 50</option>
+                    <option value="100">Last 100</option>
+                    <option value="200">Last 200</option>
+                    <option value="500">Last 500</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            <div class="dot"></div>
+            <span class="status-text" id="msg">Extracting links...</span>
+            <div class="counter" id="liveCount">0</div>
+            <button class="stop-btn" onclick="stop()">Stop</button>
+        </div>
+
+        <div class="err" id="err"></div>
+
+        <div class="results" id="results">
+            <div class="results-head">
+                <h2><span id="count">0</span> Links Found</h2>
+                <div class="btn-row">
+                    <button class="btn-sm" onclick="copyAll()">Copy All</button>
+                    <button class="btn-sm green" onclick="downloadTxt()">Download .txt</button>
+                </div>
+            </div>
+            <div class="link-list" id="links"></div>
+        </div>
+
+        <!-- Auth modal -->
+        <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
+            <div class="modal-box">
+                <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+                </div>
+                <div id="loginForm">
+                    <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
+                    <div class="modal-err" id="loginErr"></div>
+                    <button class="modal-btn" onclick="doLogin()">LOG IN ➔</button>
+                </div>
+                <div id="signupForm" style="display:none;">
+                    <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <div class="modal-err" id="signupErr"></div>
+                    <button class="modal-btn" onclick="doSignup()">SIGN UP ➔</button>
+                </div>
+                <div id="verifyForm" style="display:none;">
+                    <div class="modal-title">Check Your Email</div>
+                    <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
+                    <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
+                    <div class="modal-err" id="verifyErr"></div>
+                    <button class="modal-btn" onclick="doVerify()">VERIFY ➔</button>
+                    <div style="margin-top:0.8rem;text-align:center;">
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;">Resend code</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="tech-footer">
+            <div>TranscriptX Systems</div>
+            <div style="text-align:right;">Built by <a href="#">Attention Factory</a></div>
+        </footer>
+    </div>
+
+    <script>
+        let allLinks = [];
+        let eventSource = null;
+
+        function go() {
+            {% if not user.logged_in %}
+            showAuth('signup');
+            return;
+            {% endif %}
+
+            const url = document.getElementById('url').value.trim();
+            if (!url) return;
+
+            const limit = document.getElementById('limit').value;
+            const btn = document.getElementById('btn');
+            const status = document.getElementById('status');
+            const err = document.getElementById('err');
+            const results = document.getElementById('results');
+            const linksEl = document.getElementById('links');
+
+            allLinks = [];
+            linksEl.innerHTML = '';
+            btn.disabled = true;
+            err.classList.remove('on');
+            results.classList.add('on');
+            status.classList.add('on');
+            document.getElementById('msg').textContent = 'Extracting links...';
+            document.getElementById('liveCount').textContent = '0';
+            document.getElementById('count').textContent = '0';
+
+            if (eventSource) eventSource.close();
+
+            const params = new URLSearchParams({url, limit});
+            eventSource = new EventSource(`/api/profile-links?${params}`);
+
+            eventSource.onmessage = function(e) {
+                const d = JSON.parse(e.data);
+
+                if (d.type === 'link') {
+                    allLinks.push(d.url);
+                    document.getElementById('liveCount').textContent = d.n;
+                    document.getElementById('count').textContent = d.n;
+
+                    const a = document.createElement('a');
+                    a.href = d.url;
+                    a.target = '_blank';
+                    a.textContent = d.url;
+                    a.className = 'new';
+                    linksEl.appendChild(a);
+                    linksEl.scrollTop = linksEl.scrollHeight;
+                }
+                else if (d.type === 'done') {
+                    finish(`Done — ${d.count} links extracted` + (d.credits_used ? ` (${d.credits_used} credit${d.credits_used > 1 ? 's' : ''})` : ''));
+                    updateCredits();
+                }
+                else if (d.type === 'error') {
+                    finish();
+                    err.textContent = d.msg;
+                    err.classList.add('on');
+                    if (allLinks.length === 0) results.classList.remove('on');
+                    updateCredits();
+                }
+            };
+
+            eventSource.onerror = function() {
+                finish();
+                if (allLinks.length === 0) {
+                    err.textContent = 'Connection lost. Try again.';
+                    err.classList.add('on');
+                    results.classList.remove('on');
+                }
+                updateCredits();
+            };
+        }
+
+        function stop() {
+            if (eventSource) eventSource.close();
+            finish('Stopped');
+            updateCredits();
+        }
+
+        function finish(msg) {
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            document.getElementById('btn').disabled = false;
+            document.getElementById('status').classList.remove('on');
+            if (msg) document.getElementById('msg').textContent = msg;
+        }
+
+        function copyAll() {
+            navigator.clipboard.writeText(allLinks.join('\\n'));
+            event.target.textContent = 'Copied!';
+            setTimeout(() => event.target.textContent = 'Copy All', 1500);
+        }
+
+        function downloadTxt() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([allLinks.join('\\n')], {type:'text/plain'}));
+            a.download = 'profile-links.txt';
+            a.click();
+        }
+
+        async function updateCredits() {
+            try {
+                const r = await fetch('/api/me');
+                const u = await r.json();
+                const badge = document.querySelector('.nav-badge');
+                if (badge) {
+                    badge.textContent = `${u.plan_name} — ${u.credits_label}`;
+                    badge.className = `nav-badge ${u.plan}`;
+                }
+            } catch(e) {}
+        }
+
+        let authEmail = '';
+        function showAuth(tab) {
+            document.getElementById('authModal').classList.add('open');
+            switchTab(tab || 'login');
+        }
+        function hideAuth() {
+            document.getElementById('authModal').classList.remove('open');
+            document.getElementById('loginErr').textContent = '';
+            document.getElementById('signupErr').textContent = '';
+            document.getElementById('verifyErr').textContent = '';
+        }
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+            document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
+            document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+            if (tab === 'login') document.getElementById('loginEmail').focus();
+            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'verify') document.getElementById('verifyCode').focus();
+        }
+        async function doSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const err = document.getElementById('signupErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
+            try {
+                const r = await fetch('/api/signup', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.step === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                } else {
+                    err.textContent = d.error || 'Something went wrong';
+                }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function doVerify() {
+            const code = document.getElementById('verifyCode').value.trim();
+            const err = document.getElementById('verifyErr');
+            err.textContent = '';
+            if (code.length !== 6) { err.textContent = 'Enter the 6-digit code'; return; }
+            try {
+                const r = await fetch('/api/verify', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail, code})
+                });
+                const d = await r.json();
+                if (r.ok) { location.reload(); }
+                else { err.textContent = d.error || 'Invalid code'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function resendCode() {
+            if (!authEmail) return;
+            try {
+                await fetch('/api/resend-code', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail})
+                });
+                document.getElementById('verifyErr').textContent = '';
+                document.getElementById('verifySub').textContent = 'New code sent to ' + authEmail;
+            } catch(e) {}
+        }
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const err = document.getElementById('loginErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (!password) { err.textContent = 'Enter your password'; return; }
+            try {
+                const r = await fetch('/api/login', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.status === 'ok') { location.reload(); }
+                else if (d.status === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                }
+                else { err.textContent = d.error || 'Login failed'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function logout() {
+            await fetch('/api/logout', {method:'POST'});
+            location.reload();
+        }
+
+        {% if not user.logged_in %}
+        showAuth('signup');
+        {% endif %}
+    </script>
 </body>
 </html>
 """
