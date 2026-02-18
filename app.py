@@ -18,7 +18,7 @@ load_dotenv()  # Load .env file automatically
 
 import bcrypt
 import requests as http_requests
-from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context
+from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
@@ -47,6 +47,17 @@ RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "TranscriptX <onboarding
 
 # Initialize DB on startup
 init_db()
+
+
+@app.route("/<path:filename>")
+def serve_static_root(filename):
+    """Serve favicon/manifest files from /static at root URLs."""
+    allowed = {"favicon.ico", "favicon-16x16.png", "favicon-32x32.png",
+               "apple-touch-icon.png", "android-chrome-192x192.png",
+               "android-chrome-512x512.png", "site.webmanifest"}
+    if filename in allowed:
+        return send_from_directory("static", filename)
+    return ("Not found", 404)
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -484,6 +495,10 @@ ADMIN_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Admin</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -806,7 +821,7 @@ ADMIN_TEMPLATE = """
         <!-- Footer -->
         <footer class="tech-footer">
             <div>TranscriptX Admin<br>System Dashboard</div>
-            <div style="text-align:right;">Built by Attention Factory</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 
@@ -869,6 +884,10 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1310,7 +1329,7 @@ HTML_TEMPLATE = """
         <!-- Footer -->
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by <a href="#">Attention Factory</a><br>1000+ platforms supported</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a><br>1000+ platforms supported</div>
         </footer>
     </div>
 
@@ -1576,6 +1595,10 @@ PRICING_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Pricing</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1719,7 +1742,7 @@ PRICING_TEMPLATE = """
 
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by Attention Factory</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 </body>
@@ -1736,6 +1759,10 @@ PROFILE_LINKS_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Profile Link Extractor</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1991,7 +2018,7 @@ PROFILE_LINKS_TEMPLATE = """
 
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by <a href="#">Attention Factory</a></div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 
