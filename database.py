@@ -73,7 +73,10 @@ def _migrate_columns(db):
     ]
     for col, col_type in migrations:
         if col not in existing:
-            db.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
+            try:
+                db.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
+            except sqlite3.OperationalError:
+                pass
 
     # Make email UNIQUE if it isn't already — SQLite can't ALTER constraints,
     # but we can add an index for lookup speed
