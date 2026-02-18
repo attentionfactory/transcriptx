@@ -2,18 +2,31 @@
 app.py — TranscriptX
 ======================
 Flask app with Polar payments, SQLite credits, Groq transcription.
+Email + password + OTP auth via bcrypt + Resend.
 """
 
 import os
 import uuid
 import json
+import random
+import re
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()  # Load .env file automatically
 
+import bcrypt
+import requests as http_requests
 from flask import Flask, request, jsonify, session, redirect, render_template_string
-from database import init_db, PLANS, get_free_credits, use_free_credit
-from database import create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit
+from database import (
+    init_db, PLANS,
+    get_free_credits, use_free_credit,
+    create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit,
+    create_user, get_user_by_email, get_user_by_id,
+    set_verify_code, verify_email,
+    get_credits_for_user, use_credit_for_user,
+    link_polar_to_user,
+)
 from transcribe import process_url
 
 app = Flask(__name__)
@@ -26,6 +39,10 @@ POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
+
+# Resend config
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "TranscriptX <onboarding@resend.dev>")
 
 # Initialize DB on startup
 init_db()
@@ -41,16 +58,17 @@ def _get_session_id():
 
 
 def _get_current_user():
-    """Get current user info (paid or free)."""
-    polar_id = session.get("polar_customer_id")
+    """Get current user info. Checks session['user_id'] first (auth'd user)."""
+    user_id = session.get("user_id")
 
-    if polar_id:
-        user = get_user(polar_id)
+    if user_id:
+        user = get_user_by_id(user_id)
         if user:
             plan = PLANS.get(user["plan"], PLANS["free"])
-            credits = get_user_credits(polar_id)
+            credits = get_credits_for_user(user_id)
             return {
-                "type": "paid",
+                "type": "paid" if user["plan"] != "free" else "authed_free",
+                "user_id": user["id"],
                 "email": user["email"],
                 "plan": user["plan"],
                 "plan_name": plan.get("name", user["plan"].title()),
@@ -58,28 +76,75 @@ def _get_current_user():
                 "credits_label": "Unlimited" if credits == -1 else str(credits),
                 "batch": plan["batch"],
                 "csv_export": plan["csv_export"],
+                "logged_in": True,
             }
 
-    # Free user
-    sid = _get_session_id()
-    credits = get_free_credits(sid)
+    # Not logged in
     return {
-        "type": "free",
+        "type": "anonymous",
+        "user_id": None,
         "email": None,
         "plan": "free",
         "plan_name": "Free",
-        "credits": credits,
-        "credits_label": str(credits),
+        "credits": 0,
+        "credits_label": "0",
         "batch": False,
         "csv_export": False,
+        "logged_in": False,
     }
+
+
+def _generate_otp():
+    """Generate a 6-digit OTP code."""
+    return str(random.randint(100000, 999999))
+
+
+def _send_otp_email(email, code):
+    """Send OTP via Resend API. Returns True on success."""
+    if not RESEND_API_KEY:
+        print(f"⚠️  RESEND_API_KEY not set. OTP for {email}: {code}")
+        return True  # Dev mode — just print
+
+    try:
+        resp = http_requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": RESEND_FROM_EMAIL,
+                "to": [email],
+                "subject": f"TranscriptX — Your verification code is {code}",
+                "html": f"""
+                    <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
+                        <h2 style="margin:0 0 1rem;">TranscriptX</h2>
+                        <p>Your verification code:</p>
+                        <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
+                        <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
+                    </div>
+                """,
+            },
+            timeout=10,
+        )
+        return resp.status_code == 200
+    except Exception as e:
+        print(f"❌ Resend error: {e}")
+        return False
+
+
+EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
 
 
 # ── API Routes ──────────────────────────────────────────────
 
 @app.route("/api/extract", methods=["POST"])
 def api_extract():
-    """Extract transcript from a URL. Deducts 1 credit."""
+    """Extract transcript from a URL. Deducts 1 credit. Requires auth."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Please sign up or log in to transcribe."}), 401
+
     data = request.json or {}
     url = data.get("url", "").strip()
 
@@ -89,19 +154,11 @@ def api_extract():
     if not url.startswith(("https://", "http://")):
         return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
 
-    # Check credits
-    user = _get_current_user()
-    polar_id = session.get("polar_customer_id")
-
-    if polar_id and user["type"] == "paid":
-        if user["credits"] != -1 and user["credits"] <= 0:
-            return jsonify({"status": "error", "error": "No credits remaining. Please upgrade your plan."}), 403
-        if not use_user_credit(polar_id):
-            return jsonify({"status": "error", "error": "No credits remaining."}), 403
-    else:
-        sid = _get_session_id()
-        if not use_free_credit(sid):
-            return jsonify({"status": "error", "error": "Free credits used up. Upgrade to keep transcribing!"}), 403
+    # Check + deduct credits
+    if user["credits"] != -1 and user["credits"] <= 0:
+        return jsonify({"status": "error", "error": "No credits remaining. Upgrade your plan!"}), 403
+    if not use_credit_for_user(user["user_id"]):
+        return jsonify({"status": "error", "error": "No credits remaining."}), 403
 
     # Process
     model = data.get("model", "whisper-large-v3-turbo")
@@ -118,21 +175,100 @@ def api_me():
     return jsonify(_get_current_user())
 
 
+# ── Auth Routes ─────────────────────────────────────────────
+
+@app.route("/api/signup", methods=["POST"])
+def api_signup():
+    """Register with email + password, send OTP."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if len(password) < 6:
+        return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
+
+    # Check if email already exists
+    existing = get_user_by_email(email)
+    if existing and existing.get("email_verified"):
+        return jsonify({"status": "error", "error": "Account already exists. Log in instead."}), 409
+    if existing and not existing.get("email_verified"):
+        # Re-signup for unverified account — update password + resend code
+        pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        from database import get_db
+        with get_db() as db:
+            db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, existing["id"]))
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code)
+        return jsonify({"status": "ok", "step": "verify"})
+
+    pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    user_id = create_user(email, pw_hash)
+
+    if not user_id:
+        return jsonify({"status": "error", "error": "Account already exists."}), 409
+
+    # Generate + send OTP
+    code = _generate_otp()
+    expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    set_verify_code(email, code, expires)
+    _send_otp_email(email, code)
+
+    return jsonify({"status": "ok", "step": "verify"})
+
+
+@app.route("/api/verify", methods=["POST"])
+def api_verify():
+    """Verify OTP code, log user in."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+
+    if not email or not code:
+        return jsonify({"status": "error", "error": "Email and code required"}), 400
+
+    user = verify_email(email, code)
+    if not user:
+        return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
+
+    session["user_id"] = user["id"]
+    session.pop("polar_customer_id", None)  # clean up legacy
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/resend-code", methods=["POST"])
+def api_resend_code():
+    """Resend OTP to email."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"status": "error", "error": "Email required"}), 400
+
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({"status": "error", "error": "No account found"}), 404
+
+    code = _generate_otp()
+    expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    set_verify_code(email, code, expires)
+    _send_otp_email(email, code)
+
+    return jsonify({"status": "ok"})
+
+
 # ── Polar Webhooks ──────────────────────────────────────────
 
 @app.route("/webhooks/polar", methods=["POST"])
 def polar_webhook():
     """
     Handle Polar subscription events.
-    Polar uses Standard Webhooks (svix) for signatures.
-    For production, install `standardwebhooks` package for proper verification.
+    Links polar_customer_id to existing auth'd user by email.
     """
     payload = request.get_data()
-
-    # TODO: For production, verify with standardwebhooks package:
-    #   from standardwebhooks.webhooks import Webhook
-    #   wh = Webhook(POLAR_WEBHOOK_SECRET)
-    #   wh.verify(payload, request.headers)
 
     try:
         data = json.loads(payload)
@@ -173,39 +309,54 @@ def polar_webhook():
 
 @app.route("/auth/polar/callback")
 def polar_callback():
-    """After Polar checkout, link the customer to this session."""
+    """After Polar checkout, link the Polar customer to the logged-in user."""
     customer_id = request.args.get("customer_id", "")
-    if customer_id:
-        session["polar_customer_id"] = customer_id
+    user_id = session.get("user_id")
+
+    if customer_id and user_id:
+        user = get_user_by_id(user_id)
+        if user:
+            link_polar_to_user(user["email"], customer_id, user.get("plan", "starter"))
+
     return redirect("/")
 
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    """Link session to existing paid account by email."""
+    """Authenticate with email + password."""
     data = request.json or {}
     email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
     if not email:
         return jsonify({"status": "error", "error": "Enter your email"}), 400
+    if not password:
+        return jsonify({"status": "error", "error": "Enter your password"}), 400
 
-    from database import get_db
-    with get_db() as db:
-        row = db.execute(
-            "SELECT polar_customer_id, plan FROM users WHERE LOWER(email) = ?",
-            (email,)
-        ).fetchone()
+    user = get_user_by_email(email)
 
-    if not row or row["plan"] == "free":
-        return jsonify({"status": "error", "error": "No active subscription found for this email."}), 404
+    if not user or not user.get("password_hash"):
+        return jsonify({"status": "error", "error": "Invalid email or password"}), 401
 
-    session["polar_customer_id"] = row["polar_customer_id"]
-    return jsonify({"status": "ok", "plan": row["plan"]})
+    if not bcrypt.checkpw(password.encode(), user["password_hash"].encode()):
+        return jsonify({"status": "error", "error": "Invalid email or password"}), 401
+
+    if not user.get("email_verified"):
+        # Resend OTP automatically
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code)
+        return jsonify({"status": "verify", "error": "Email not verified. Code sent."}), 200
+
+    session["user_id"] = user["id"]
+    return jsonify({"status": "ok", "plan": user["plan"]})
 
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
     """Clear session."""
+    session.pop("user_id", None)
     session.pop("polar_customer_id", None)
     return jsonify({"status": "ok"})
 
@@ -213,34 +364,38 @@ def api_logout():
 # ── Admin ───────────────────────────────────────────────────
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "changeme")
+ADMIN_EMAILS = [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()]
 
 @app.route("/admin")
 def admin():
-    """Admin dashboard — protected by ?key= param."""
-    if request.args.get("key") != ADMIN_KEY:
+    """Admin dashboard — protected by login+email whitelist OR ?key= param."""
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    has_admin_key = request.args.get("key") == ADMIN_KEY
+    if not has_admin_email and not has_admin_key:
         return "Not found", 404
 
     from database import get_db
     with get_db() as db:
         users = [dict(r) for r in db.execute(
-            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users ORDER BY created_at DESC"
+            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
         ).fetchall()]
 
-        sessions = [dict(r) for r in db.execute(
-            "SELECT session_id, credits_used, credits_reset_at, created_at FROM free_sessions ORDER BY created_at DESC LIMIT 100"
+        free_users = [dict(r) for r in db.execute(
+            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC LIMIT 100"
         ).fetchall()]
 
         stats = {
-            "total_users": db.execute("SELECT COUNT(*) FROM users").fetchone()[0],
+            "total_users": db.execute("SELECT COUNT(*) FROM users WHERE email_verified = 1").fetchone()[0],
             "paid_users": db.execute("SELECT COUNT(*) FROM users WHERE plan != 'free'").fetchone()[0],
             "starter": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'starter'").fetchone()[0],
             "pro": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'pro'").fetchone()[0],
-            "free_sessions": db.execute("SELECT COUNT(*) FROM free_sessions").fetchone()[0],
-            "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM free_sessions").fetchone()[0],
-            "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users").fetchone()[0],
+            "free_users": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'free' AND email_verified = 1").fetchone()[0],
+            "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan = 'free'").fetchone()[0],
+            "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
         }
 
-    return render_template_string(ADMIN_TEMPLATE, users=users, sessions=sessions, stats=stats)
+    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats)
 
 
 ADMIN_TEMPLATE = """
@@ -454,8 +609,8 @@ ADMIN_TEMPLATE = """
                 <div class="stat-lbl">Pro</div>
             </div>
             <div class="stat-card">
-                <div class="stat-num" data-count="{{ stats.free_sessions }}">0</div>
-                <div class="stat-lbl">Free Sessions</div>
+                <div class="stat-num" data-count="{{ stats.free_users }}">0</div>
+                <div class="stat-lbl">Free Users</div>
             </div>
             <div class="stat-card">
                 <div class="stat-num" data-count="{{ stats.total_paid_transcripts }}">0</div>
@@ -475,13 +630,13 @@ ADMIN_TEMPLATE = """
                         <circle class="circle-bg" cx="18" cy="18" r="15.9"/>
                         <circle class="circle-fg orange" cx="18" cy="18" r="15.9"
                             stroke-dasharray="100"
-                            stroke-dashoffset="{{ 100 - ([((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) if (stats.paid_users + stats.free_sessions) > 0 else 0, 100] | min) }}"/>
+                            stroke-dashoffset="{{ 100 - ([((stats.paid_users / (stats.paid_users + stats.free_users)) * 100) if (stats.paid_users + stats.free_users) > 0 else 0, 100] | min) }}"/>
                     </svg>
-                    <div class="circle-label">{{ ((stats.paid_users / (stats.paid_users + stats.free_sessions)) * 100) | int if (stats.paid_users + stats.free_sessions) > 0 else 0 }}%</div>
+                    <div class="circle-label">{{ ((stats.paid_users / (stats.paid_users + stats.free_users)) * 100) | int if (stats.paid_users + stats.free_users) > 0 else 0 }}%</div>
                 </div>
                 <div>
                     <div class="chart-title">Conversion Rate</div>
-                    <div class="chart-sub">{{ stats.paid_users }} paid / {{ stats.paid_users + stats.free_sessions }} total</div>
+                    <div class="chart-sub">{{ stats.paid_users }} paid / {{ stats.paid_users + stats.free_users }} total</div>
                 </div>
             </div>
             <div class="chart-card">
@@ -539,32 +694,32 @@ ADMIN_TEMPLATE = """
             </table>
         </div>
 
-        <!-- Free Sessions -->
+        <!-- Free Users -->
         <div class="section-head">
-            <div class="section-title">Free Sessions</div>
-            <div class="section-count">{{ stats.free_sessions }}</div>
+            <div class="section-title">Free Users</div>
+            <div class="section-count">{{ stats.free_users }}</div>
         </div>
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Session</th><th>Usage</th><th>Resets</th><th>Created</th></tr>
+                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th></tr>
                 </thead>
                 <tbody>
-                    {% for s in sessions %}
+                    {% for u in free_users %}
                     <tr>
-                        <td class="mono" style="opacity:1">{{ s.session_id[:16] }}…</td>
+                        <td class="email-cell">{{ u.email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
-                                <span class="mono">{{ s.credits_used }}</span>
-                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (s.credits_used / 3 * 100) | int }}%"></div></div>
+                                <span class="mono">{{ u.credits_used }}</span>
+                                <div class="usage-bar"><div class="usage-bar-fill orange" style="width:{{ (u.credits_used / 3 * 100) | int }}%"></div></div>
                                 <span class="mono">/ 3</span>
                             </div>
                         </td>
-                        <td class="mono">{{ s.credits_reset_at[:10] if s.credits_reset_at else '—' }}</td>
-                        <td class="mono">{{ s.created_at[:10] if s.created_at else '—' }}</td>
+                        <td class="mono">{{ u.credits_reset_at[:10] if u.credits_reset_at else '—' }}</td>
+                        <td class="mono">{{ u.created_at[:10] if u.created_at else '—' }}</td>
                     </tr>
                     {% endfor %}
-                    {% if not sessions %}<tr><td colspan="4" class="empty-row">No free sessions yet</td></tr>{% endif %}
+                    {% if not free_users %}<tr><td colspan="4" class="empty-row">No free users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -810,7 +965,7 @@ HTML_TEMPLATE = """
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
 
-        /* ── Login modal ── */
+        /* ── Auth modal ── */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-overlay.open { display:flex; }
         .modal-box { background:var(--grey); border-radius:var(--radius); padding:2rem; width:90%; max-width:380px; text-align:center; }
@@ -825,7 +980,14 @@ HTML_TEMPLATE = """
             width:100%; margin-top:0.8rem; background:var(--ink); color:var(--orange); border:none;
             padding:1rem; font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer;
         }
+        .modal-btn:disabled { opacity:0.4; cursor:not-allowed; }
         .modal-err { color:var(--red); font-size:0.7rem; margin-top:0.5rem; min-height:1.2em; }
+        .auth-tab {
+            flex:1; background:transparent; border:var(--bw) solid var(--ink); padding:0.7rem;
+            font-family:var(--f-wide); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            color:var(--ink); opacity:0.4; transition:all 0.2s;
+        }
+        .auth-tab.active { opacity:1; background:var(--ink); color:var(--orange); }
 
         /* ── Footer ── */
         .tech-footer {
@@ -883,13 +1045,17 @@ HTML_TEMPLATE = """
         <nav>
             <div class="nav-logo">TRANSCRIPTX<em>®</em></div>
             <div class="nav-links">
+                {% if user.logged_in %}
                 <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
-                {% if user.type == 'paid' %}
+                {% if user.plan != 'free' %}
                 <a href="{{ config.customer_portal }}">Billing</a>
+                {% else %}
+                <a href="/pricing">Upgrade</a>
+                {% endif %}
                 <a href="#" onclick="logout();return false">Logout</a>
                 {% else %}
-                <a href="#" onclick="showLogin();return false">Login</a>
-                <a href="/pricing">Pricing</a>
+                <a href="#" onclick="showAuth('login');return false">Login</a>
+                <a href="#" onclick="showAuth('signup');return false">Sign Up</a>
                 {% endif %}
             </div>
         </nav>
@@ -1001,14 +1167,42 @@ HTML_TEMPLATE = """
         <!-- Results -->
         <div id="results"></div>
 
-        <!-- Login modal -->
-        <div class="modal-overlay" id="loginModal" onclick="if(event.target===this)hideLogin()">
+        <!-- Auth modal -->
+        <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
             <div class="modal-box">
-                <div class="modal-title">Restore Subscription</div>
-                <div class="modal-sub">Enter the email used at checkout</div>
-                <input type="email" class="modal-input" id="loginEmail" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-                <div class="modal-err" id="loginErr"></div>
-                <button class="modal-btn" onclick="doLogin()">RESTORE ➔</button>
+                <!-- Tab toggle -->
+                <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+                </div>
+
+                <!-- Login form -->
+                <div id="loginForm">
+                    <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
+                    <div class="modal-err" id="loginErr"></div>
+                    <button class="modal-btn" onclick="doLogin()">LOG IN ➔</button>
+                </div>
+
+                <!-- Signup form -->
+                <div id="signupForm" style="display:none;">
+                    <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <div class="modal-err" id="signupErr"></div>
+                    <button class="modal-btn" onclick="doSignup()">SIGN UP ➔</button>
+                </div>
+
+                <!-- Verify form -->
+                <div id="verifyForm" style="display:none;">
+                    <div class="modal-title">Check Your Email</div>
+                    <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
+                    <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
+                    <div class="modal-err" id="verifyErr"></div>
+                    <button class="modal-btn" onclick="doVerify()">VERIFY ➔</button>
+                    <div style="margin-top:0.8rem;text-align:center;">
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;">Resend code</a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1035,6 +1229,11 @@ HTML_TEMPLATE = """
         }
 
         async function go() {
+            {% if not user.logged_in %}
+            showAuth('signup');
+            return;
+            {% endif %}
+
             const urls = getUrls();
             if (!urls.length) return;
 
@@ -1155,26 +1354,112 @@ HTML_TEMPLATE = """
         function dl(n,c,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
         function clearAll(){all=[];document.getElementById('results').innerHTML='';document.getElementById('exportBar').classList.remove('on');}
 
-        function showLogin(){document.getElementById('loginModal').classList.add('open');document.getElementById('loginEmail').focus();}
-        function hideLogin(){document.getElementById('loginModal').classList.remove('open');document.getElementById('loginErr').textContent='';}
+        let authEmail = '';
 
-        async function doLogin(){
-            const email=document.getElementById('loginEmail').value.trim();
-            const err=document.getElementById('loginErr');
-            if(!email){err.textContent='Enter your email';return;}
-            err.textContent='';
-            try{
-                const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
-                const d=await r.json();
-                if(r.ok){location.reload();}
-                else{err.textContent=d.error||'Not found';}
-            }catch(e){err.textContent='Something went wrong';}
+        function showAuth(tab) {
+            document.getElementById('authModal').classList.add('open');
+            switchTab(tab || 'login');
+        }
+        function hideAuth() {
+            document.getElementById('authModal').classList.remove('open');
+            document.getElementById('loginErr').textContent = '';
+            document.getElementById('signupErr').textContent = '';
+            document.getElementById('verifyErr').textContent = '';
+        }
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+            document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
+            document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+            if (tab === 'login') document.getElementById('loginEmail').focus();
+            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
 
-        async function logout(){
-            await fetch('/api/logout',{method:'POST'});
+        async function doSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const err = document.getElementById('signupErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
+            try {
+                const r = await fetch('/api/signup', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.step === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                } else {
+                    err.textContent = d.error || 'Something went wrong';
+                }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function doVerify() {
+            const code = document.getElementById('verifyCode').value.trim();
+            const err = document.getElementById('verifyErr');
+            err.textContent = '';
+            if (code.length !== 6) { err.textContent = 'Enter the 6-digit code'; return; }
+            try {
+                const r = await fetch('/api/verify', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail, code})
+                });
+                const d = await r.json();
+                if (r.ok) { location.reload(); }
+                else { err.textContent = d.error || 'Invalid code'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function resendCode() {
+            if (!authEmail) return;
+            try {
+                await fetch('/api/resend-code', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail})
+                });
+                document.getElementById('verifyErr').textContent = '';
+                document.getElementById('verifySub').textContent = 'New code sent to ' + authEmail;
+            } catch(e) {}
+        }
+
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const err = document.getElementById('loginErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (!password) { err.textContent = 'Enter your password'; return; }
+            try {
+                const r = await fetch('/api/login', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.status === 'ok') { location.reload(); }
+                else if (d.status === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                }
+                else { err.textContent = d.error || 'Login failed'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+
+        async function logout() {
+            await fetch('/api/logout', {method:'POST'});
             location.reload();
         }
+
+        {% if not user.logged_in %}
+        showAuth('signup');
+        {% endif %}
     </script>
 </body>
 </html>
