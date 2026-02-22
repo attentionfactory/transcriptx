@@ -12,7 +12,21 @@ import random
 import re
 import subprocess
 from datetime import datetime, timedelta
+from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
+
+EXTRA_DISPOSABLE_DOMAINS = {
+    "tempmail.com", "tempmail.io", "tempmail.net",
+    "throwaway.email", "burnermail.io", "trashmailr.com",
+    "temp-mail.io", "tempemail.cc", "tempemailco.com",
+    "tempmailgen.com", "tempinboxmail.com", "tempm.com",
+    "temporary.best", "temp.now", "disposablemail.com",
+    "5minmail.com", "hour.email", "noemail.cc",
+    "anonibox.com", "luxusmail.org", "mail7.app",
+    "dmailpro.net", "adresseemailtemporaire.com",
+    "emailtemporalgratis.com", "emailtemporanea.org",
+}
+disposable_domains = _disposable_pkg | EXTRA_DISPOSABLE_DOMAINS
 
 load_dotenv()  # Load .env file automatically
 
@@ -276,6 +290,8 @@ def api_signup():
 
     if not email or not EMAIL_RE.match(email):
         return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if email.split("@")[1] in disposable_domains:
+        return jsonify({"status": "error", "error": "Disposable email addresses are not allowed"}), 400
     if len(password) < 6:
         return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
 
