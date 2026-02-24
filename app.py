@@ -44,6 +44,7 @@ from database import (
     set_verify_code, verify_email,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     link_polar_to_user,
+    get_banner, set_config,
 )
 from transcribe import process_url
 
@@ -506,7 +507,21 @@ def admin():
             "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
         }
 
-    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats)
+    banner = get_banner()
+    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats, banner=banner)
+
+
+@app.route("/admin/banner", methods=["POST"])
+def admin_banner():
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    has_admin_key = request.args.get("key") == ADMIN_KEY
+    if not has_admin_email and not has_admin_key:
+        return "Not found", 404
+    data = request.get_json()
+    set_config("banner_enabled", "1" if data.get("enabled") else "0")
+    set_config("banner_text", data.get("text", ""))
+    return jsonify({"status": "ok"})
 
 
 ADMIN_TEMPLATE = """
@@ -527,6 +542,7 @@ ADMIN_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -839,6 +855,20 @@ ADMIN_TEMPLATE = """
             </table>
         </div>
 
+        <!-- Banner Control -->
+        <div class="section-head">
+            <div class="section-title">Site Banner</div>
+        </div>
+        <div class="panel" style="background:var(--grey); display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Enabled</label>
+                <input type="checkbox" id="bannerEnabled" {% if banner.enabled %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
+            <input type="text" id="bannerText" value="{{ banner.text }}" placeholder="Banner message..." style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+            <button onclick="saveBanner()" style="align-self:flex-start; background:var(--ink); color:var(--grey); border:none; padding:0.6rem 1.5rem; border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">Save Banner</button>
+            <div id="bannerStatus" style="font-size:0.7rem; opacity:0.6;"></div>
+        </div>
+
         <!-- Footer -->
         <footer class="tech-footer">
             <div>TranscriptX Admin<br>System Dashboard</div>
@@ -858,6 +888,21 @@ ADMIN_TEMPLATE = """
                 if (count >= target) clearInterval(interval);
             }, 32);
         });
+
+        async function saveBanner() {
+            const enabled = document.getElementById('bannerEnabled').checked;
+            const text = document.getElementById('bannerText').value;
+            const st = document.getElementById('bannerStatus');
+            try {
+                const r = await fetch('/admin/banner' + window.location.search, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({enabled, text})
+                });
+                st.textContent = r.ok ? 'Saved!' : 'Error saving';
+                setTimeout(() => st.textContent = '', 2000);
+            } catch(e) { st.textContent = 'Error: ' + e.message; }
+        }
     </script>
 </body>
 </html>
@@ -869,7 +914,7 @@ ADMIN_TEMPLATE = """
 @app.route("/")
 def index():
     user = _get_current_user()
-    return render_template_string(HTML_TEMPLATE, user=user, config={
+    return render_template_string(HTML_TEMPLATE, user=user, banner=get_banner(), config={
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
@@ -889,7 +934,7 @@ def pricing():
 @app.route("/profile-links")
 def profile_links():
     user = _get_current_user()
-    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, config={
+    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, banner=get_banner(), config={
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
@@ -916,6 +961,7 @@ HTML_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -1179,6 +1225,12 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
+    {% if banner.enabled and banner.text %}
+    <div id="siteBanner" style="background:var(--electricgreen);color:var(--ink);text-align:center;padding:0.6rem 2rem;font-size:0.7rem;font-family:var(--f-tech);position:relative;">
+        {{ banner.text }}
+        <button onclick="document.getElementById('siteBanner').remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1rem;cursor:pointer;opacity:0.6;">✕</button>
+    </div>
+    {% endif %}
     <div class="layout">
         <!-- Nav -->
         <nav>
@@ -1820,6 +1872,7 @@ PROFILE_LINKS_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -1970,6 +2023,12 @@ PROFILE_LINKS_TEMPLATE = """
     </style>
 </head>
 <body>
+    {% if banner.enabled and banner.text %}
+    <div id="siteBanner" style="background:var(--electricgreen);color:var(--ink);text-align:center;padding:0.6rem 2rem;font-size:0.7rem;font-family:var(--f-tech);position:relative;">
+        {{ banner.text }}
+        <button onclick="document.getElementById('siteBanner').remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1rem;cursor:pointer;opacity:0.6;">✕</button>
+    </div>
+    {% endif %}
     <div class="layout">
         <nav>
             <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>

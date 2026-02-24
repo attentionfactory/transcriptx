@@ -57,6 +57,12 @@ def init_db():
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS site_config (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
 
         # Migrate existing users table — add new auth columns if missing
         _migrate_columns(db)
@@ -390,3 +396,29 @@ def _maybe_reset_credits(db, user):
 def _next_reset_date():
     """Next monthly reset (30 days from now)."""
     return (datetime.utcnow() + timedelta(days=30)).isoformat()
+
+
+# ── Site config ───────────────────────────────────────────
+
+def get_config(key, default=None):
+    with get_db() as db:
+        row = db.execute("SELECT value FROM site_config WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else default
+
+
+def set_config(key, value):
+    with get_db() as db:
+        db.execute(
+            "INSERT INTO site_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?",
+            (key, value, value)
+        )
+
+
+def get_banner():
+    with get_db() as db:
+        rows = db.execute("SELECT key, value FROM site_config WHERE key IN ('banner_enabled', 'banner_text')").fetchall()
+        d = {r["key"]: r["value"] for r in rows}
+    return {
+        "enabled": d.get("banner_enabled", "0") == "1",
+        "text": d.get("banner_text", ""),
+    }
