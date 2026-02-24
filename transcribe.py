@@ -152,15 +152,14 @@ def process_url(url, model="whisper-large-v3-turbo"):
             **{k: meta.get(k, 0) for k in ["views", "likes", "comments", "duration"]},
         }
 
-    # Transcribe
-    result = transcribe(filepath, model)
-
-    # Cleanup
     try:
-        os.remove(filepath)
-        os.rmdir(os.path.dirname(filepath))
-    except Exception:
-        pass
+        result = transcribe(filepath, model)
+    finally:
+        try:
+            os.remove(filepath)
+            os.rmdir(os.path.dirname(filepath))
+        except Exception:
+            pass
 
     # Format duration
     dur = meta.get("duration", 0)
