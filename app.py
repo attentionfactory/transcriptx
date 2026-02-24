@@ -1885,7 +1885,7 @@ PROFILE_LINKS_TEMPLATE = """
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; overflow-x:hidden; }
 
-        .layout { max-width:800px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
 
         nav {
             display:flex; justify-content:space-between; align-items:center;
