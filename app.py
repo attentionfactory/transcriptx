@@ -1508,14 +1508,17 @@ HTML_TEMPLATE = """
             document.getElementById('verifyErr').textContent = '';
         }
         function switchTab(tab) {
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            if (tab === 'signup') se.value = le.value;
+            if (tab === 'login') le.value = se.value;
             document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
             document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
             document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
             document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-            if (tab === 'login') document.getElementById('loginEmail').focus();
-            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'login') le.focus();
+            if (tab === 'signup') se.focus();
             if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
 
@@ -1598,9 +1601,6 @@ HTML_TEMPLATE = """
             location.reload();
         }
 
-        {% if not user.logged_in %}
-        showAuth('signup');
-        {% endif %}
     </script>
 </body>
 </html>
@@ -2168,14 +2168,17 @@ PROFILE_LINKS_TEMPLATE = """
             document.getElementById('verifyErr').textContent = '';
         }
         function switchTab(tab) {
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            if (tab === 'signup') se.value = le.value;
+            if (tab === 'login') le.value = se.value;
             document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
             document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
             document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
             document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-            if (tab === 'login') document.getElementById('loginEmail').focus();
-            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'login') le.focus();
+            if (tab === 'signup') se.focus();
             if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
         async function doSignup() {
@@ -2253,9 +2256,6 @@ PROFILE_LINKS_TEMPLATE = """
             location.reload();
         }
 
-        {% if not user.logged_in %}
-        showAuth('signup');
-        {% endif %}
     </script>
 </body>
 </html>
