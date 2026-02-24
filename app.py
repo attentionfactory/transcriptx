@@ -1388,10 +1388,35 @@ HTML_TEMPLATE = """
             btn.classList.add('loading');
             status.classList.add('on');
 
+            var fakeTimer = null;
+            function startFakeProgress(base, span) {
+                var start = Date.now(), dur = 70000;
+                prog.style.transition = 'none';
+                prog.style.width = base + '%';
+                fakeTimer = setInterval(function() {
+                    var t = Math.min((Date.now() - start) / dur, 1);
+                    var ease = 1 - Math.pow(1 - t, 3);
+                    prog.style.width = (base + ease * span * 0.9) + '%';
+                }, 200);
+            }
+            function stopFakeProgress(pct) {
+                clearInterval(fakeTimer);
+                return new Promise(function(resolve) {
+                    requestAnimationFrame(function() {
+                        prog.style.transition = 'width 0.4s ease-out';
+                        prog.style.width = pct + '%';
+                        setTimeout(resolve, 450);
+                    });
+                });
+            }
+
             for (let i = 0; i < urls.length; i++) {
                 msg.textContent = urls.length > 1 ? `Processing ${i+1}/${urls.length}...` : 'Transcribing...';
-                prog.style.width = `${(i/urls.length)*100}%`;
+                var base = (i / urls.length) * 100;
+                var span = 100 / urls.length;
+                startFakeProgress(base, span);
 
+                var result = null, isErr = false;
                 try {
                     const r = await fetch('/api/extract', {
                         method: 'POST',
@@ -1402,22 +1427,26 @@ HTML_TEMPLATE = """
 
                     if (r.status === 403) {
                         showUpgrade(d.error);
+                        await stopFakeProgress(((i + 1) / urls.length) * 100);
                         break;
                     }
-
-                    all.push(d);
-                    render(d);
-                    updateCredits();
+                    result = d;
                 } catch(e) {
-                    all.push({url:urls[i], status:'error', error:e.message});
-                    render({url:urls[i], status:'error', error:e.message});
+                    result = {url:urls[i], status:'error', error:e.message};
+                    isErr = true;
                 }
-                prog.style.width = `${((i+1)/urls.length)*100}%`;
+
+                await stopFakeProgress(((i + 1) / urls.length) * 100);
+                all.push(result);
+                render(result);
+                updateCredits();
             }
 
             btn.disabled = false;
             btn.classList.remove('loading');
             status.classList.remove('on');
+            prog.style.transition = 'none';
+            prog.style.width = '0%';
             if (all.length) document.getElementById('exportBar').classList.add('on');
             document.getElementById('urlInput').value = '';
             document.getElementById('batchUrls').value = '';
