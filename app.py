@@ -8,10 +8,13 @@ Email + password + OTP auth via bcrypt + Resend.
 import os
 import uuid
 import json
+import logging
 import random
 import re
 import subprocess
 from datetime import datetime, timedelta
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
 
