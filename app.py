@@ -42,7 +42,7 @@ from database import (
     create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email,
-    get_credits_for_user, use_credit_for_user,
+    get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     link_polar_to_user,
 )
 from transcribe import process_url
@@ -195,6 +195,8 @@ def api_extract():
         model = "whisper-large-v3-turbo"
 
     result = process_url(url, model=model)
+    if result.get("status") == "error":
+        refund_credit_for_user(user["user_id"])
     return jsonify(result)
 
 
