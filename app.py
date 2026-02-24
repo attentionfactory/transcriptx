@@ -8,25 +8,43 @@ Email + password + OTP auth via bcrypt + Resend.
 import os
 import uuid
 import json
+import logging
 import random
 import re
 import subprocess
 from datetime import datetime, timedelta
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
+
+EXTRA_DISPOSABLE_DOMAINS = {
+    "tempmail.com", "tempmail.io", "tempmail.net",
+    "throwaway.email", "burnermail.io", "trashmailr.com",
+    "temp-mail.io", "tempemail.cc", "tempemailco.com",
+    "tempmailgen.com", "tempinboxmail.com", "tempm.com",
+    "temporary.best", "temp.now", "disposablemail.com",
+    "5minmail.com", "hour.email", "noemail.cc",
+    "anonibox.com", "luxusmail.org", "mail7.app",
+    "dmailpro.net", "adresseemailtemporaire.com",
+    "emailtemporalgratis.com", "emailtemporanea.org",
+}
+disposable_domains = _disposable_pkg | EXTRA_DISPOSABLE_DOMAINS
 
 load_dotenv()  # Load .env file automatically
 
 import bcrypt
 import requests as http_requests
-from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context
+from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
     create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email,
-    get_credits_for_user, use_credit_for_user,
+    get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     link_polar_to_user,
+    get_banner, set_config,
 )
 from transcribe import process_url
 
@@ -47,6 +65,17 @@ RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "TranscriptX <onboarding
 
 # Initialize DB on startup
 init_db()
+
+
+@app.route("/<path:filename>")
+def serve_static_root(filename):
+    """Serve favicon/manifest files from /static at root URLs."""
+    allowed = {"favicon.ico", "favicon-16x16.png", "favicon-32x32.png",
+               "apple-touch-icon.png", "android-chrome-192x192.png",
+               "android-chrome-512x512.png", "site.webmanifest"}
+    if filename in allowed:
+        return send_from_directory("static", filename)
+    return ("Not found", 404)
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -167,6 +196,8 @@ def api_extract():
         model = "whisper-large-v3-turbo"
 
     result = process_url(url, model=model)
+    if result.get("status") == "error":
+        refund_credit_for_user(user["user_id"])
     return jsonify(result)
 
 
@@ -265,6 +296,8 @@ def api_signup():
 
     if not email or not EMAIL_RE.match(email):
         return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if email.split("@")[1] in disposable_domains:
+        return jsonify({"status": "error", "error": "Disposable email addresses are not allowed"}), 400
     if len(password) < 6:
         return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
 
@@ -474,7 +507,21 @@ def admin():
             "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
         }
 
-    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats)
+    banner = get_banner()
+    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats, banner=banner)
+
+
+@app.route("/admin/banner", methods=["POST"])
+def admin_banner():
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    has_admin_key = request.args.get("key") == ADMIN_KEY
+    if not has_admin_email and not has_admin_key:
+        return "Not found", 404
+    data = request.get_json()
+    set_config("banner_enabled", "1" if data.get("enabled") else "0")
+    set_config("banner_text", data.get("text", ""))
+    return jsonify({"status": "ok"})
 
 
 ADMIN_TEMPLATE = """
@@ -484,6 +531,10 @@ ADMIN_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Admin</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -491,6 +542,7 @@ ADMIN_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -803,10 +855,24 @@ ADMIN_TEMPLATE = """
             </table>
         </div>
 
+        <!-- Banner Control -->
+        <div class="section-head">
+            <div class="section-title">Site Banner</div>
+        </div>
+        <div class="panel" style="background:var(--grey); display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Enabled</label>
+                <input type="checkbox" id="bannerEnabled" {% if banner.enabled %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
+            <input type="text" id="bannerText" value="{{ banner.text }}" placeholder="Banner message..." style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+            <button onclick="saveBanner()" style="align-self:flex-start; background:var(--ink); color:var(--grey); border:none; padding:0.6rem 1.5rem; border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">Save Banner</button>
+            <div id="bannerStatus" style="font-size:0.7rem; opacity:0.6;"></div>
+        </div>
+
         <!-- Footer -->
         <footer class="tech-footer">
             <div>TranscriptX Admin<br>System Dashboard</div>
-            <div style="text-align:right;">Built by Attention Factory</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 
@@ -822,6 +888,21 @@ ADMIN_TEMPLATE = """
                 if (count >= target) clearInterval(interval);
             }, 32);
         });
+
+        async function saveBanner() {
+            const enabled = document.getElementById('bannerEnabled').checked;
+            const text = document.getElementById('bannerText').value;
+            const st = document.getElementById('bannerStatus');
+            try {
+                const r = await fetch('/admin/banner' + window.location.search, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({enabled, text})
+                });
+                st.textContent = r.ok ? 'Saved!' : 'Error saving';
+                setTimeout(() => st.textContent = '', 2000);
+            } catch(e) { st.textContent = 'Error: ' + e.message; }
+        }
     </script>
 </body>
 </html>
@@ -833,7 +914,7 @@ ADMIN_TEMPLATE = """
 @app.route("/")
 def index():
     user = _get_current_user()
-    return render_template_string(HTML_TEMPLATE, user=user, config={
+    return render_template_string(HTML_TEMPLATE, user=user, banner=get_banner(), config={
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
@@ -853,7 +934,7 @@ def pricing():
 @app.route("/profile-links")
 def profile_links():
     user = _get_current_user()
-    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, config={
+    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, banner=get_banner(), config={
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
@@ -869,6 +950,10 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -876,6 +961,7 @@ HTML_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -1139,6 +1225,12 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
+    {% if banner.enabled and banner.text %}
+    <div id="siteBanner" style="background:var(--electricgreen);color:var(--ink);text-align:center;padding:0.6rem 2rem;font-size:0.7rem;font-family:var(--f-tech);position:relative;">
+        {{ banner.text }}
+        <button onclick="document.getElementById('siteBanner').remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1rem;cursor:pointer;opacity:0.6;">✕</button>
+    </div>
+    {% endif %}
     <div class="layout">
         <!-- Nav -->
         <nav>
@@ -1310,7 +1402,7 @@ HTML_TEMPLATE = """
         <!-- Footer -->
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by <a href="#">Attention Factory</a><br>1000+ platforms supported</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a><br>1000+ platforms supported</div>
         </footer>
     </div>
 
@@ -1348,10 +1440,35 @@ HTML_TEMPLATE = """
             btn.classList.add('loading');
             status.classList.add('on');
 
+            var fakeTimer = null;
+            function startFakeProgress(base, span) {
+                var start = Date.now(), dur = 70000;
+                prog.style.transition = 'none';
+                prog.style.width = base + '%';
+                fakeTimer = setInterval(function() {
+                    var t = Math.min((Date.now() - start) / dur, 1);
+                    var ease = 1 - Math.pow(1 - t, 3);
+                    prog.style.width = (base + ease * span * 0.9) + '%';
+                }, 200);
+            }
+            function stopFakeProgress(pct) {
+                clearInterval(fakeTimer);
+                return new Promise(function(resolve) {
+                    requestAnimationFrame(function() {
+                        prog.style.transition = 'width 0.4s ease-out';
+                        prog.style.width = pct + '%';
+                        setTimeout(resolve, 450);
+                    });
+                });
+            }
+
             for (let i = 0; i < urls.length; i++) {
                 msg.textContent = urls.length > 1 ? `Processing ${i+1}/${urls.length}...` : 'Transcribing...';
-                prog.style.width = `${(i/urls.length)*100}%`;
+                var base = (i / urls.length) * 100;
+                var span = 100 / urls.length;
+                startFakeProgress(base, span);
 
+                var result = null, isErr = false;
                 try {
                     const r = await fetch('/api/extract', {
                         method: 'POST',
@@ -1362,22 +1479,26 @@ HTML_TEMPLATE = """
 
                     if (r.status === 403) {
                         showUpgrade(d.error);
+                        await stopFakeProgress(((i + 1) / urls.length) * 100);
                         break;
                     }
-
-                    all.push(d);
-                    render(d);
-                    updateCredits();
+                    result = d;
                 } catch(e) {
-                    all.push({url:urls[i], status:'error', error:e.message});
-                    render({url:urls[i], status:'error', error:e.message});
+                    result = {url:urls[i], status:'error', error:e.message};
+                    isErr = true;
                 }
-                prog.style.width = `${((i+1)/urls.length)*100}%`;
+
+                await stopFakeProgress(((i + 1) / urls.length) * 100);
+                all.push(result);
+                render(result);
+                updateCredits();
             }
 
             btn.disabled = false;
             btn.classList.remove('loading');
             status.classList.remove('on');
+            prog.style.transition = 'none';
+            prog.style.width = '0%';
             if (all.length) document.getElementById('exportBar').classList.add('on');
             document.getElementById('urlInput').value = '';
             document.getElementById('batchUrls').value = '';
@@ -1468,14 +1589,17 @@ HTML_TEMPLATE = """
             document.getElementById('verifyErr').textContent = '';
         }
         function switchTab(tab) {
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            if (tab === 'signup') se.value = le.value;
+            if (tab === 'login') le.value = se.value;
             document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
             document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
             document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
             document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-            if (tab === 'login') document.getElementById('loginEmail').focus();
-            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'login') le.focus();
+            if (tab === 'signup') se.focus();
             if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
 
@@ -1558,9 +1682,6 @@ HTML_TEMPLATE = """
             location.reload();
         }
 
-        {% if not user.logged_in %}
-        showAuth('signup');
-        {% endif %}
     </script>
 </body>
 </html>
@@ -1576,6 +1697,10 @@ PRICING_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Pricing</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1719,7 +1844,7 @@ PRICING_TEMPLATE = """
 
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by Attention Factory</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 </body>
@@ -1736,6 +1861,10 @@ PROFILE_LINKS_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Profile Link Extractor</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1743,6 +1872,7 @@ PROFILE_LINKS_TEMPLATE = """
         :root {
             --bg: #050505;
             --orange: #F0A860;
+            --electricgreen: #9BBA45;
             --red: #B84B3F;
             --green: #709472;
             --grey: #C4C5C7;
@@ -1755,7 +1885,7 @@ PROFILE_LINKS_TEMPLATE = """
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; overflow-x:hidden; }
 
-        .layout { max-width:800px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
 
         nav {
             display:flex; justify-content:space-between; align-items:center;
@@ -1893,6 +2023,12 @@ PROFILE_LINKS_TEMPLATE = """
     </style>
 </head>
 <body>
+    {% if banner.enabled and banner.text %}
+    <div id="siteBanner" style="background:var(--electricgreen);color:var(--ink);text-align:center;padding:0.6rem 2rem;font-size:0.7rem;font-family:var(--f-tech);position:relative;">
+        {{ banner.text }}
+        <button onclick="document.getElementById('siteBanner').remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1rem;cursor:pointer;opacity:0.6;">✕</button>
+    </div>
+    {% endif %}
     <div class="layout">
         <nav>
             <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
@@ -1991,7 +2127,7 @@ PROFILE_LINKS_TEMPLATE = """
 
         <footer class="tech-footer">
             <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by <a href="#">Attention Factory</a></div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
         </footer>
     </div>
 
@@ -2120,14 +2256,17 @@ PROFILE_LINKS_TEMPLATE = """
             document.getElementById('verifyErr').textContent = '';
         }
         function switchTab(tab) {
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            if (tab === 'signup') se.value = le.value;
+            if (tab === 'login') le.value = se.value;
             document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
             document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
             document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
             document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-            if (tab === 'login') document.getElementById('loginEmail').focus();
-            if (tab === 'signup') document.getElementById('signupEmail').focus();
+            if (tab === 'login') le.focus();
+            if (tab === 'signup') se.focus();
             if (tab === 'verify') document.getElementById('verifyCode').focus();
         }
         async function doSignup() {
@@ -2205,9 +2344,6 @@ PROFILE_LINKS_TEMPLATE = """
             location.reload();
         }
 
-        {% if not user.logged_in %}
-        showAuth('signup');
-        {% endif %}
     </script>
 </body>
 </html>

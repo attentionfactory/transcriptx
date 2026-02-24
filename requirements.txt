@@ -5,3 +5,4 @@ yt-dlp
 python-dotenv
 bcrypt
 requests
+disposable-email-domains
