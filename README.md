@@ -1,4 +1,4 @@
-# TranscriptX — Production Deployment Guide
+# TranscriptX
 
 Instant video transcripts as a SaaS. Groq Whisper + Polar payments + SQLite.
 
