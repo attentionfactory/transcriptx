@@ -79,6 +79,22 @@ def serve_static_root(filename):
     return ("Not found", 404)
 
 
+@app.route("/robots.txt")
+def robots_txt():
+    return Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: https://transcriptx.xyz/sitemap.xml\n", mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://transcriptx.xyz/</loc><priority>1.0</priority></url>
+  <url><loc>https://transcriptx.xyz/pricing</loc><priority>0.8</priority></url>
+  <url><loc>https://transcriptx.xyz/profile-links</loc><priority>0.7</priority></url>
+</urlset>"""
+    return Response(xml, mimetype="application/xml")
+
+
 # ── Helpers ─────────────────────────────────────────────────
 
 def _get_session_id():
@@ -545,10 +561,11 @@ ADMIN_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -748,6 +765,26 @@ ADMIN_TEMPLATE = """
             font-weight:700; text-transform:uppercase; cursor:pointer;
         }
 
+        /* ── Pagination ── */
+        .pagination {
+            display:flex; align-items:center; justify-content:center; gap:0.4rem;
+            padding:1rem 0; font-family:var(--f-tech); font-size:0.7rem;
+        }
+        .pg-btn {
+            background:var(--grey); border:var(--bw) solid rgba(0,0,0,0.15); padding:0.4rem 0.8rem;
+            border-radius:0.4rem; font-family:var(--f-tech); font-size:0.65rem; font-weight:700;
+            cursor:pointer; text-transform:uppercase;
+        }
+        .pg-btn:hover { background:rgba(0,0,0,0.05); }
+        .pg-btn:disabled { opacity:0.3; cursor:not-allowed; }
+        .pg-btn.active { background:var(--ink); color:var(--grey); border-color:var(--ink); }
+        .pg-info { font-size:0.65rem; opacity:0.5; margin:0 0.5rem; }
+        .pg-select {
+            margin-left:0.8rem; padding:0.4rem 0.6rem; border:var(--bw) solid rgba(0,0,0,0.15);
+            border-radius:0.4rem; font-family:var(--f-tech); font-size:0.65rem; font-weight:700;
+            background:var(--grey); cursor:pointer;
+        }
+
         /* ── Footer ── */
         .tech-footer {
             border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
@@ -906,11 +943,11 @@ ADMIN_TEMPLATE = """
             <div class="section-count">{{ stats.free_users }}</div>
         </div>
         <div class="table-wrap">
-            <table>
+            <table id="freeTable">
                 <thead>
                     <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
                 </thead>
-                <tbody>
+                <tbody id="freeBody">
                     {% for u in free_users %}
                     <tr>
                         <td class="email-cell">{{ u.email or '—' }}</td>
@@ -937,6 +974,7 @@ ADMIN_TEMPLATE = """
                 </tbody>
             </table>
         </div>
+        <div class="pagination" id="freePagination"></div>
 
         <!-- Banner Control -->
         <div class="section-head">
@@ -1049,6 +1087,44 @@ ADMIN_TEMPLATE = """
                 }
             } catch(e) { st.textContent = 'Error: ' + e.message; }
         }
+
+        (function() {
+            let perPage = 25;
+            const tbody = document.getElementById('freeBody');
+            const pag = document.getElementById('freePagination');
+            if (!tbody || !pag) return;
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const total = rows.length;
+            if (total <= 10) return;
+            let cur = 1;
+
+            function render() {
+                const pages = Math.ceil(total / perPage);
+                if (cur > pages) cur = pages;
+                const start = (cur - 1) * perPage;
+                rows.forEach((r, i) => r.style.display = (i >= start && i < start + perPage) ? '' : 'none');
+                pag.innerHTML = '';
+                const prev = Object.assign(document.createElement('button'), {textContent: '← Prev', className: 'pg-btn', disabled: cur === 1});
+                prev.onclick = () => { cur--; render(); };
+                pag.appendChild(prev);
+                const info = Object.assign(document.createElement('span'), {textContent: cur + ' / ' + pages, className: 'pg-info'});
+                pag.appendChild(info);
+                const next = Object.assign(document.createElement('button'), {textContent: 'Next →', className: 'pg-btn', disabled: cur === pages});
+                next.onclick = () => { cur++; render(); };
+                pag.appendChild(next);
+                const sel = document.createElement('select');
+                sel.className = 'pg-select';
+                [10, 25, 50, 100].forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n; opt.textContent = n + ' / page';
+                    if (n === perPage) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                sel.onchange = () => { perPage = parseInt(sel.value); cur = 1; render(); };
+                pag.appendChild(sel);
+            }
+            render();
+        })();
     </script>
 </body>
 </html>
@@ -1093,10 +1169,21 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
+    <meta name="description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper.">
+    <meta name="theme-color" content="#111111">
+    <link rel="canonical" href="https://transcriptx.xyz/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/">
+    <meta property="og:title" content="TranscriptX — Instant Transcripts from Any Video">
+    <meta property="og:description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms.">
+    <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="TranscriptX — Instant Transcripts from Any Video">
+    <meta name="twitter:description" content="Transcribe any video instantly with AI. 1000+ platforms supported.">
+    <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -1104,6 +1191,7 @@ HTML_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <style>
         :root {
             --bg: #050505;
@@ -1841,10 +1929,21 @@ PRICING_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Pricing</title>
+    <meta name="description" content="Simple pricing for TranscriptX. Starter plan at $2/mo for 50 transcripts, or Pro at $4/mo for unlimited. All 1000+ platforms included.">
+    <meta name="theme-color" content="#111111">
+    <link rel="canonical" href="https://transcriptx.xyz/pricing">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/pricing">
+    <meta property="og:title" content="TranscriptX — Pricing">
+    <meta property="og:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited. All 1000+ platforms included.">
+    <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="TranscriptX — Pricing">
+    <meta name="twitter:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited.">
+    <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -1852,6 +1951,7 @@ PRICING_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <style>
         :root {
             --bg: #050505;
@@ -2006,10 +2106,21 @@ PROFILE_LINKS_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Profile Link Extractor</title>
+    <meta name="description" content="Extract all video links from any TikTok, YouTube, Instagram, or X profile. Links stream in live — no waiting. Powered by TranscriptX.">
+    <meta name="theme-color" content="#111111">
+    <link rel="canonical" href="https://transcriptx.xyz/profile-links">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/profile-links">
+    <meta property="og:title" content="TranscriptX — Profile Link Extractor">
+    <meta property="og:description" content="Extract all video links from any TikTok, YouTube, Instagram, or X profile. Links stream in live.">
+    <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="TranscriptX — Profile Link Extractor">
+    <meta name="twitter:description" content="Extract all video links from any social media profile. Links stream in live.">
+    <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -2017,6 +2128,7 @@ PROFILE_LINKS_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <style>
         :root {
             --bg: #050505;
