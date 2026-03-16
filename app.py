@@ -511,7 +511,7 @@ def admin():
         ).fetchall()]
 
         free_users = [dict(r) for r in db.execute(
-            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC LIMIT 100"
+            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC"
         ).fetchall()]
 
         stats = {
@@ -894,7 +894,7 @@ ADMIN_TEMPLATE = """
         <!-- Users Table -->
         <div class="section-head">
             <div class="section-title">Paid Users</div>
-            <div class="section-count">{{ stats.total_users }}</div>
+            <div class="section-count">{{ stats.paid_users }}</div>
         </div>
         <div class="table-wrap">
             <table>
