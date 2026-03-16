@@ -224,6 +224,15 @@ def refund_credit_for_user(user_id):
         )
 
 
+def grant_credits(user_id, amount):
+    """Grant credits by reducing credits_used (admin action)."""
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET credits_used = MAX(0, credits_used - ?) WHERE id = ?",
+            (amount, user_id),
+        )
+
+
 # ── Polar linking ─────────────────────────────────────────
 
 def link_polar_to_user(email, polar_customer_id, plan):

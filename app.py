@@ -43,6 +43,7 @@ from database import (
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
+    grant_credits,
     link_polar_to_user,
     get_banner, set_config,
 )
@@ -490,7 +491,7 @@ def admin():
     from database import get_db
     with get_db() as db:
         users = [dict(r) for r in db.execute(
-            "SELECT polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
+            "SELECT id, polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
         ).fetchall()]
 
         free_users = [dict(r) for r in db.execute(
@@ -511,6 +512,22 @@ def admin():
     return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats, banner=banner)
 
 
+@app.route("/admin/credit", methods=["POST"])
+def admin_credit():
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    has_admin_key = request.args.get("key") == ADMIN_KEY
+    if not has_admin_email and not has_admin_key:
+        return jsonify({"error": "forbidden"}), 403
+    data = request.get_json()
+    user_id = data.get("user_id")
+    amount = int(data.get("amount", 0))
+    if not user_id or amount <= 0:
+        return jsonify({"error": "bad request"}), 400
+    grant_credits(user_id, amount)
+    return jsonify({"ok": True})
+
+
 @app.route("/admin/banner", methods=["POST"])
 def admin_banner():
     user = _get_current_user()
@@ -528,6 +545,7 @@ ADMIN_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Admin</title>
@@ -642,7 +660,7 @@ ADMIN_TEMPLATE = """
 
         /* ── Tables ── */
         .table-wrap {
-            background:var(--grey); border-radius:var(--radius); overflow:hidden;
+            background:var(--grey); border-radius:var(--radius);
             animation:slideUp 0.4s 0.4s ease both;
         }
         table { width:100%; border-collapse:collapse; }
@@ -680,6 +698,55 @@ ADMIN_TEMPLATE = """
         .usage-bar-fill.red { background:var(--red); }
 
         .empty-row { text-align:center; opacity:0.4; padding:2rem 1rem; font-size:0.75rem; }
+
+        /* Kebab menu */
+        .actions-cell { position:relative; width:40px; text-align:center; }
+        .kebab-wrap { position:relative; display:inline-block; }
+        .kebab-btn {
+            background:none; border:none; font-size:1.2rem; cursor:pointer;
+            padding:4px 8px; border-radius:4px; line-height:1;
+        }
+        .kebab-btn:hover { background:rgba(0,0,0,0.08); }
+        .kebab-menu {
+            display:none; position:absolute; right:0; top:100%; z-index:10;
+            background:#fff; border:var(--bw) solid rgba(0,0,0,0.12);
+            border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.1);
+            min-width:140px; overflow:hidden;
+        }
+        .kebab-menu.open { display:block; }
+        .kebab-menu button {
+            display:block; width:100%; text-align:left; padding:0.6rem 1rem;
+            background:none; border:none; font-family:var(--f-tech);
+            font-size:0.7rem; cursor:pointer; font-weight:700;
+        }
+        .kebab-menu button:hover { background:rgba(0,0,0,0.05); }
+
+        /* Modal */
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.5);
+            display:flex; align-items:center; justify-content:center; z-index:100;
+        }
+        .modal-box {
+            background:var(--grey); border-radius:var(--radius); padding:2rem;
+            min-width:320px; max-width:400px;
+        }
+        .modal-title { font-family:var(--f-wide); font-size:0.85rem; text-transform:uppercase; margin-bottom:4px; }
+        .modal-sub { font-size:0.7rem; opacity:0.6; margin-bottom:1rem; }
+        .modal-input {
+            width:100%; padding:0.7rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15);
+            border-radius:0.5rem; font-family:var(--f-tech); font-size:0.8rem;
+            background:rgba(255,255,255,0.6); margin-bottom:1rem;
+        }
+        .modal-actions { display:flex; gap:0.5rem; justify-content:flex-end; }
+        .modal-cancel {
+            background:none; border:var(--bw) solid rgba(0,0,0,0.2); padding:0.5rem 1.2rem;
+            border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; cursor:pointer;
+        }
+        .modal-confirm {
+            background:var(--ink); color:var(--grey); border:none; padding:0.5rem 1.2rem;
+            border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem;
+            font-weight:700; text-transform:uppercase; cursor:pointer;
+        }
 
         /* ── Footer ── */
         .tech-footer {
@@ -795,7 +862,7 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Email</th><th>Plan</th><th>Usage</th><th>Since</th></tr>
+                    <tr><th>Email</th><th>Plan</th><th>Usage</th><th>Since</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for u in users %}
@@ -818,9 +885,17 @@ ADMIN_TEMPLATE = """
                             </div>
                         </td>
                         <td class="mono">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+                        <td class="actions-cell">
+                            <div class="kebab-wrap">
+                                <button class="kebab-btn" onclick="toggleMenu(this)">⋮</button>
+                                <div class="kebab-menu">
+                                    <button onclick="openCreditModal({{ u.id }}, '{{ u.email }}')">Add Credits</button>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
-                    {% if not users %}<tr><td colspan="4" class="empty-row">No users yet</td></tr>{% endif %}
+                    {% if not users %}<tr><td colspan="5" class="empty-row">No users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -833,7 +908,7 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th></tr>
+                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for u in free_users %}
@@ -848,9 +923,17 @@ ADMIN_TEMPLATE = """
                         </td>
                         <td class="mono">{{ u.credits_reset_at[:10] if u.credits_reset_at else '—' }}</td>
                         <td class="mono">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+                        <td class="actions-cell">
+                            <div class="kebab-wrap">
+                                <button class="kebab-btn" onclick="toggleMenu(this)">⋮</button>
+                                <div class="kebab-menu">
+                                    <button onclick="openCreditModal({{ u.id }}, '{{ u.email }}')">Add Credits</button>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
-                    {% if not free_users %}<tr><td colspan="4" class="empty-row">No free users yet</td></tr>{% endif %}
+                    {% if not free_users %}<tr><td colspan="5" class="empty-row">No free users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -867,6 +950,20 @@ ADMIN_TEMPLATE = """
             <input type="text" id="bannerText" value="{{ banner.text }}" placeholder="Banner message..." style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
             <button onclick="saveBanner()" style="align-self:flex-start; background:var(--ink); color:var(--grey); border:none; padding:0.6rem 1.5rem; border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">Save Banner</button>
             <div id="bannerStatus" style="font-size:0.7rem; opacity:0.6;"></div>
+        </div>
+
+        <!-- Credit Modal -->
+        <div id="creditModal" class="modal-overlay" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Add Credits</div>
+                <div class="modal-sub" id="modalUser"></div>
+                <input type="number" id="creditAmount" min="1" value="5" placeholder="Credits to add" class="modal-input">
+                <div class="modal-actions">
+                    <button class="modal-cancel" onclick="closeCreditModal()">Cancel</button>
+                    <button class="modal-confirm" onclick="submitCredits()">Grant</button>
+                </div>
+                <div id="creditStatus" style="font-size:0.7rem; margin-top:0.5rem; opacity:0.6;"></div>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -901,6 +998,55 @@ ADMIN_TEMPLATE = """
                 });
                 st.textContent = r.ok ? 'Saved!' : 'Error saving';
                 setTimeout(() => st.textContent = '', 2000);
+            } catch(e) { st.textContent = 'Error: ' + e.message; }
+        }
+
+        let currentUserId = null;
+
+        function toggleMenu(btn) {
+            document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+            btn.nextElementSibling.classList.toggle('open');
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.kebab-wrap'))
+                document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+        });
+
+        function openCreditModal(userId, email) {
+            currentUserId = userId;
+            document.getElementById('modalUser').textContent = email;
+            document.getElementById('creditAmount').value = 5;
+            document.getElementById('creditStatus').textContent = '';
+            document.getElementById('creditModal').style.display = 'flex';
+            document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+        }
+
+        function closeCreditModal() {
+            document.getElementById('creditModal').style.display = 'none';
+            currentUserId = null;
+        }
+
+        document.getElementById('creditModal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeCreditModal();
+        });
+
+        async function submitCredits() {
+            const amount = parseInt(document.getElementById('creditAmount').value);
+            const st = document.getElementById('creditStatus');
+            if (!amount || amount <= 0) { st.textContent = 'Enter a valid number'; return; }
+            try {
+                const r = await fetch('/admin/credit' + window.location.search, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: currentUserId, amount})
+                });
+                if (r.ok) {
+                    st.textContent = 'Granted ' + amount + ' credits!';
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    st.textContent = 'Error granting credits';
+                }
             } catch(e) { st.textContent = 'Error: ' + e.message; }
         }
     </script>
@@ -947,6 +1093,7 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
@@ -1239,16 +1386,16 @@ HTML_TEMPLATE = """
                 {% if user.logged_in %}
                 <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
                 {% if user.plan != 'free' %}
-                <a href="{{ config.customer_portal }}">Billing</a>
+                <a href="{{ config.customer_portal }}" data-umami-event="nav-billing">Billing</a>
                 {% else %}
-                <a href="/pricing">Upgrade</a>
+                <a href="/pricing" data-umami-event="nav-upgrade">Upgrade</a>
                 {% endif %}
-                <a href="/profile-links">Links</a>
-                <a href="#" onclick="logout();return false">Logout</a>
+                <a href="/profile-links" data-umami-event="nav-links">Links</a>
+                <a href="#" onclick="logout();return false" data-umami-event="nav-logout">Logout</a>
                 {% else %}
-                <a href="/profile-links">Links</a>
-                <a href="#" onclick="showAuth('login');return false">Login</a>
-                <a href="#" onclick="showAuth('signup');return false">Sign Up</a>
+                <a href="/profile-links" data-umami-event="nav-links">Links</a>
+                <a href="#" onclick="showAuth('login');return false" data-umami-event="nav-login">Login</a>
+                <a href="#" onclick="showAuth('signup');return false" data-umami-event="nav-signup">Sign Up</a>
                 {% endif %}
             </div>
         </nav>
@@ -1272,7 +1419,7 @@ HTML_TEMPLATE = """
                     <span class="label">Initialize Transcription</span>
                     <div class="input-machine">
                         <input type="text" id="urlInput" placeholder="PASTE_VIDEO_URL" onkeydown="if(event.key==='Enter')go()">
-                        <button id="goBtn" onclick="go()">EXTRACT ➔</button>
+                        <button id="goBtn" onclick="go()" data-umami-event="extract-transcript">EXTRACT ➔</button>
                     </div>
                     <div class="controls">
                         <label class="toggle-wrap" {% if not user.batch %}style="opacity:0.3;pointer-events:none"{% endif %}>
@@ -1352,9 +1499,9 @@ HTML_TEMPLATE = """
 
         <!-- Export -->
         <div class="export-bar" id="exportBar">
-            <button class="export-btn" onclick="expCSV()">Export CSV</button>
-            <button class="export-btn" onclick="expJSON()">Export JSON</button>
-            <button class="export-btn" onclick="clearAll()">Clear</button>
+            <button class="export-btn" onclick="expCSV()" data-umami-event="export-csv">Export CSV</button>
+            <button class="export-btn" onclick="expJSON()" data-umami-event="export-json">Export JSON</button>
+            <button class="export-btn" onclick="clearAll()" data-umami-event="clear-results">Clear</button>
         </div>
 
         <!-- Results -->
@@ -1365,8 +1512,8 @@ HTML_TEMPLATE = """
             <div class="modal-box">
                 <!-- Tab toggle -->
                 <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
-                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">LOG IN</button>
-                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')" data-umami-event="tab-login">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')" data-umami-event="tab-signup">SIGN UP</button>
                 </div>
 
                 <!-- Login form -->
@@ -1374,7 +1521,7 @@ HTML_TEMPLATE = """
                     <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
                     <div class="modal-err" id="loginErr"></div>
-                    <button class="modal-btn" onclick="doLogin()">LOG IN ➔</button>
+                    <button class="modal-btn" onclick="doLogin()" data-umami-event="login-submit">LOG IN ➔</button>
                 </div>
 
                 <!-- Signup form -->
@@ -1382,7 +1529,7 @@ HTML_TEMPLATE = """
                     <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
                     <div class="modal-err" id="signupErr"></div>
-                    <button class="modal-btn" onclick="doSignup()">SIGN UP ➔</button>
+                    <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
                 </div>
 
                 <!-- Verify form -->
@@ -1391,9 +1538,9 @@ HTML_TEMPLATE = """
                     <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
                     <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
                     <div class="modal-err" id="verifyErr"></div>
-                    <button class="modal-btn" onclick="doVerify()">VERIFY ➔</button>
+                    <button class="modal-btn" onclick="doVerify()" data-umami-event="verify-submit">VERIFY ➔</button>
                     <div style="margin-top:0.8rem;text-align:center;">
-                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;">Resend code</a>
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;" data-umami-event="resend-code">Resend code</a>
                     </div>
                 </div>
             </div>
@@ -1552,7 +1699,7 @@ HTML_TEMPLATE = """
                     <div class="transcript-box">
                         <div class="transcript-head">
                             <span class="label" style="margin:0">${d.language||'auto'}</span>
-                            <button class="copy-btn" onclick="clip(this,'${id}')">COPY</button>
+                            <button class="copy-btn" onclick="clip(this,'${id}')" data-umami-event="copy-transcript">COPY</button>
                         </div>
                         <div class="transcript-text" id="${id}">${d.transcript||'No transcript'}</div>
                     </div>
@@ -1694,6 +1841,7 @@ PRICING_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Pricing</title>
@@ -1817,7 +1965,7 @@ PRICING_TEMPLATE = """
                     <li>Batch mode</li>
                     <li>CSV + JSON export</li>
                 </ul>
-                <a href="{{ config.checkout_starter }}" class="plan-btn dark" style="margin-top:auto;">GET STARTER ➔</a>
+                <a href="{{ config.checkout_starter }}" class="plan-btn dark" style="margin-top:auto;" data-umami-event="checkout-starter">GET STARTER ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Cost Per</span><div>$0.04</div></div>
                     <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
@@ -1834,7 +1982,7 @@ PRICING_TEMPLATE = """
                     <li>Batch mode</li>
                     <li>CSV + JSON export</li>
                 </ul>
-                <a href="{{ config.checkout_pro }}" class="plan-btn green" style="margin-top:auto;">GET PRO ➔</a>
+                <a href="{{ config.checkout_pro }}" class="plan-btn green" style="margin-top:auto;" data-umami-event="checkout-pro">GET PRO ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
                     <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
@@ -1858,6 +2006,7 @@ PROFILE_LINKS_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Profile Link Extractor</title>
@@ -2036,16 +2185,16 @@ PROFILE_LINKS_TEMPLATE = """
                 {% if user.logged_in %}
                 <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
                 {% if user.plan != 'free' %}
-                <a href="{{ config.customer_portal }}">Billing</a>
+                <a href="{{ config.customer_portal }}" data-umami-event="nav-billing">Billing</a>
                 {% else %}
-                <a href="/pricing">Upgrade</a>
+                <a href="/pricing" data-umami-event="nav-upgrade">Upgrade</a>
                 {% endif %}
-                <a href="/">Transcribe</a>
-                <a href="#" onclick="logout();return false">Logout</a>
+                <a href="/" data-umami-event="nav-transcribe">Transcribe</a>
+                <a href="#" onclick="logout();return false" data-umami-event="nav-logout">Logout</a>
                 {% else %}
-                <a href="/">Transcribe</a>
-                <a href="#" onclick="showAuth('login');return false">Login</a>
-                <a href="#" onclick="showAuth('signup');return false">Sign Up</a>
+                <a href="/" data-umami-event="nav-transcribe">Transcribe</a>
+                <a href="#" onclick="showAuth('login');return false" data-umami-event="nav-login">Login</a>
+                <a href="#" onclick="showAuth('signup');return false" data-umami-event="nav-signup">Sign Up</a>
                 {% endif %}
             </div>
         </nav>
@@ -2057,7 +2206,7 @@ PROFILE_LINKS_TEMPLATE = """
             <span class="label">Profile URL</span>
             <div class="input-row">
                 <input type="text" id="url" placeholder="https://tiktok.com/@username" onkeydown="if(event.key==='Enter')go()">
-                <button id="btn" onclick="go()">EXTRACT ➔</button>
+                <button id="btn" onclick="go()" data-umami-event="extract-links">EXTRACT ➔</button>
             </div>
             <div class="options">
                 <span class="label" style="margin:0">Limit:</span>
@@ -2077,7 +2226,7 @@ PROFILE_LINKS_TEMPLATE = """
             <div class="dot"></div>
             <span class="status-text" id="msg">Extracting links...</span>
             <div class="counter" id="liveCount">0</div>
-            <button class="stop-btn" onclick="stop()">Stop</button>
+            <button class="stop-btn" onclick="stop()" data-umami-event="stop-extraction">Stop</button>
         </div>
 
         <div class="err" id="err"></div>
@@ -2086,8 +2235,8 @@ PROFILE_LINKS_TEMPLATE = """
             <div class="results-head">
                 <h2><span id="count">0</span> Links Found</h2>
                 <div class="btn-row">
-                    <button class="btn-sm" onclick="copyAll()">Copy All</button>
-                    <button class="btn-sm green" onclick="downloadTxt()">Download .txt</button>
+                    <button class="btn-sm" onclick="copyAll()" data-umami-event="copy-all-links">Copy All</button>
+                    <button class="btn-sm green" onclick="downloadTxt()" data-umami-event="download-txt">Download .txt</button>
                 </div>
             </div>
             <div class="link-list" id="links"></div>
@@ -2097,29 +2246,29 @@ PROFILE_LINKS_TEMPLATE = """
         <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
             <div class="modal-box">
                 <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
-                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">LOG IN</button>
-                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')" data-umami-event="tab-login">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')" data-umami-event="tab-signup">SIGN UP</button>
                 </div>
                 <div id="loginForm">
                     <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
                     <div class="modal-err" id="loginErr"></div>
-                    <button class="modal-btn" onclick="doLogin()">LOG IN ➔</button>
+                    <button class="modal-btn" onclick="doLogin()" data-umami-event="login-submit">LOG IN ➔</button>
                 </div>
                 <div id="signupForm" style="display:none;">
                     <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
                     <div class="modal-err" id="signupErr"></div>
-                    <button class="modal-btn" onclick="doSignup()">SIGN UP ➔</button>
+                    <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
                 </div>
                 <div id="verifyForm" style="display:none;">
                     <div class="modal-title">Check Your Email</div>
                     <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
                     <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
                     <div class="modal-err" id="verifyErr"></div>
-                    <button class="modal-btn" onclick="doVerify()">VERIFY ➔</button>
+                    <button class="modal-btn" onclick="doVerify()" data-umami-event="verify-submit">VERIFY ➔</button>
                     <div style="margin-top:0.8rem;text-align:center;">
-                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;">Resend code</a>
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;" data-umami-event="resend-code">Resend code</a>
                     </div>
                 </div>
             </div>
