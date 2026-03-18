@@ -59,6 +59,7 @@ POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
+FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
 
 # Resend config
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
@@ -1140,6 +1141,7 @@ def index():
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
+        "featurebase_app_id": FEATUREBASE_APP_ID,
     })
 
 
@@ -1150,6 +1152,7 @@ def pricing():
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
+        "featurebase_app_id": FEATUREBASE_APP_ID,
     })
 
 
@@ -1160,6 +1163,7 @@ def profile_links():
         "checkout_starter": POLAR_CHECKOUT_STARTER,
         "checkout_pro": POLAR_CHECKOUT_PRO,
         "customer_portal": POLAR_CUSTOMER_PORTAL,
+        "featurebase_app_id": FEATUREBASE_APP_ID,
     })
 
 
@@ -1192,6 +1196,16 @@ HTML_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
+    <script>
+        !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
+        if ("{{ config.featurebase_app_id }}") {
+            Featurebase("boot", {
+                appId: "{{ config.featurebase_app_id }}",
+                theme: "dark",
+                language: "en"
+            });
+        }
+    </script>
     <style>
         :root {
             --bg: #050505;
@@ -1952,6 +1966,16 @@ PRICING_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
+    <script>
+        !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
+        if ("{{ config.featurebase_app_id }}") {
+            Featurebase("boot", {
+                appId: "{{ config.featurebase_app_id }}",
+                theme: "dark",
+                language: "en"
+            });
+        }
+    </script>
     <style>
         :root {
             --bg: #050505;
@@ -2129,6 +2153,16 @@ PROFILE_LINKS_TEMPLATE = """
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
+    <script>
+        !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
+        if ("{{ config.featurebase_app_id }}") {
+            Featurebase("boot", {
+                appId: "{{ config.featurebase_app_id }}",
+                theme: "dark",
+                language: "en"
+            });
+        }
+    </script>
     <style>
         :root {
             --bg: #050505;
