@@ -1,8 +1,8 @@
 FROM python:3.12-slim
 
-# Install ffmpeg (required by yt-dlp for audio extraction)
+# Install ffmpeg + nodejs (yt-dlp needs a JS runtime for YouTube extraction)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
