@@ -12,6 +12,11 @@ import logging
 import random
 import re
 import subprocess
+import base64
+import functools
+import hashlib
+import hmac
+import time
 from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
@@ -39,13 +44,17 @@ from flask import Flask, request, jsonify, session, redirect, render_template_st
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
-    create_or_update_user, cancel_user, get_user, get_user_credits, use_user_credit,
+    get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
     get_banner, set_config,
+    claim_webhook_event,
+    release_webhook_event,
+    sync_polar_subscription_webhook,
+    effective_entitlement,
 )
 from transcribe import process_url
 
@@ -60,6 +69,10 @@ POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
 FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
+
+# Standard Webhooks (Polar) — timestamp skew tolerance for signature verification
+WEBHOOK_TS_TOLERANCE_SEC = 300
+_dev_polar_webhook_warned = False
 
 # Resend config
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
@@ -112,14 +125,16 @@ def _get_current_user():
     if user_id:
         user = get_user_by_id(user_id)
         if user:
-            plan = PLANS.get(user["plan"], PLANS["free"])
+            ent = effective_entitlement(user)
+            eff_plan = ent["effective_plan"]
+            plan = PLANS.get(eff_plan, PLANS["free"])
             credits = get_credits_for_user(user_id)
             return {
-                "type": "paid" if user["plan"] != "free" else "authed_free",
+                "type": "paid" if ent["has_paid_access"] else "authed_free",
                 "user_id": user["id"],
                 "email": user["email"],
-                "plan": user["plan"],
-                "plan_name": plan.get("name", user["plan"].title()),
+                "plan": eff_plan,
+                "plan_name": plan.get("name", eff_plan.title()),
                 "credits": credits,
                 "credits_label": "Unlimited" if credits == -1 else str(credits),
                 "batch": plan["batch"],
@@ -182,6 +197,114 @@ def _send_otp_email(email, code):
 
 
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
+
+
+def _is_production():
+    return os.environ.get("FLASK_ENV") == "production"
+
+
+def _client_ip():
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip() or request.remote_addr
+    return request.remote_addr or "0.0.0.0"
+
+
+class _SlidingWindowLimiter:
+    def __init__(self):
+        self._hits = {}
+
+    def allow(self, key, max_hits, window_sec):
+        now = time.monotonic()
+        window_start = now - window_sec
+        lst = self._hits.setdefault(key, [])
+        lst[:] = [t for t in lst if t > window_start]
+        if len(lst) >= max_hits:
+            return False
+        lst.append(now)
+        return True
+
+
+_auth_rate_limiter = _SlidingWindowLimiter()
+
+
+def rate_limit_auth(max_hits, window_sec):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            key = f"{f.__name__}:{_client_ip()}"
+            if not _auth_rate_limiter.allow(key, max_hits, window_sec):
+                return jsonify({"status": "error", "error": "Too many requests. Try again later."}), 429
+            return f(*args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+def _decode_whsec_signing_key(secret: str) -> bytes:
+    """Standard Webhooks symmetric secret: whsec_ + base64, or raw UTF-8 bytes."""
+    s = secret.strip()
+    if s.startswith("whsec_"):
+        try:
+            return base64.b64decode(s[6:])
+        except Exception:
+            return s.encode("utf-8")
+    return s.encode("utf-8")
+
+
+def _verify_standard_webhook_symmetric(body: bytes, headers, secret: str) -> bool:
+    """Verify Standard Webhooks v1 (HMAC-SHA256) signature; constant-time compare per candidate."""
+    msg_id = (headers.get("webhook-id") or "").strip()
+    ts = (headers.get("webhook-timestamp") or "").strip()
+    sig_header = (headers.get("webhook-signature") or "").strip()
+    if not msg_id or not ts or not sig_header:
+        return False
+    try:
+        ts_int = int(ts)
+    except ValueError:
+        return False
+    now = int(time.time())
+    if abs(now - ts_int) > WEBHOOK_TS_TOLERANCE_SEC:
+        return False
+    key = _decode_whsec_signing_key(secret)
+    signed_content = f"{msg_id}.{ts}.".encode("utf-8") + body
+    expected = hmac.new(key, signed_content, hashlib.sha256).digest()
+    for part in sig_header.split():
+        part = part.strip()
+        if not part.startswith("v1,"):
+            continue
+        try:
+            got = base64.b64decode(part[3:])
+        except Exception:
+            continue
+        if len(got) != len(expected):
+            continue
+        if hmac.compare_digest(expected, got):
+            return True
+    return False
+
+
+def _polar_webhook_verify_ok(body: bytes):
+    """Returns None if OK, or (response, status_code) on failure."""
+    global _dev_polar_webhook_warned
+    secret = POLAR_WEBHOOK_SECRET.strip()
+    if _is_production():
+        if not secret:
+            return jsonify({"error": "Webhook not configured"}), 401
+        if not _verify_standard_webhook_symmetric(body, request.headers, secret):
+            return jsonify({"error": "Invalid signature"}), 401
+        return None
+    if not secret:
+        if not _dev_polar_webhook_warned:
+            logging.warning(
+                "POLAR_WEBHOOK_SECRET not set; webhook signatures not verified (development only)"
+            )
+            _dev_polar_webhook_warned = True
+        return None
+    if not _verify_standard_webhook_symmetric(body, request.headers, secret):
+        return jsonify({"error": "Invalid signature"}), 401
+    return None
 
 
 # ── API Routes ──────────────────────────────────────────────
@@ -306,6 +429,7 @@ def api_me():
 # ── Auth Routes ─────────────────────────────────────────────
 
 @app.route("/api/signup", methods=["POST"])
+@rate_limit_auth(5, 60)
 def api_signup():
     """Register with email + password, send OTP."""
     data = request.json or {}
@@ -351,6 +475,7 @@ def api_signup():
 
 
 @app.route("/api/verify", methods=["POST"])
+@rate_limit_auth(15, 60)
 def api_verify():
     """Verify OTP code, log user in."""
     data = request.json or {}
@@ -370,6 +495,7 @@ def api_verify():
 
 
 @app.route("/api/resend-code", methods=["POST"])
+@rate_limit_auth(5, 3600)
 def api_resend_code():
     """Resend OTP to email."""
     data = request.json or {}
@@ -395,46 +521,88 @@ def api_resend_code():
 @app.route("/webhooks/polar", methods=["POST"])
 def polar_webhook():
     """
-    Handle Polar subscription events.
+    Handle Polar subscription events (Standard Webhooks signed).
     Links polar_customer_id to existing auth'd user by email.
     """
-    payload = request.get_data()
+    body = request.get_data(cache=False, as_text=False)
+
+    err = _polar_webhook_verify_ok(body)
+    if err is not None:
+        return err
 
     try:
-        data = json.loads(payload)
+        data = json.loads(body)
     except json.JSONDecodeError:
-        return "Invalid JSON", 400
+        return jsonify({"error": "Invalid JSON"}), 400
 
-    event_type = data.get("type", "")
-    event_data = data.get("data", {})
+    webhook_id = (request.headers.get("webhook-id") or "").strip()
+    if not webhook_id:
+        return jsonify({"error": "Missing webhook-id"}), 400
 
-    if event_type in ("subscription.created", "subscription.updated", "subscription.active"):
-        customer = event_data.get("customer", {})
-        polar_id = customer.get("id", "")
-        email = customer.get("email", "")
-        product = event_data.get("product", {})
-        product_id = product.get("id", "")
+    if not claim_webhook_event(webhook_id):
+        return jsonify({"status": "ok", "message": "duplicate"}), 200
 
-        # Map product to plan
-        if product_id == POLAR_PRO_PRODUCT_ID:
+    try:
+        event_type = data.get("type", "")
+        event_data = data.get("data", {})
+
+        product = event_data.get("product") or {}
+        product_id = product.get("id") or event_data.get("product_id") or ""
+        customer = event_data.get("customer") or {}
+        polar_id = customer.get("id") or event_data.get("customer_id") or ""
+
+        plan = None
+        if POLAR_PRO_PRODUCT_ID and product_id == POLAR_PRO_PRODUCT_ID:
             plan = "pro"
-        elif product_id == POLAR_STARTER_PRODUCT_ID:
-            plan = "starter"
-        else:
+        elif POLAR_STARTER_PRODUCT_ID and product_id == POLAR_STARTER_PRODUCT_ID:
             plan = "starter"
 
-        if polar_id:
-            create_or_update_user(polar_id, email, plan)
-            print(f"✅ User {email} → {plan}")
+        if plan is None:
+            strict_types = (
+                "subscription.created",
+                "subscription.active",
+                "subscription.uncanceled",
+            )
+            if event_type in strict_types:
+                logging.warning(
+                    "Polar webhook: unknown or missing product for %s (product_id=%r); ignoring",
+                    event_type,
+                    product_id,
+                )
+                return jsonify({"status": "ignored", "reason": "unknown_product"}), 200
 
-    elif event_type in ("subscription.canceled", "subscription.revoked"):
-        customer = event_data.get("customer", {})
-        polar_id = customer.get("id", "")
-        if polar_id:
-            cancel_user(polar_id)
-            print(f"⬇️ User {polar_id} → free (canceled)")
+            # For lifecycle updates without product details, keep existing paid tier if known.
+            existing = get_user(polar_id) if polar_id else None
+            existing_plan = (existing or {}).get("plan")
+            if existing_plan in ("starter", "pro"):
+                plan = existing_plan
+            else:
+                logging.warning(
+                    "Polar webhook: cannot infer plan for %s (product_id=%r, polar_id=%r); ignoring",
+                    event_type,
+                    product_id,
+                    polar_id,
+                )
+                return jsonify({"status": "ignored", "reason": "unknown_product"}), 200
 
-    return "ok", 200
+        subscription_events = (
+            "subscription.created",
+            "subscription.updated",
+            "subscription.active",
+            "subscription.canceled",
+            "subscription.revoked",
+            "subscription.past_due",
+            "subscription.uncanceled",
+        )
+        if event_type in subscription_events:
+            sync_polar_subscription_webhook(event_type, event_data, plan)
+            logging.info("Polar webhook %s synced (plan=%s)", event_type, plan)
+
+        return jsonify({"status": "ok"}), 200
+    except Exception:
+        release_webhook_event(webhook_id)
+        logging.exception("Polar webhook processing failed")
+        return jsonify({"error": "Webhook processing failed"}), 500
 
 
 @app.route("/auth/polar/callback")
@@ -452,6 +620,7 @@ def polar_callback():
 
 
 @app.route("/api/login", methods=["POST"])
+@rate_limit_auth(15, 60)
 def api_login():
     """Authenticate with email + password."""
     data = request.json or {}
@@ -480,7 +649,8 @@ def api_login():
         return jsonify({"status": "verify", "error": "Email not verified. Code sent."}), 200
 
     session["user_id"] = user["id"]
-    return jsonify({"status": "ok", "plan": user["plan"]})
+    ent = effective_entitlement(user)
+    return jsonify({"status": "ok", "plan": ent["effective_plan"]})
 
 
 @app.route("/api/logout", methods=["POST"])
@@ -493,16 +663,14 @@ def api_logout():
 
 # ── Admin ───────────────────────────────────────────────────
 
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "changeme")
 ADMIN_EMAILS = [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()]
 
 @app.route("/admin")
 def admin():
-    """Admin dashboard — protected by login+email whitelist OR ?key= param."""
+    """Admin dashboard — protected by login + email allowlist."""
     user = _get_current_user()
     has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
-    has_admin_key = request.args.get("key") == ADMIN_KEY
-    if not has_admin_email and not has_admin_key:
+    if not has_admin_email:
         return "Not found", 404
 
     from database import get_db
@@ -533,8 +701,7 @@ def admin():
 def admin_credit():
     user = _get_current_user()
     has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
-    has_admin_key = request.args.get("key") == ADMIN_KEY
-    if not has_admin_email and not has_admin_key:
+    if not has_admin_email:
         return jsonify({"error": "forbidden"}), 403
     data = request.get_json()
     user_id = data.get("user_id")
@@ -549,8 +716,7 @@ def admin_credit():
 def admin_banner():
     user = _get_current_user()
     has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
-    has_admin_key = request.args.get("key") == ADMIN_KEY
-    if not has_admin_email and not has_admin_key:
+    if not has_admin_email:
         return "Not found", 404
     data = request.get_json()
     set_config("banner_enabled", "1" if data.get("enabled") else "0")
@@ -1030,7 +1196,7 @@ ADMIN_TEMPLATE = """
             const text = document.getElementById('bannerText').value;
             const st = document.getElementById('bannerStatus');
             try {
-                const r = await fetch('/admin/banner' + window.location.search, {
+                const r = await fetch('/admin/banner', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({enabled, text})
@@ -1075,7 +1241,7 @@ ADMIN_TEMPLATE = """
             const st = document.getElementById('creditStatus');
             if (!amount || amount <= 0) { st.textContent = 'Enter a valid number'; return; }
             try {
-                const r = await fetch('/admin/credit' + window.location.search, {
+                const r = await fetch('/admin/credit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({user_id: currentUserId, amount})

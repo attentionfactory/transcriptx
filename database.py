@@ -4,15 +4,15 @@ database.py — SQLite: users + credits + auth
 
 import sqlite3
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 
 DB_PATH = os.environ.get("DB_PATH", "transcriptx.db")
 
 PLANS = {
-    "free":    {"credits": 3,  "batch": False, "csv_export": False},
-    "starter": {"credits": 50, "batch": True,  "csv_export": True},
-    "pro":     {"credits": -1, "batch": True,  "csv_export": True},  # -1 = unlimited
+    "free":    {"credits": 3,  "batch": False, "csv_export": False, "name": "Free"},
+    "starter": {"credits": 50, "batch": True,  "csv_export": True, "name": "Starter"},
+    "pro":     {"credits": -1, "batch": True,  "csv_export": True, "name": "Pro"},  # -1 = unlimited
 }
 
 
@@ -63,6 +63,12 @@ def init_db():
                 value TEXT
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS webhook_events (
+                event_id TEXT PRIMARY KEY,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
         # Migrate existing users table — add new auth columns if missing
         _migrate_columns(db)
@@ -76,6 +82,11 @@ def _migrate_columns(db):
         ("email_verified", "INTEGER DEFAULT 0"),
         ("verify_code", "TEXT"),
         ("verify_code_expires", "TEXT"),
+        ("billing_state", "TEXT DEFAULT 'none'"),
+        ("grace_until", "TEXT"),
+        ("cancel_at_period_end", "INTEGER DEFAULT 0"),
+        ("current_period_end", "TEXT"),
+        ("last_billing_event_at", "TEXT"),
     ]
     for col, col_type in migrations:
         if col not in existing:
@@ -90,6 +101,387 @@ def _migrate_columns(db):
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
     except sqlite3.IntegrityError:
         pass  # duplicate emails exist — skip, we'll handle at app layer
+
+
+def _parse_iso_utc_naive(s):
+    """Parse Polar ISO8601 timestamps to naive UTC for comparison with datetime.utcnow()."""
+    if not s:
+        return None
+    s = str(s).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
+def effective_entitlement(user):
+    """
+    Compute effective plan for gating from stored plan + billing columns.
+
+    State machine (billing_state):
+    - none + starter/pro: legacy rows → treat as active paid
+    - active / uncanceled path: paid tier from plan when plan is starter/pro
+    - past_due: paid while grace_until > now, else free
+    - canceled (scheduled): paid while current_period_end > now, else free
+    - revoked: free
+    """
+    if not user:
+        return {
+            "effective_plan": "free",
+            "raw_plan": "free",
+            "billing_state": "none",
+            "has_paid_access": False,
+        }
+
+    raw = (user.get("plan") or "free").lower()
+    bs = (user.get("billing_state") or "none").lower()
+    now = datetime.utcnow()
+
+    tier = raw if raw in ("starter", "pro") else "free"
+
+    if bs == "revoked":
+        return {
+            "effective_plan": "free",
+            "raw_plan": raw,
+            "billing_state": "revoked",
+            "has_paid_access": False,
+        }
+
+    if bs in ("none", ""):
+        return {
+            "effective_plan": tier if tier != "free" else "free",
+            "raw_plan": raw,
+            "billing_state": "none",
+            "has_paid_access": tier != "free",
+        }
+
+    if bs == "past_due":
+        gu = _parse_iso_utc_naive(user.get("grace_until"))
+        if gu and gu > now and tier != "free":
+            return {
+                "effective_plan": tier,
+                "raw_plan": raw,
+                "billing_state": "past_due",
+                "has_paid_access": True,
+            }
+        return {
+            "effective_plan": "free",
+            "raw_plan": raw,
+            "billing_state": "past_due",
+            "has_paid_access": False,
+        }
+
+    if bs == "canceled":
+        if user.get("cancel_at_period_end"):
+            end = _parse_iso_utc_naive(user.get("current_period_end")) or _parse_iso_utc_naive(
+                user.get("ends_at")
+            )
+            if end and end > now and tier != "free":
+                return {
+                    "effective_plan": tier,
+                    "raw_plan": raw,
+                    "billing_state": "canceled",
+                    "has_paid_access": True,
+                }
+        return {
+            "effective_plan": "free",
+            "raw_plan": raw,
+            "billing_state": "canceled",
+            "has_paid_access": False,
+        }
+
+    if bs == "active":
+        return {
+            "effective_plan": tier if tier != "free" else "free",
+            "raw_plan": raw,
+            "billing_state": "active",
+            "has_paid_access": tier != "free",
+        }
+
+    # Unknown billing_state — fail closed (no paid access)
+    return {
+        "effective_plan": "free",
+        "raw_plan": raw,
+        "billing_state": bs,
+        "has_paid_access": False,
+    }
+
+
+def _grace_until_from_subscription(sub):
+    cpe = sub.get("current_period_end") or sub.get("ends_at")
+    if cpe:
+        return cpe
+    days = int(os.environ.get("BILLING_GRACE_DAYS", "7"))
+    return (datetime.utcnow() + timedelta(days=days)).isoformat()
+
+
+def _extract_customer_from_subscription(sub):
+    c = sub.get("customer") or {}
+    polar_id = c.get("id") or sub.get("customer_id") or ""
+    email = (c.get("email") or "").strip()
+    return polar_id, email
+
+
+def _upsert_subscription_user(
+    db,
+    polar_customer_id,
+    email,
+    plan_tier,
+    *,
+    billing_state,
+    cancel_at_period_end=0,
+    grace_until=None,
+    current_period_end=None,
+    last_event_iso=None,
+):
+    """Insert or update user row from Polar subscription sync."""
+    last_event_iso = last_event_iso or datetime.utcnow().isoformat()
+    cap = 1 if cancel_at_period_end else 0
+    email_norm = email.lower().strip() if email else ""
+
+    polar_row = db.execute(
+        "SELECT id FROM users WHERE polar_customer_id = ?",
+        (polar_customer_id,),
+    ).fetchone()
+
+    if polar_row:
+        if email_norm:
+            db.execute(
+                """UPDATE users SET email = ?, plan = ?, billing_state = ?,
+                   cancel_at_period_end = ?, grace_until = ?, current_period_end = ?,
+                   last_billing_event_at = ?
+                   WHERE polar_customer_id = ?""",
+                (
+                    email_norm,
+                    plan_tier,
+                    billing_state,
+                    cap,
+                    grace_until,
+                    current_period_end,
+                    last_event_iso,
+                    polar_customer_id,
+                ),
+            )
+        else:
+            db.execute(
+                """UPDATE users SET plan = ?, billing_state = ?,
+                   cancel_at_period_end = ?, grace_until = ?, current_period_end = ?,
+                   last_billing_event_at = ?
+                   WHERE polar_customer_id = ?""",
+                (
+                    plan_tier,
+                    billing_state,
+                    cap,
+                    grace_until,
+                    current_period_end,
+                    last_event_iso,
+                    polar_customer_id,
+                ),
+            )
+        return
+
+    if email_norm:
+        email_row = db.execute(
+            "SELECT id FROM users WHERE LOWER(email) = ?",
+            (email_norm,),
+        ).fetchone()
+        if email_row:
+            db.execute(
+                """UPDATE users SET polar_customer_id = ?, plan = ?, billing_state = ?,
+                   cancel_at_period_end = ?, grace_until = ?, current_period_end = ?,
+                   last_billing_event_at = ?
+                   WHERE id = ?""",
+                (
+                    polar_customer_id,
+                    plan_tier,
+                    billing_state,
+                    cap,
+                    grace_until,
+                    current_period_end,
+                    last_event_iso,
+                    email_row["id"],
+                ),
+            )
+            return
+
+    if not email_norm:
+        return
+
+    reset_at = _next_reset_date()
+    db.execute(
+        """INSERT INTO users (polar_customer_id, email, plan, credits_used, credits_reset_at,
+           billing_state, cancel_at_period_end, grace_until, current_period_end, last_billing_event_at)
+           VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?)""",
+        (
+            polar_customer_id,
+            email_norm,
+            plan_tier,
+            reset_at,
+            billing_state,
+            cap,
+            grace_until,
+            current_period_end,
+            last_event_iso,
+        ),
+    )
+
+
+def _revoke_polar_user(polar_customer_id):
+    now = datetime.utcnow().isoformat()
+    with get_db() as db:
+        db.execute(
+            """UPDATE users SET plan = 'free', billing_state = 'revoked',
+               grace_until = NULL, cancel_at_period_end = 0, current_period_end = NULL,
+               last_billing_event_at = ?
+               WHERE polar_customer_id = ?""",
+            (now, polar_customer_id),
+        )
+
+
+def sync_polar_subscription_webhook(event_type, event_data, plan_tier):
+    """
+    Apply Polar subscription webhook using subscription payload fields.
+    plan_tier: starter|pro from product id mapping in app layer.
+    """
+    sub = event_data or {}
+    polar_id, email = _extract_customer_from_subscription(sub)
+    if not polar_id:
+        return
+
+    et = (event_type or "").lower()
+    now_iso = datetime.utcnow().isoformat()
+    status = (sub.get("status") or "").lower()
+    cap = bool(sub.get("cancel_at_period_end"))
+    cpe = sub.get("current_period_end") or sub.get("ends_at")
+
+    if et == "subscription.revoked":
+        _revoke_polar_user(polar_id)
+        return
+
+    if et == "subscription.uncanceled":
+        with get_db() as db:
+            _upsert_subscription_user(
+                db,
+                polar_id,
+                email,
+                plan_tier,
+                billing_state="active",
+                cancel_at_period_end=0,
+                grace_until=None,
+                current_period_end=cpe,
+                last_event_iso=now_iso,
+            )
+        return
+
+    if et == "subscription.canceled":
+        if cap:
+            with get_db() as db:
+                _upsert_subscription_user(
+                    db,
+                    polar_id,
+                    email,
+                    plan_tier,
+                    billing_state="canceled",
+                    cancel_at_period_end=1,
+                    grace_until=None,
+                    current_period_end=cpe,
+                    last_event_iso=now_iso,
+                )
+        else:
+            _revoke_polar_user(polar_id)
+        return
+
+    if et == "subscription.past_due":
+        grace = _grace_until_from_subscription(sub)
+        with get_db() as db:
+            _upsert_subscription_user(
+                db,
+                polar_id,
+                email,
+                plan_tier,
+                billing_state="past_due",
+                cancel_at_period_end=0,
+                grace_until=grace,
+                current_period_end=cpe,
+                last_event_iso=now_iso,
+            )
+        return
+
+    if et in (
+        "subscription.created",
+        "subscription.updated",
+        "subscription.active",
+    ):
+        if status in ("incomplete", "incomplete_expired"):
+            return
+
+        if status in ("past_due", "unpaid"):
+            grace = _grace_until_from_subscription(sub)
+            with get_db() as db:
+                _upsert_subscription_user(
+                    db,
+                    polar_id,
+                    email,
+                    plan_tier,
+                    billing_state="past_due",
+                    cancel_at_period_end=0,
+                    grace_until=grace,
+                    current_period_end=cpe,
+                    last_event_iso=now_iso,
+                )
+            return
+
+        if status == "canceled":
+            if cap and cpe:
+                with get_db() as db:
+                    _upsert_subscription_user(
+                        db,
+                        polar_id,
+                        email,
+                        plan_tier,
+                        billing_state="canceled",
+                        cancel_at_period_end=1,
+                        grace_until=None,
+                        current_period_end=cpe,
+                        last_event_iso=now_iso,
+                    )
+            else:
+                _revoke_polar_user(polar_id)
+            return
+
+        if status in ("active", "trialing"):
+            if cap:
+                with get_db() as db:
+                    _upsert_subscription_user(
+                        db,
+                        polar_id,
+                        email,
+                        plan_tier,
+                        billing_state="canceled",
+                        cancel_at_period_end=1,
+                        grace_until=None,
+                        current_period_end=cpe,
+                        last_event_iso=now_iso,
+                    )
+            else:
+                with get_db() as db:
+                    _upsert_subscription_user(
+                        db,
+                        polar_id,
+                        email,
+                        plan_tier,
+                        billing_state="active",
+                        cancel_at_period_end=0,
+                        grace_until=None,
+                        current_period_end=cpe,
+                        last_event_iso=now_iso,
+                    )
+            return
 
 
 # ── Auth ──────────────────────────────────────────────────
@@ -180,7 +572,8 @@ def get_credits_for_user(user_id):
     if not user:
         return 0
 
-    plan = PLANS.get(user["plan"], PLANS["free"])
+    ent = effective_entitlement(user)
+    plan = PLANS.get(ent["effective_plan"], PLANS["free"])
 
     if plan["credits"] == -1:
         return -1
@@ -194,7 +587,8 @@ def use_credit_for_user(user_id):
     if not user:
         return False
 
-    plan = PLANS.get(user["plan"], PLANS["free"])
+    ent = effective_entitlement(user)
+    plan = PLANS.get(ent["effective_plan"], PLANS["free"])
 
     if plan["credits"] == -1:
         with get_db() as db:
@@ -233,19 +627,46 @@ def grant_credits(user_id, amount):
         )
 
 
+def claim_webhook_event(event_id):
+    """
+    Atomically claim a webhook id before processing (idempotency / replay protection).
+    Returns True if this is the first delivery, False if duplicate.
+    """
+    if not event_id:
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT OR IGNORE INTO webhook_events (event_id) VALUES (?)",
+            (event_id,),
+        )
+        return cur.rowcount > 0
+
+
+def release_webhook_event(event_id):
+    """Remove claim so Polar retries can be reprocessed after an error."""
+    if not event_id:
+        return
+    with get_db() as db:
+        db.execute("DELETE FROM webhook_events WHERE event_id = ?", (event_id,))
+
+
 # ── Polar linking ─────────────────────────────────────────
 
 def link_polar_to_user(email, polar_customer_id, plan):
     """Attach polar_customer_id + plan to an existing user by email."""
+    now = datetime.utcnow().isoformat()
     with get_db() as db:
         db.execute(
-            "UPDATE users SET polar_customer_id = ?, plan = ? WHERE LOWER(email) = ?",
-            (polar_customer_id, plan, email.lower().strip())
+            """UPDATE users SET polar_customer_id = ?, plan = ?, billing_state = 'active',
+               cancel_at_period_end = 0, grace_until = NULL, last_billing_event_at = ?
+               WHERE LOWER(email) = ?""",
+            (polar_customer_id, plan, now, email.lower().strip()),
         )
 
 
 def create_or_update_user(polar_customer_id, email, plan):
     """Create or update a user from Polar webhook. Links to existing auth'd user if email matches."""
+    now = datetime.utcnow().isoformat()
     with get_db() as db:
         # First: check if a user with this email already exists (from signup)
         email_row = db.execute(
@@ -255,8 +676,10 @@ def create_or_update_user(polar_customer_id, email, plan):
 
         if email_row:
             db.execute(
-                "UPDATE users SET polar_customer_id = ?, plan = ? WHERE id = ?",
-                (polar_customer_id, plan, email_row["id"])
+                """UPDATE users SET polar_customer_id = ?, plan = ?, billing_state = 'active',
+                   cancel_at_period_end = 0, grace_until = NULL, last_billing_event_at = ?
+                   WHERE id = ?""",
+                (polar_customer_id, plan, now, email_row["id"]),
             )
             return
 
@@ -268,24 +691,24 @@ def create_or_update_user(polar_customer_id, email, plan):
 
         if polar_row:
             db.execute(
-                "UPDATE users SET email = ?, plan = ? WHERE polar_customer_id = ?",
-                (email.lower().strip(), plan, polar_customer_id)
+                """UPDATE users SET email = ?, plan = ?, billing_state = 'active',
+                   cancel_at_period_end = 0, grace_until = NULL, last_billing_event_at = ?
+                   WHERE polar_customer_id = ?""",
+                (email.lower().strip(), plan, now, polar_customer_id),
             )
         else:
             reset_at = _next_reset_date()
             db.execute(
-                "INSERT INTO users (polar_customer_id, email, plan, credits_used, credits_reset_at) VALUES (?, ?, ?, 0, ?)",
-                (polar_customer_id, email.lower().strip(), plan, reset_at)
+                """INSERT INTO users (polar_customer_id, email, plan, credits_used, credits_reset_at,
+                   billing_state, cancel_at_period_end, last_billing_event_at)
+                   VALUES (?, ?, ?, 0, ?, 'active', 0, ?)""",
+                (polar_customer_id, email.lower().strip(), plan, reset_at, now),
             )
 
 
 def cancel_user(polar_customer_id):
-    """Downgrade user to free on subscription cancel."""
-    with get_db() as db:
-        db.execute(
-            "UPDATE users SET plan = 'free' WHERE polar_customer_id = ?",
-            (polar_customer_id,)
-        )
+    """Downgrade user to free on subscription cancel (immediate revoke)."""
+    _revoke_polar_user(polar_customer_id)
 
 
 # ── Legacy functions (kept for backward compat) ──────────
@@ -312,7 +735,8 @@ def get_user_credits(polar_customer_id):
     if not user:
         return 0
 
-    plan = PLANS.get(user["plan"], PLANS["free"])
+    ent = effective_entitlement(user)
+    plan = PLANS.get(ent["effective_plan"], PLANS["free"])
     if plan["credits"] == -1:
         return -1
     return max(0, plan["credits"] - user["credits_used"])
@@ -324,7 +748,8 @@ def use_user_credit(polar_customer_id):
     if not user:
         return False
 
-    plan = PLANS.get(user["plan"], PLANS["free"])
+    ent = effective_entitlement(user)
+    plan = PLANS.get(ent["effective_plan"], PLANS["free"])
 
     if plan["credits"] == -1:
         with get_db() as db:
