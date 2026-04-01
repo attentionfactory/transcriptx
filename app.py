@@ -95,7 +95,12 @@ def serve_static_root(filename):
 
 @app.route("/robots.txt")
 def robots_txt():
-    return Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: https://transcriptx.xyz/sitemap.xml\n", mimetype="text/plain")
+    return Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: https://transcriptx.xyz/sitemap.xml\nLLMs: https://transcriptx.xyz/llms.txt\n", mimetype="text/plain")
+
+
+@app.route("/llms.txt")
+def llms_txt():
+    return send_from_directory(".", "llms.txt", mimetype="text/plain; charset=utf-8")
 
 
 @app.route("/sitemap.xml")
@@ -105,6 +110,14 @@ def sitemap_xml():
   <url><loc>https://transcriptx.xyz/</loc><priority>1.0</priority></url>
   <url><loc>https://transcriptx.xyz/pricing</loc><priority>0.8</priority></url>
   <url><loc>https://transcriptx.xyz/profile-links</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/repurpose-video-into-seo-post</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/manual-vs-ai-transcription</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/youtube-transcript-generator</loc><priority>0.8</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/video-to-transcript</loc><priority>0.8</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/download-youtube-transcript</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/audio-to-transcript</loc><priority>0.7</priority></url>
+  <url><loc>https://transcriptx.xyz/guides/youtube-video-to-transcript</loc><priority>0.7</priority></url>
 </urlset>"""
     return Response(xml, mimetype="application/xml")
 
@@ -1300,6 +1313,653 @@ ADMIN_TEMPLATE = """
 
 # ── UI ──────────────────────────────────────────────────────
 
+GUIDES_CONTENT = {
+    "repurpose-video-into-seo-post": {
+        "title": "Repurpose Video Content Into SEO Posts (Using TranscriptX)",
+        "description": "Use TranscriptX to extract a transcript, edit it into an article, and publish SEO-ready content with a repeatable workflow.",
+        "keywords": "repurpose video content, video to blog post, transcript to article, content repurposing workflow",
+        "h1": "Repurpose Video Content Into SEO Posts (Using TranscriptX)",
+        "quick_answer": "Use TranscriptX to pull a transcript from your video URL, edit it into a clean article structure, optimize for one keyword, and publish.",
+        "faq": [
+            {
+                "q": "Can I publish the raw transcript directly?",
+                "a": "You can, but an edited transcript performs better for readability and SEO."
+            },
+            {
+                "q": "How long should the repurposed post be?",
+                "a": "Typically 800 to 1500 words, depending on query intent and topic depth."
+            },
+            {
+                "q": "Should one video become one article?",
+                "a": "Start with one article, then split high-value videos into multiple intent-specific posts."
+            },
+            {
+                "q": "What if the transcript has minor errors?",
+                "a": "Do a fast editorial pass for names, technical terms, and context before publishing."
+            },
+        ],
+        "body_html": """
+<p>If you already publish videos, you are sitting on SEO content. The fastest workflow is simple: get transcript, edit into article, publish.</p>
+<h2>Quick answer</h2>
+<p>Use TranscriptX to pull a transcript from your video URL, clean the text into an article structure, optimize for one keyword, and publish.</p>
+<h2>Step-by-step workflow</h2>
+<h3>1) Get the transcript with TranscriptX</h3>
+<ul>
+  <li>Paste your video URL into TranscriptX.</li>
+  <li>Run transcription and copy the transcript output.</li>
+</ul>
+<h3>2) Clean the transcript</h3>
+<ul>
+  <li>Remove filler words and repeated phrases.</li>
+  <li>Split long blocks into short readable sections.</li>
+</ul>
+<h3>3) Turn transcript into article structure</h3>
+<ul>
+  <li>Intro with problem + promise</li>
+  <li>Quick answer</li>
+  <li>Steps/checklist</li>
+  <li>Common mistakes</li>
+  <li>FAQ + CTA</li>
+</ul>
+<h3>4) Optimize for SEO before publishing</h3>
+<ul>
+  <li>Put keyword in title, H1, slug, and first paragraph.</li>
+  <li>Add internal links to <a href="/">home</a>, <a href="/pricing">pricing</a>, and <a href="/guides/manual-vs-ai-transcription">manual vs AI</a>.</li>
+  <li>Include FAQ for long-tail capture.</li>
+</ul>
+<h3>5) Publish and interlink</h3>
+<ul>
+  <li>Publish the page and link related guides to it.</li>
+  <li>Submit updated sitemap in Search Console.</li>
+</ul>
+<h2>Why this works</h2>
+<p>Transcript-first writing increases speed and consistency. Every published video becomes a new ranking attempt.</p>
+<h2>Common mistakes to avoid</h2>
+<ul>
+  <li>Publishing raw transcript without editing</li>
+  <li>Targeting multiple unrelated keywords on one page</li>
+  <li>Skipping FAQ and internal links</li>
+  <li>No clear CTA</li>
+</ul>
+<h2>FAQ</h2>
+<h3>Can I publish the raw transcript directly?</h3>
+<p>You can, but an edited transcript performs better for readability and SEO.</p>
+<h3>How long should the repurposed post be?</h3>
+<p>Typically 800 to 1500 words, depending on query intent and topic depth.</p>
+<h3>Should one video become one article?</h3>
+<p>Start with one article, then split high-value videos into multiple intent-specific posts.</p>
+<h3>What if the transcript has minor errors?</h3>
+<p>Do a fast editorial pass for names, technical terms, and context before publishing.</p>
+<h2>Final take</h2>
+<p>Treat TranscriptX as your repurposing engine: every video should become a search-optimized page.</p>
+""",
+    },
+    "manual-vs-ai-transcription": {
+        "title": "Stop Typing Manually \u2014 Why Fast Teams Use AI Transcription",
+        "description": "Manual transcription costs you time and publishing speed. See why teams are switching to AI-powered transcription with TranscriptX.",
+        "keywords": "manual transcription vs ai transcription, ai transcription tool, transcription workflow, transcriptx guide",
+        "h1": "Stop Typing Manually \u2014 Why Fast Teams Use AI Transcription",
+        "quick_answer": "AI transcription with TranscriptX turns hours of manual typing into minutes of clean, editable text \u2014 so your team publishes faster without losing quality.",
+        "faq": [
+            {
+                "q": "Is AI transcription accurate enough to publish?",
+                "a": "Yes. For clear audio, TranscriptX produces highly accurate output. A quick editorial pass handles the rest."
+            },
+            {
+                "q": "When does manual transcription still make sense?",
+                "a": "Strict legal or compliance recordings where every syllable matters and volume is low."
+            },
+            {
+                "q": "Will AI transcription make my content sound robotic?",
+                "a": "No. TranscriptX produces the draft. Your team controls tone, voice, and final quality."
+            },
+            {
+                "q": "How much faster is AI transcription than manual?",
+                "a": "Most videos are transcribed in minutes instead of hours. Editing adds a short pass on top."
+            },
+            {
+                "q": "What does TranscriptX cost compared to hiring a transcriptionist?",
+                "a": "TranscriptX starts at $2/month for 50 transcripts. A single freelance transcript can cost $20-50+."
+            },
+        ],
+        "body_html": """
+<p>There was a time when transcription meant headphones, a foot pedal, and hours of rewind-type-rewind. For some teams, that is still the default. But the math has changed dramatically, and teams that have not caught up are losing publishing speed every week.</p>
+
+<p>Manual transcription is not bad work. It is thorough, controllable, and precise when done well. The problem is throughput. A skilled typist working from audio needs roughly four hours to transcribe one hour of speech. That means a single 20-minute video eats nearly 90 minutes of focused human effort before a single word is edited, structured, or published. Multiply that by a weekly publishing cadence and you have a full-time bottleneck disguised as a routine task.</p>
+
+<p>AI transcription does not eliminate humans from the process. It changes where humans spend their time. Instead of converting sound to words, your team spends time on structure, voice, and intent \u2014 the parts that actually determine whether content performs. TranscriptX handles the conversion layer: paste a URL, get a clean transcript, then shape it into whatever you need.</p>
+
+<h2>The real cost of manual transcription</h2>
+
+<p>Cost is not just money. It is time, opportunity, and consistency. Manual transcription introduces three hidden costs that most teams underestimate.</p>
+
+<p>First, there is the calendar cost. Every hour spent typing is an hour not spent writing, editing, or distributing. Teams with manual workflows publish less frequently, which means fewer pages indexed, fewer ranking opportunities, and slower compounding growth.</p>
+
+<p>Second, there is the consistency cost. Manual work is subject to energy, availability, and human variability. Miss one week and your publishing rhythm breaks. Miss three and your content pipeline stalls. AI transcription runs on demand regardless of team capacity.</p>
+
+<p>Third, there is the scaling cost. Manual transcription does not scale linearly. Doubling your video output means doubling transcription labor. With AI, doubling video output means doubling API calls \u2014 no new hires, no new processes.</p>
+
+<h2>What AI transcription actually delivers</h2>
+
+<p>Modern speech recognition models like Whisper are trained on hundreds of thousands of hours of diverse, multilingual audio from the real web \u2014 not clean studio recordings. That training breadth is why they handle accents, background noise, and overlapping speech far better than earlier systems. The practical result: you get a usable first draft from imperfect real-world recordings, not just laboratory audio.</p>
+
+<p>TranscriptX uses this technology to give you transcript output in minutes. The workflow is simple: paste the video URL, TranscriptX extracts audio and runs transcription, and you get structured text ready for editing. No file management, no software installs, no waiting for freelancers.</p>
+
+<h2>When manual still wins</h2>
+
+<p>There are legitimate cases where manual transcription is the right call. Legal depositions, compliance-heavy recordings, and highly specialized technical content with dense jargon sometimes need human attention from the first word. If your volume is low and precision requirements are unusually strict, manual work can still justify itself.</p>
+
+<p>But those cases are narrow. For creators, marketers, agencies, and product teams producing content regularly, AI transcription is not just faster \u2014 it is the only way to maintain a sustainable publishing pace without burning out your team.</p>
+
+<h2>How TranscriptX fits your workflow</h2>
+
+<p>TranscriptX is designed for teams that need to move from video to published content quickly. Here is how it works in practice:</p>
+
+<p>You paste a video URL from YouTube, TikTok, Instagram, or any of 1000+ supported sources. TranscriptX extracts the audio automatically \u2014 no downloads, no file conversions on your end. The audio runs through high-accuracy AI transcription and you receive clean, structured text output within minutes.</p>
+
+<p>From there, your team does what humans do best: edit for tone, restructure for the target format, and publish. The entire cycle \u2014 from video URL to published page \u2014 can happen in a single sitting instead of spanning days.</p>
+
+<h2>The publishing speed advantage</h2>
+
+<p>Content that ships weekly compounds faster than content that ships monthly. That is not theory \u2014 it is how search indexing and topical authority work. Every published page is a new entry point, a new ranking opportunity, and a new internal linking node. Teams that transcribe faster, publish faster. Teams that publish faster, grow faster.</p>
+
+<p>TranscriptX exists to remove the bottleneck between having content and publishing content. Your videos already contain the substance. TranscriptX turns that substance into text you can use today.</p>
+
+<h2>FAQ</h2>
+<h3>Is AI transcription accurate enough to publish?</h3>
+<p>Yes. For clear audio, TranscriptX produces highly accurate output. A quick editorial pass handles the rest.</p>
+<h3>When does manual transcription still make sense?</h3>
+<p>Strict legal or compliance recordings where every syllable matters and volume is low.</p>
+<h3>Will AI transcription make my content sound robotic?</h3>
+<p>No. TranscriptX produces the draft. Your team controls tone, voice, and final quality.</p>
+<h3>How much faster is AI transcription than manual?</h3>
+<p>Most videos are transcribed in minutes instead of hours. Editing adds a short pass on top.</p>
+<h3>What does TranscriptX cost compared to hiring a transcriptionist?</h3>
+<p>TranscriptX starts at $2/month for 50 transcripts. A single freelance transcript can cost $20\u201350+.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Ready to stop typing and start publishing?</strong></p>
+  <a href="/pricing" style="color:#F0A860;font-weight:700;">See TranscriptX pricing \u2192</a>
+</div>
+""",
+    },
+    "youtube-transcript-generator": {
+        "title": "YouTube Transcript Generator \u2014 Get Clean Text From Any Video",
+        "description": "TranscriptX turns any YouTube video into clean, editable transcript text in minutes. Accurate AI transcription you can publish, repurpose, and share.",
+        "keywords": "youtube transcript generator, youtube transcript, transcript youtube, youtube to transcript",
+        "h1": "YouTube Transcript Generator \u2014 Clean Text From Any Video in Minutes",
+        "quick_answer": "Paste a YouTube URL into TranscriptX and get an accurate, editable transcript in minutes \u2014 ready to publish, repurpose, or share.",
+        "faq": [
+            {
+                "q": "How does the TranscriptX YouTube transcript generator work?",
+                "a": "Paste a YouTube URL, TranscriptX extracts the audio and runs AI transcription, then returns clean editable text."
+            },
+            {
+                "q": "Is this more accurate than YouTube auto-captions?",
+                "a": "TranscriptX uses advanced Whisper-based AI that handles noise, accents, and overlapping speech better than standard auto-captions."
+            },
+            {
+                "q": "Can I use the transcript for blog posts and articles?",
+                "a": "Yes. TranscriptX output is designed to be edited and published as articles, guides, social posts, and more."
+            },
+            {
+                "q": "What if a YouTube video has no captions?",
+                "a": "TranscriptX does not depend on existing captions. It extracts audio and transcribes directly, so missing captions are not a problem."
+            },
+            {
+                "q": "How much does it cost?",
+                "a": "Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited."
+            },
+            {
+                "q": "Does it work with long YouTube videos?",
+                "a": "Yes, TranscriptX handles videos up to the audio size limit. Most standard YouTube content processes without issues."
+            },
+        ],
+        "body_html": """
+<p>Every day, millions of hours of valuable spoken content go live on YouTube. Tutorials, interviews, lectures, product reviews, earnings calls, podcasts \u2014 all of it locked inside video. If you need that content as text, your options have historically been limited: copy-paste from inconsistent auto-captions, hire a transcriptionist, or type it yourself.</p>
+
+<p>TranscriptX changes that equation. Paste a YouTube URL and get a clean, accurate transcript in minutes. Not a rough caption dump \u2014 actual structured text you can edit, publish, and repurpose immediately.</p>
+
+<h2>Why YouTube auto-captions are not enough</h2>
+
+<p>YouTube generates automatic captions using its own speech recognition, and for casual viewing they work reasonably well. But anyone who has tried to use auto-captions as source material for writing knows the frustration. Missing punctuation. Sentence boundaries that make no sense. Names and technical terms mangled beyond recognition. Background noise interpreted as speech.</p>
+
+<p>YouTube\u2019s own documentation acknowledges that automatic captions can vary in quality depending on mispronunciations, accents, dialects, and background noise. For quick reference while watching a video, that is fine. For content production, it creates more editing work than it saves.</p>
+
+<p>Worse, not every video even has captions available. If the creator disabled them, or if the audio conditions prevented auto-generation, the built-in transcript view simply does not appear. You are left with nothing.</p>
+
+<h2>How TranscriptX works</h2>
+
+<p>TranscriptX does not depend on YouTube\u2019s existing caption track. Instead, it extracts the actual audio from the video and runs it through advanced AI speech recognition built on Whisper technology \u2014 trained on over 680,000 hours of diverse, multilingual web audio.</p>
+
+<p>The practical difference is significant. Whisper-based transcription handles real-world audio conditions \u2014 background noise, varied accents, technical vocabulary, multiple languages \u2014 with substantially better accuracy than standard auto-caption systems. Research shows these models make up to 50% fewer errors than models tuned for narrow benchmark conditions.</p>
+
+<p>Here is the workflow:</p>
+
+<p><strong>Step 1:</strong> Paste the YouTube video URL into TranscriptX.</p>
+<p><strong>Step 2:</strong> TranscriptX automatically extracts the audio. No downloads or file management on your end.</p>
+<p><strong>Step 3:</strong> AI transcription runs and returns clean, structured text \u2014 typically within minutes.</p>
+<p><strong>Step 4:</strong> Copy the transcript, edit it for your needs, and publish.</p>
+
+<p>That is the complete workflow. No software to install, no accounts to configure with third-party APIs, no audio files to juggle.</p>
+
+<h2>What you can do with the transcript</h2>
+
+<p>A clean transcript is not just text \u2014 it is a content asset with multiple downstream uses.</p>
+
+<p><strong>Blog posts and articles.</strong> One 15-minute video contains enough material for a 1,500-word article. Structure the transcript into sections, add an intro and conclusion, and you have a publishable page targeting search traffic you would never capture with video alone.</p>
+
+<p><strong>Social media content.</strong> Pull the strongest quotes, insights, or data points from the transcript. Each one becomes a standalone post, a thread, or a carousel slide. One video can fuel a week of social content.</p>
+
+<p><strong>Documentation and knowledge bases.</strong> Product demos, onboarding sessions, and internal presentations all become searchable reference material once transcribed. Teams stop asking \u201cwhat did we say in that meeting?\u201d and start finding answers instantly.</p>
+
+<p><strong>Accessibility.</strong> Transcripts make your content available to people who are deaf or hard of hearing, people who prefer reading, and people in environments where audio is not practical. Accessibility is not a feature \u2014 it is a responsibility.</p>
+
+<h2>Built for reliability, not just speed</h2>
+
+<p>Speed matters, but not if the tool breaks every other attempt. YouTube periodically changes how it serves content, and extraction tools that do not adapt fail silently. TranscriptX includes automatic retry logic, intelligent fallback handling, and clear error messaging when something upstream changes. You get a result or you get an honest explanation \u2014 never a blank screen.</p>
+
+<p>This operational resilience is invisible when everything works, but it is the difference between a tool you use once and a tool your team relies on weekly.</p>
+
+<h2>Pricing that makes sense</h2>
+
+<p>TranscriptX is built for creators and teams, not enterprise budgets. Free users get 3 transcripts per month with no signup. Starter gives you 50 transcripts for $2/month. Pro gives you unlimited for $4/month. Compare that to transcription services charging $1\u2013$2 per minute of audio, and the economics are not even close.</p>
+
+<h2>FAQ</h2>
+<h3>How does the TranscriptX YouTube transcript generator work?</h3>
+<p>Paste a YouTube URL, TranscriptX extracts the audio and runs AI transcription, then returns clean editable text.</p>
+<h3>Is this more accurate than YouTube auto-captions?</h3>
+<p>TranscriptX uses advanced Whisper-based AI that handles noise, accents, and overlapping speech better than standard auto-captions.</p>
+<h3>Can I use the transcript for blog posts and articles?</h3>
+<p>Yes. TranscriptX output is designed to be edited and published as articles, guides, social posts, and more.</p>
+<h3>What if a YouTube video has no captions?</h3>
+<p>TranscriptX does not depend on existing captions. It extracts audio and transcribes directly, so missing captions are not a problem.</p>
+<h3>How much does it cost?</h3>
+<p>Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited.</p>
+<h3>Does it work with long YouTube videos?</h3>
+<p>Yes, TranscriptX handles videos up to the audio size limit. Most standard YouTube content processes without issues.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Ready to turn YouTube videos into publishable text?</strong></p>
+  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
+</div>
+""",
+    },
+    "video-to-transcript": {
+        "title": "Video to Transcript \u2014 Turn Any Video Into Usable Text With TranscriptX",
+        "description": "Convert any video into clean, accurate transcript text with TranscriptX. Works with YouTube, TikTok, Instagram, and 1000+ platforms.",
+        "keywords": "video to transcript, transcript from video, transcript video, video transcript",
+        "h1": "Turn Any Video Into Clean, Publishable Transcript Text",
+        "quick_answer": "TranscriptX converts video from any supported platform into accurate transcript text in minutes \u2014 ready for editing, publishing, and repurposing.",
+        "faq": [
+            {
+                "q": "What platforms does TranscriptX support?",
+                "a": "YouTube, TikTok, Instagram, X (Twitter), Facebook, and 1000+ other platforms with public video."
+            },
+            {
+                "q": "How accurate is the video-to-transcript conversion?",
+                "a": "TranscriptX uses Whisper-class AI trained on 680,000+ hours of real audio. Accuracy is high for clear speech and strong even with background noise."
+            },
+            {
+                "q": "Can I transcribe videos in languages other than English?",
+                "a": "Yes. TranscriptX supports multilingual transcription across dozens of languages."
+            },
+            {
+                "q": "How long does transcription take?",
+                "a": "Most videos are transcribed within minutes, depending on length and current demand."
+            },
+            {
+                "q": "Do I need to download the video first?",
+                "a": "No. Paste the URL and TranscriptX handles audio extraction automatically."
+            },
+        ],
+        "body_html": """
+<p>Video is everywhere. Your team records product demos. Your founder does podcast interviews. Your marketing lead goes live on Instagram. Your sales team runs webinars. All of that content has value beyond the moment it was spoken \u2014 but only if you can get it into text.</p>
+
+<p>TranscriptX turns video from any supported platform into clean transcript text in minutes. No file downloads, no audio conversion, no manual typing. Paste a URL and get text you can actually use.</p>
+
+<h2>The problem with video-only content</h2>
+
+<p>Video content has a discoverability problem. Search engines can crawl text, not speech. Social algorithms surface video briefly, then move on. Internal teams cannot search spoken words in a Zoom recording. The insight, the quote, the step-by-step explanation \u2014 all of it stays locked inside a media file that most people will never rewatch.</p>
+
+<p>Transcription unlocks that content. A single 10-minute video becomes a searchable document, a source for articles, a reference for your team, and an accessibility asset for audiences who prefer or need text. But traditional transcription \u2014 whether manual or through clunky desktop software \u2014 takes too long for teams publishing on a regular schedule.</p>
+
+<h2>How TranscriptX converts video to transcript</h2>
+
+<p>TranscriptX works with a URL. That is the starting point and, from your perspective, nearly the entire workflow.</p>
+
+<p>You paste a video URL from YouTube, TikTok, Instagram, X, Facebook, or any of 1000+ supported sources. TranscriptX extracts the audio track automatically behind the scenes. The audio is then processed through Whisper-based speech recognition \u2014 AI trained on over 680,000 hours of diverse, real-world audio spanning dozens of languages and conditions.</p>
+
+<p>Within minutes, you receive a clean transcript. Not a raw character dump \u2014 readable text with coherent sentence structure that you can immediately start editing for your target format.</p>
+
+<h2>What makes TranscriptX different</h2>
+
+<p><strong>Platform breadth.</strong> Most transcription tools are YouTube-only or require you to upload files. TranscriptX supports 1000+ sources because it handles audio extraction from URLs directly. If there is a public video at a URL, TranscriptX can likely transcribe it.</p>
+
+<p><strong>AI quality.</strong> The Whisper model family represents a meaningful leap in real-world transcription. Unlike older systems that were trained on narrow, clean datasets, Whisper was trained on massive volumes of actual web audio \u2014 with all its imperfections. That is why it handles background noise, accents, technical jargon, and multilingual content substantially better than legacy solutions.</p>
+
+<p><strong>Operational resilience.</strong> Platforms change. Extraction paths break. Request patterns get throttled. TranscriptX handles this with automatic retries, intelligent proxy fallback for YouTube, and clear error messaging. You get a transcript or you get a real explanation \u2014 not a spinning loader that never resolves.</p>
+
+<p><strong>Simplicity.</strong> No software to install. No audio files to manage. No API keys to configure. Paste a URL, click transcribe, get text. The complexity is handled for you.</p>
+
+<h2>What teams build from transcripts</h2>
+
+<p>The transcript is the starting material, not the final product. Here is what teams actually do with TranscriptX output:</p>
+
+<p><strong>Content marketing teams</strong> turn one video into an SEO article, 3\u20135 social posts, and a newsletter section. One recording session feeds an entire week of content distribution.</p>
+
+<p><strong>Product teams</strong> transcribe demo recordings and customer calls to build searchable knowledge bases, FAQ pages, and onboarding documentation.</p>
+
+<p><strong>Agency teams</strong> batch-transcribe client content to produce deliverables faster. When your clients produce video weekly and expect written assets in return, TranscriptX compresses the turnaround from days to hours.</p>
+
+<p><strong>Educators and researchers</strong> convert lectures, interviews, and conference talks into citable text documents. Transcripts become study materials, reference archives, and collaboration tools.</p>
+
+<h2>Pricing built for real usage</h2>
+
+<p>TranscriptX is not priced for enterprises with procurement departments. It is priced for creators and small teams who need reliable output at reasonable cost. Free gets you 3 transcripts/month. Starter is $2/month for 50. Pro is $4/month for unlimited. No per-minute billing, no hidden fees.</p>
+
+<h2>FAQ</h2>
+<h3>What platforms does TranscriptX support?</h3>
+<p>YouTube, TikTok, Instagram, X (Twitter), Facebook, and 1000+ other platforms with public video.</p>
+<h3>How accurate is the video-to-transcript conversion?</h3>
+<p>TranscriptX uses Whisper-class AI trained on 680,000+ hours of real audio. Accuracy is high for clear speech and strong even with background noise.</p>
+<h3>Can I transcribe videos in languages other than English?</h3>
+<p>Yes. TranscriptX supports multilingual transcription across dozens of languages.</p>
+<h3>How long does transcription take?</h3>
+<p>Most videos are transcribed within minutes, depending on length and current demand.</p>
+<h3>Do I need to download the video first?</h3>
+<p>No. Paste the URL and TranscriptX handles audio extraction automatically.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn your next video into publishable text.</strong></p>
+  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
+</div>
+""",
+    },
+    "download-youtube-transcript": {
+        "title": "Download YouTube Transcript \u2014 Get the Full Text Instantly",
+        "description": "Download the full transcript from any YouTube video with TranscriptX. Clean AI-generated text even when native captions are missing or unreliable.",
+        "keywords": "download youtube transcript, youtube transcript download, yt transcript, get transcript of youtube video",
+        "h1": "Download YouTube Transcript \u2014 Full Text, Any Video, Instantly",
+        "quick_answer": "TranscriptX lets you download a clean transcript from any YouTube video in minutes \u2014 even when native captions are unavailable or low-quality.",
+        "faq": [
+            {
+                "q": "Can I download a transcript from any YouTube video?",
+                "a": "Yes. TranscriptX extracts audio and generates its own transcript, so it works even when the video has no captions."
+            },
+            {
+                "q": "Is the downloaded transcript better than YouTube's auto-captions?",
+                "a": "In most cases, yes. TranscriptX uses Whisper-class AI that handles noise, accents, and technical terms more accurately."
+            },
+            {
+                "q": "What format is the transcript in?",
+                "a": "TranscriptX returns clean, readable text that you can copy, edit, and paste into any editor or CMS."
+            },
+            {
+                "q": "Does it work on mobile?",
+                "a": "TranscriptX is a web app that works on any device with a browser."
+            },
+            {
+                "q": "Is it free?",
+                "a": "Free users get 3 transcripts/month. Paid plans start at $2/month for 50 transcripts."
+            },
+        ],
+        "body_html": """
+<p>You found a YouTube video with exactly the information you need. Maybe it is a 45-minute conference talk, a product breakdown, or an interview with someone in your industry. You want the text. You go to click \u201cShow Transcript\u201d \u2014 and it is not there. Or it is there, but the auto-generated captions are a mess of garbled sentences and missing punctuation.</p>
+
+<p>This is the reality of downloading YouTube transcripts through native tools. It works sometimes. It fails often enough to be unreliable for anyone who depends on transcript output for real work.</p>
+
+<p>TranscriptX solves this by not depending on YouTube\u2019s caption system at all. Paste the video URL, and TranscriptX extracts the audio directly and runs its own AI transcription. You get a clean, accurate transcript every time \u2014 regardless of whether the original video has captions enabled.</p>
+
+<h2>Why native YouTube transcripts fall short</h2>
+
+<p>YouTube\u2019s built-in transcript feature is tied to the caption track. If captions exist, you can view and copy the text. If they do not, there is nothing to download. Even when auto-captions are available, they come with well-documented limitations.</p>
+
+<p>YouTube\u2019s own help documentation acknowledges that automatic captions may misrepresent content due to mispronunciations, accents, dialects, or background noise. For someone taking quick personal notes, that is acceptable. For someone creating published content, building documentation, or extracting precise quotes, it is not.</p>
+
+<p>There is also the formatting problem. YouTube caption text is segmented for display timing, not for reading. When you copy it, you get choppy fragments that need significant restructuring before they resemble readable paragraphs. What feels like a simple \u201cdownload\u201d turns into a full editing project.</p>
+
+<h2>How TranscriptX handles YouTube transcripts</h2>
+
+<p>TranscriptX bypasses the caption dependency entirely. When you paste a YouTube URL, it extracts the actual audio track from the video. That audio is processed through Whisper-based speech recognition \u2014 an AI model trained on over 680,000 hours of multilingual, real-world audio data.</p>
+
+<p>The result is a transcript generated from the spoken words themselves, not from a pre-existing caption file. This means you get output even when captions are disabled, missing, or auto-generated with poor quality.</p>
+
+<p>The output is clean, paragraph-structured text. Not timestamped caption fragments. Not raw speech-to-text noise. Actual readable text that you can copy into a document and start editing immediately.</p>
+
+<h2>What people actually use downloaded transcripts for</h2>
+
+<p><strong>Content repurposing.</strong> A downloaded transcript is the fastest path from someone else\u2019s insight to your own published commentary. Transcribe a conference talk, extract the key arguments, add your perspective, and publish an article that would have taken hours to write from scratch.</p>
+
+<p><strong>Research and citation.</strong> When you are writing about a topic and need to accurately quote or reference what someone said in a video, a transcript gives you searchable, citable text instead of scrubbing through a timeline.</p>
+
+<p><strong>Meeting and lecture notes.</strong> Recorded Zoom calls shared on YouTube, university lectures, and webinar replays all become far more useful as text. Your team can search, highlight, and reference specific points instead of rewatching entire recordings.</p>
+
+<p><strong>Accessibility and translation.</strong> Transcripts make video content available to people who are deaf or hard of hearing, and they provide a foundation for translation into other languages. If your audience is global, transcripts are not optional \u2014 they are infrastructure.</p>
+
+<h2>Reliability when YouTube makes it hard</h2>
+
+<p>Anyone who has worked with YouTube extraction at scale knows that the platform periodically changes how it serves content. Anti-bot checks, request throttling, and delivery pattern changes can break tools that worked yesterday. TranscriptX is built with this reality in mind.</p>
+
+<p>The system includes automatic retries with backoff, rotating proxy fallback for YouTube-specific anti-bot detection, and clear error messaging when issues occur. If a transcript cannot be generated, TranscriptX tells you why and what to try next. You are never stuck wondering why the screen is blank.</p>
+
+<h2>Simple pricing for regular use</h2>
+
+<p>If you download transcripts occasionally, the free tier gives you 3 per month with no signup required. If transcription is part of your regular workflow, Starter at $2/month gives you 50, and Pro at $4/month gives you unlimited. No per-minute charges, no surprise bills.</p>
+
+<h2>FAQ</h2>
+<h3>Can I download a transcript from any YouTube video?</h3>
+<p>Yes. TranscriptX extracts audio and generates its own transcript, so it works even when the video has no captions.</p>
+<h3>Is the downloaded transcript better than YouTube\u2019s auto-captions?</h3>
+<p>In most cases, yes. TranscriptX uses Whisper-class AI that handles noise, accents, and technical terms more accurately.</p>
+<h3>What format is the transcript in?</h3>
+<p>TranscriptX returns clean, readable text that you can copy, edit, and paste into any editor or CMS.</p>
+<h3>Does it work on mobile?</h3>
+<p>TranscriptX is a web app that works on any device with a browser.</p>
+<h3>Is it free?</h3>
+<p>Free users get 3 transcripts/month. Paid plans start at $2/month for 50 transcripts.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Download your first YouTube transcript now.</strong></p>
+  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
+</div>
+""",
+    },
+    "audio-to-transcript": {
+        "title": "Audio to Transcript \u2014 Convert Any Recording to Editable Text",
+        "description": "TranscriptX converts audio from any video source into clean, structured transcript text. Powered by Whisper AI, ready in minutes.",
+        "keywords": "audio to transcript, transcript audio, audio transcription, convert audio to text",
+        "h1": "Audio to Transcript \u2014 From Raw Recording to Publishable Text",
+        "quick_answer": "TranscriptX extracts audio from any video URL and delivers an accurate, editable transcript in minutes \u2014 no uploads, no installs, no waiting.",
+        "faq": [
+            {
+                "q": "Does TranscriptX work with audio-only content like podcasts?",
+                "a": "TranscriptX works with any URL that contains audio or video. If your podcast episode is hosted at a public URL, it can be transcribed."
+            },
+            {
+                "q": "What happens with poor audio quality?",
+                "a": "Whisper-class AI is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy."
+            },
+            {
+                "q": "Can I transcribe audio in multiple languages?",
+                "a": "Yes. TranscriptX supports dozens of languages and can handle mixed-language audio."
+            },
+            {
+                "q": "How is this different from dictation software?",
+                "a": "Dictation software converts live speech in real time. TranscriptX converts recorded audio into polished transcript text for editing and publishing."
+            },
+            {
+                "q": "What can I do with the transcript?",
+                "a": "Edit it into articles, guides, social posts, documentation, show notes, or any text format your workflow requires."
+            },
+        ],
+        "body_html": """
+<p>Audio content is one of the most underused assets in content production. Podcasts, interviews, webinars, voice memos, earnings calls, customer conversations \u2014 all of them contain spoken material that could become searchable, publishable, shareable text. But it stays locked in audio because the conversion step has traditionally been painful.</p>
+
+<p>Manual transcription is slow. Desktop software is clunky. Most online tools require you to download audio files, convert formats, and upload them somewhere. By the time you have a transcript, the publishing window has passed or your team has moved on to the next thing.</p>
+
+<p>TranscriptX removes that friction. It extracts audio from any supported video URL and converts it into clean, editable transcript text using Whisper-class AI \u2014 all within minutes, entirely in your browser.</p>
+
+<h2>Why audio transcription still matters</h2>
+
+<p>In a world that increasingly produces content in audio and video formats, text remains the backbone of discoverability. Search engines index text. Knowledge bases store text. Teams collaborate in documents, not audio files. Social platforms may favor video, but the ideas inside that video reach further when they also exist as written words.</p>
+
+<p>For creators, this means every podcast episode is also a potential article. Every webinar is a potential guide. Every interview is a potential quote bank for weeks of social content. But only if the audio becomes text quickly enough to act on it.</p>
+
+<p>For teams, audio transcription turns ephemeral conversations into searchable records. Customer calls become training material. Strategy sessions become reference documents. The institutional knowledge that currently lives in recordings becomes accessible to everyone, not just the people who were in the room.</p>
+
+<h2>How TranscriptX converts audio to transcript</h2>
+
+<p>The process is built around one principle: you should not have to think about audio files. TranscriptX handles extraction and conversion behind the scenes.</p>
+
+<p>You paste a URL \u2014 from YouTube, TikTok, Instagram, or any of 1000+ supported platforms. TranscriptX identifies and extracts the audio track. That audio is processed through Whisper-based AI speech recognition, a model trained on over 680,000 hours of real-world audio spanning dozens of languages and recording conditions.</p>
+
+<p>You receive clean text output. Not timestamped fragments. Not raw speech-to-text noise. Structured, readable text that reflects what was actually said, with the coherence and sentence structure needed for editing.</p>
+
+<h2>Why audio quality is not the dealbreaker it used to be</h2>
+
+<p>Older transcription systems were trained on clean, studio-quality recordings. That made them brittle. Background noise, overlapping speakers, room echo, phone-quality microphones \u2014 any of these could degrade output to the point of uselessness.</p>
+
+<p>Whisper-family models are different because their training data is different. They were trained on massive volumes of actual web audio with all its imperfections. That broad training base gives them substantially better robustness to real recording conditions. Research from OpenAI indicates these models produce up to 50% fewer errors than systems trained on narrow benchmark datasets.</p>
+
+<p>Does that mean perfect transcripts from terrible audio? No. Physics still applies \u2014 a recording with constant construction noise and three people talking at once will challenge any system. But for the vast majority of real content \u2014 podcast interviews, conference talks, product demos, customer calls \u2014 the output is immediately usable with minimal editing.</p>
+
+<h2>From transcript to finished content</h2>
+
+<p>The transcript is your raw material. What you build from it depends on your goal.</p>
+
+<p><strong>Podcast show notes.</strong> Pull key topics, timestamps, and guest quotes from the transcript. Publish structured show notes that give listeners a reason to bookmark your episode page \u2014 and give search engines text to index.</p>
+
+<p><strong>Long-form articles.</strong> A 30-minute conversation easily yields 4,000+ words of raw material. Extract the strongest arguments, add context and structure, and publish an article that would have taken a full day to write from scratch.</p>
+
+<p><strong>Internal documentation.</strong> Customer call recordings become searchable support references. Onboarding sessions become training guides. Strategy conversations become decision logs. Transcripts turn audio archives into operational assets.</p>
+
+<p><strong>Social content.</strong> Short, quotable moments from audio make excellent social posts. Transcripts let you find these moments by reading instead of re-listening, cutting production time dramatically.</p>
+
+<h2>What TranscriptX costs</h2>
+
+<p>TranscriptX is priced for real usage, not theoretical enterprise scale. Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited. That is less than the cost of a single freelance transcription job.</p>
+
+<h2>FAQ</h2>
+<h3>Does TranscriptX work with audio-only content like podcasts?</h3>
+<p>TranscriptX works with any URL that contains audio or video. If your podcast episode is hosted at a public URL, it can be transcribed.</p>
+<h3>What happens with poor audio quality?</h3>
+<p>Whisper-class AI is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy.</p>
+<h3>Can I transcribe audio in multiple languages?</h3>
+<p>Yes. TranscriptX supports dozens of languages and can handle mixed-language audio.</p>
+<h3>How is this different from dictation software?</h3>
+<p>Dictation software converts live speech in real time. TranscriptX converts recorded audio into polished transcript text for editing and publishing.</p>
+<h3>What can I do with the transcript?</h3>
+<p>Edit it into articles, guides, social posts, documentation, show notes, or any text format your workflow requires.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn your audio into content that works for you.</strong></p>
+  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
+</div>
+""",
+    },
+    "youtube-video-to-transcript": {
+        "title": "YouTube Video to Transcript \u2014 From URL to Publishable Text",
+        "description": "Convert any YouTube video to a clean, editable transcript with TranscriptX. Paste the URL, get accurate text in minutes, publish everywhere.",
+        "keywords": "youtube video to transcript, youtube video transcript, transcript youtube video, youtube to transcript",
+        "h1": "YouTube Video to Transcript \u2014 Paste a URL, Get Clean Text",
+        "quick_answer": "TranscriptX converts any YouTube video into accurate, publication-ready transcript text in minutes. No captions required, no file downloads, no waiting.",
+        "faq": [
+            {
+                "q": "How is this different from copying YouTube captions?",
+                "a": "TranscriptX generates its own transcript from the audio, producing cleaner text than YouTube auto-captions with better punctuation and accuracy."
+            },
+            {
+                "q": "What happens if YouTube blocks the video download?",
+                "a": "TranscriptX includes retry logic and proxy fallback to handle YouTube anti-bot checks automatically."
+            },
+            {
+                "q": "Can I turn the transcript into a blog post?",
+                "a": "Yes. TranscriptX output is designed to be edited and restructured into articles, guides, and any text format."
+            },
+            {
+                "q": "Does it work with YouTube Shorts?",
+                "a": "Yes. Any YouTube URL with playable video content can be transcribed."
+            },
+            {
+                "q": "How many YouTube videos can I transcribe?",
+                "a": "Free: 3/month. Starter ($2/mo): 50. Pro ($4/mo): unlimited."
+            },
+            {
+                "q": "Is the transcript available in other languages?",
+                "a": "TranscriptX detects the spoken language automatically and supports dozens of languages."
+            },
+        ],
+        "body_html": """
+<p>YouTube is the largest library of spoken content on the internet. Tutorials, interviews, product reviews, conference keynotes, earnings calls, educational lectures \u2014 billions of hours of human knowledge and insight, all of it spoken, almost none of it available as clean text.</p>
+
+<p>That gap represents a massive content opportunity. Every YouTube video your team watches, references, or creates is potential written content that could be driving search traffic, fueling social posts, and building your knowledge base. But the gap only closes if you can get from video to usable text quickly and reliably.</p>
+
+<p>TranscriptX closes that gap. Paste a YouTube URL, get a clean transcript in minutes. No file downloads, no caption dependencies, no manual labor. Just text you can immediately edit and publish.</p>
+
+<h2>The caption problem</h2>
+
+<p>YouTube does offer a built-in transcript feature, and for casual use it works. But for anyone doing real content work, the limitations add up fast.</p>
+
+<p>Auto-captions are generated by YouTube\u2019s own speech recognition and are explicitly described by YouTube as variable in quality. Names get mangled. Technical terms become unrecognizable. Punctuation is inconsistent or missing entirely. The text is segmented for caption display timing, not for reading \u2014 so even accurate captions produce choppy, fragmented output when copied.</p>
+
+<p>And then there are the videos where captions simply do not exist. The creator disabled them, or the audio conditions prevented auto-generation, or the video is too new for captions to have processed. In those cases, YouTube\u2019s \u201cShow Transcript\u201d button does not appear at all. Your workflow hits a wall.</p>
+
+<p>TranscriptX does not have this dependency. It extracts audio directly from the video and generates its own transcript using Whisper-based AI. Captions being present or absent on YouTube is irrelevant to the output you receive.</p>
+
+<h2>From YouTube URL to finished text</h2>
+
+<p>Here is what the actual workflow looks like in practice.</p>
+
+<p>You copy a YouTube video URL. You paste it into TranscriptX. Behind the scenes, TranscriptX downloads the audio track from the video. That audio is processed through speech recognition models trained on over 680,000 hours of real-world, multilingual audio data. Within minutes, you have a clean transcript in your browser.</p>
+
+<p>The transcript is structured for readability: coherent sentences, proper casing, natural paragraph flow. You can copy the full text with one click and paste it into your editor, CMS, Google Doc, or wherever your content workflow lives.</p>
+
+<p>From there, the editorial work begins \u2014 but the hardest part is already done. Instead of staring at a blank page, you are reshaping existing substance. Instead of listening to a video at 1x speed with your fingers on a keyboard, you are scanning and editing text at the speed of reading.</p>
+
+<h2>What one YouTube transcript becomes</h2>
+
+<p>Think about the last time your team referenced a YouTube video in a meeting. Someone said \u201cthere is a great talk about this\u201d and shared a link. Two people watched part of it. Nobody had time to finish. The insight evaporated.</p>
+
+<p>Now imagine that same video transcribed and published as an internal reference document within the hour. The key arguments are extracted. The relevant data points are highlighted. Anyone on the team can search the text, quote it, and build on it without watching 45 minutes of video. That is the operational value of video-to-transcript conversion.</p>
+
+<p>For external content, the math is even more compelling. A single YouTube video can become a long-form article targeting a commercial keyword, a troubleshooting guide answering questions from the comments, a series of social posts pulling the best quotes, and an FAQ page addressing audience objections. One video, four assets, all indexable, all linkable, all working for you 24/7 while the original video\u2019s social visibility fades within days.</p>
+
+<h2>Reliability matters more than features</h2>
+
+<p>Anyone can build a transcription demo that works on a good day with a clean video. The real test is what happens on a bad day. YouTube changes delivery patterns. Anti-bot systems flag automated requests. Audio quality varies wildly across creators, devices, and environments.</p>
+
+<p>TranscriptX is designed for this reality. The system includes automatic retries with backoff timing, proxy fallback for YouTube anti-bot detection, and transparent error messaging. When something goes wrong, you know what happened and what to do about it. When things work \u2014 which is most of the time \u2014 you barely notice the complexity underneath.</p>
+
+<p>For teams that depend on transcription as part of a regular publishing workflow, this reliability is not a nice-to-have. It is the feature. A tool that works 70% of the time and fails silently the other 30% is worse than no tool at all, because you plan around it and then scramble when it breaks.</p>
+
+<h2>Pricing for real people</h2>
+
+<p>TranscriptX is priced so the decision is easy. Free users get 3 transcripts per month with no account required. Starter is $2/month for 50 transcripts with batch processing and export. Pro is $4/month for unlimited. That is less than a single cup of coffee for a tool that saves hours of manual work every month.</p>
+
+<h2>FAQ</h2>
+<h3>How is this different from copying YouTube captions?</h3>
+<p>TranscriptX generates its own transcript from the audio, producing cleaner text than YouTube auto-captions with better punctuation and accuracy.</p>
+<h3>What happens if YouTube blocks the video download?</h3>
+<p>TranscriptX includes retry logic and proxy fallback to handle YouTube anti-bot checks automatically.</p>
+<h3>Can I turn the transcript into a blog post?</h3>
+<p>Yes. TranscriptX output is designed to be edited and restructured into articles, guides, and any text format.</p>
+<h3>Does it work with YouTube Shorts?</h3>
+<p>Yes. Any YouTube URL with playable video content can be transcribed.</p>
+<h3>How many YouTube videos can I transcribe?</h3>
+<p>Free: 3/month. Starter ($2/mo): 50. Pro ($4/mo): unlimited.</p>
+<h3>Is the transcript available in other languages?</h3>
+<p>TranscriptX detects the spoken language automatically and supports dozens of languages.</p>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
+  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn any YouTube video into text you can use today.</strong></p>
+  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
+</div>
+""",
+    },
+}
+
+
 @app.route("/")
 def index():
     user = _get_current_user()
@@ -1331,6 +1991,52 @@ def profile_links():
         "customer_portal": POLAR_CUSTOMER_PORTAL,
         "featurebase_app_id": FEATUREBASE_APP_ID,
     })
+
+
+@app.route("/guides")
+def guides_index():
+    guides = [
+        {"slug": slug, "title": guide["title"], "description": guide["description"]}
+        for slug, guide in GUIDES_CONTENT.items()
+    ]
+    return render_template_string(GUIDES_INDEX_TEMPLATE, guides=guides)
+
+
+@app.route("/guides/<slug>")
+def guide_page(slug):
+    guide = GUIDES_CONTENT.get(slug)
+    if not guide:
+        return ("Guide not found", 404)
+
+    article_schema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": guide["title"],
+        "description": guide["description"],
+        "author": {"@type": "Organization", "name": "TranscriptX"},
+        "publisher": {"@type": "Organization", "name": "TranscriptX"},
+        "mainEntityOfPage": f"https://transcriptx.xyz/guides/{slug}",
+    }
+    faq_schema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": item["q"],
+                "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+            }
+            for item in guide["faq"]
+        ],
+    }
+
+    return render_template_string(
+        GUIDE_TEMPLATE,
+        guide=guide,
+        slug=slug,
+        article_schema_json=json.dumps(article_schema),
+        faq_schema_json=json.dumps(faq_schema),
+    )
 
 
 # ── Main Template ──────────────────────────────────────────
@@ -1755,6 +2461,7 @@ HTML_TEMPLATE = """
                     <span class="label">Transcription Engine</span>
                     <h3 class="blink" style="font-family:var(--f-wide); text-transform:uppercase;">READY</h3>
                 </div>
+                <a href="/guides" style="display:block;text-align:center;padding:0.8rem 1rem;background:var(--grey);color:var(--ink);border-radius:12px;font-family:var(--f-tech);font-size:0.75rem;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">Guides &rarr;</a>
             </div>
         </div>
 
@@ -2098,6 +2805,184 @@ HTML_TEMPLATE = """
         }
 
     </script>
+</body>
+</html>
+"""
+
+
+# ── Guides Templates ───────────────────────────────────────
+
+GUIDES_INDEX_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX Guides</title>
+    <meta name="description" content="Actionable guides for transcription workflows, repurposing video content, and SEO publishing systems.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://transcriptx.xyz/guides">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/guides">
+    <meta property="og:title" content="TranscriptX Guides">
+    <meta property="og:description" content="Actionable guides for transcription workflows, repurposing video content, and SEO publishing systems.">
+    <meta name="twitter:card" content="summary">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f5;
+            --card: #ffffff;
+            --ink: #141414;
+            --text: #141414;
+            --muted: #4f4f55;
+            --link: #b84b3f;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #050505;
+                --card: #c4c5c7;
+                --ink: #0a0a0a;
+                --text: #c4c5c7;
+                --muted: #b3b3bb;
+                --link: #b84b3f;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Mono", monospace; }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        h1 { margin-bottom: 0.5rem; }
+        p.lead { margin-top: 0; color: var(--muted); }
+        .list { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .item { background: var(--card); color: var(--ink); padding: 1rem 1.2rem; border-radius: 16px; }
+        .item a { color: var(--ink); text-decoration: none; font-weight: 700; }
+        .item a:hover { color: var(--link); }
+        .item p { color: #2b2b2b; }
+        @media (prefers-color-scheme: dark) { .item p { color: #2b2b2b; } }
+        .topnav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
+        .topnav a { color:var(--text); text-decoration:none; font-size:0.8rem; font-weight:700; }
+        .topnav a:hover { color:var(--link); }
+        .topnav .logo { font-size:1rem; letter-spacing:0.02em; }
+        .topnav .links { display:flex; gap:1rem; align-items:center; }
+        .cta-banner { margin-top:2rem; padding:1.2rem; background:var(--card); color:var(--ink); border-radius:14px; text-align:center; }
+        .cta-banner a { color:var(--link); font-weight:700; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="topnav">
+            <a href="/" class="logo">TranscriptX</a>
+            <div class="links">
+                <a href="/">Transcribe</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/guides">Guides</a>
+            </div>
+        </nav>
+        <h1>TranscriptX Guides</h1>
+        <p class="lead">Practical guides for repurposing video, running transcription workflows, and shipping SEO content faster.</p>
+        <div class="list">
+            {% for item in guides %}
+            <article class="item">
+                <a href="/guides/{{ item.slug }}">{{ item.title }}</a>
+                <p>{{ item.description }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="cta-banner">
+            <p style="margin:0 0 0.3rem;font-weight:700;">Ready to transcribe?</p>
+            <a href="/">Start transcribing free &rarr;</a>
+        </div>
+    </main>
+</body>
+</html>
+"""
+
+
+GUIDE_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ guide.title }} | TranscriptX</title>
+    <meta name="description" content="{{ guide.description }}">
+    <meta name="keywords" content="{{ guide.keywords }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://transcriptx.xyz/guides/{{ slug }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://transcriptx.xyz/guides/{{ slug }}">
+    <meta property="og:title" content="{{ guide.title }}">
+    <meta property="og:description" content="{{ guide.description }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ guide.title }}">
+    <meta name="twitter:description" content="{{ guide.description }}">
+    <script type="application/ld+json">{{ article_schema_json | safe }}</script>
+    <script type="application/ld+json">{{ faq_schema_json | safe }}</script>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f5;
+            --card: #ffffff;
+            --ink: #141414;
+            --text: #141414;
+            --muted: #3f3f46;
+            --accent: #b84b3f;
+            --table-bg: #ffffff;
+            --table-border: #d1d1d6;
+            --table-head: #f0f0f2;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #050505;
+                --card: #c4c5c7;
+                --ink: #0a0a0a;
+                --text: #c4c5c7;
+                --muted: #b3b3bb;
+                --accent: #b84b3f;
+                --table-bg: #efefef;
+                --table-border: #b1b1b1;
+                --table-head: #dddddd;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Mono", monospace; line-height: 1.6; }
+        main { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .nav { margin-bottom: 1.25rem; }
+        .nav a { color: var(--text); text-decoration: none; opacity: 0.9; }
+        .panel { background: var(--card); color: var(--ink); border-radius: 18px; padding: 1.2rem 1.4rem; margin: 1rem 0 1.25rem; }
+        h1, h2, h3 { line-height: 1.25; }
+        h1 { margin-bottom: 0.7rem; }
+        h2 { margin-top: 1.3rem; }
+        p, li { color: var(--muted); }
+        a { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: var(--table-bg); }
+        th, td { border: 1px solid var(--table-border); padding: 0.6rem; text-align: left; color: #111; }
+        th { background: var(--table-head); }
+        .topnav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
+        .topnav a { color:var(--text); text-decoration:none; font-size:0.8rem; font-weight:700; }
+        .topnav a:hover { color:var(--accent); }
+        .topnav .logo { font-size:1rem; letter-spacing:0.02em; }
+        .topnav .links { display:flex; gap:1rem; align-items:center; }
+        .sticky-cta { position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--muted); padding:0.8rem 1rem; text-align:center; margin:2rem -1rem 0; }
+        .sticky-cta a { color:var(--accent); font-weight:700; text-decoration:none; font-size:0.85rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="topnav">
+            <a href="/" class="logo">TranscriptX</a>
+            <div class="links">
+                <a href="/">Transcribe</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/guides">Guides</a>
+            </div>
+        </nav>
+        <h1>{{ guide.h1 }}</h1>
+        <div class="panel"><strong>Quick answer:</strong> {{ guide.quick_answer }}</div>
+        {{ guide.body_html | safe }}
+        <div class="sticky-cta">
+            <a href="/">Try TranscriptX free &rarr;</a>
+        </div>
+    </main>
 </body>
 </html>
 """
