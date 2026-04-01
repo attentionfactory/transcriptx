@@ -15,6 +15,19 @@ from groq import Groq
 log = logging.getLogger(__name__)
 
 _client = None
+_YTDLP_RETRY_ARGS = [
+    "--extractor-retries", "3",
+    "--retries", "5",
+    "--fragment-retries", "5",
+    "--sleep-requests", "1",
+    "--socket-timeout", "30",
+]
+_YT_ANTIBOT_MARKERS = (
+    "http error 429",
+    "login_required",
+    "sign in to confirm you",
+    "unable to download webpage",
+)
 
 
 def _get_client():
@@ -27,15 +40,80 @@ def _get_client():
     return _client
 
 
+def _is_youtube_url(url):
+    u = url.lower()
+    return "youtube.com" in u or "youtu.be" in u
+
+
+def _is_youtube_antibot(stderr):
+    e = (stderr or "").lower()
+    return any(marker in e for marker in _YT_ANTIBOT_MARKERS)
+
+
+def _proxy_candidates():
+    raw = os.environ.get("YTDLP_PROXY_URL", "").strip()
+    if not raw:
+        return []
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+
+def _format_yt_dlp_error(stderr, context, used_proxy=False):
+    msg = (stderr or "").strip()
+    if _is_youtube_antibot(msg):
+        if used_proxy:
+            return (
+                f"{context} failed: YouTube anti-bot check blocked this request after proxy retry. "
+                "Try again in a few minutes or use a different rotating proxy endpoint."
+            )
+        return (
+            f"{context} failed: YouTube anti-bot check blocked this request "
+            "(HTTP 429 / LOGIN_REQUIRED)."
+        )
+
+    if "timed out" in msg.lower():
+        return f"{context} timed out while contacting the video source."
+
+    short = msg[:220] if msg else "Unknown yt-dlp error"
+    return f"{context} failed: {short}"
+
+
+def _run_ytdlp_with_fallback(cmd, timeout, url):
+    """Run yt-dlp directly; for YouTube anti-bot errors retry via proxy."""
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if r.returncode == 0:
+        return r, False
+
+    if not _is_youtube_url(url) or not _is_youtube_antibot(r.stderr):
+        return r, False
+
+    proxies = _proxy_candidates()
+    if not proxies:
+        return r, False
+
+    log.warning("[yt-dlp] YouTube anti-bot detected. Retrying with proxy pool (%d)", len(proxies))
+
+    last = r
+    for proxy in proxies:
+        proxy_cmd = ["yt-dlp", "--proxy", proxy, *cmd[1:]]
+        log.info("[yt-dlp] proxy retry using endpoint=%s", proxy.split("@")[-1])
+        pr = subprocess.run(proxy_cmd, capture_output=True, text=True, timeout=timeout)
+        last = pr
+        if pr.returncode == 0:
+            return pr, True
+
+    return last, True
+
+
 def get_metadata(url):
     """Pull video metadata via yt-dlp (no download)."""
     try:
-        r = subprocess.run(
-            ["yt-dlp", "--dump-json", "--no-download", "--no-playlist", url],
-            capture_output=True, text=True, timeout=60
+        r, used_proxy = _run_ytdlp_with_fallback(
+            ["yt-dlp", *_YTDLP_RETRY_ARGS, "--dump-json", "--no-download", "--no-playlist", url],
+            timeout=60,
+            url=url,
         )
         if r.returncode != 0:
-            return {"error": f"Could not fetch video: {r.stderr.strip()[:200]}"}
+            return {"error": _format_yt_dlp_error(r.stderr, "Could not fetch video metadata", used_proxy)}
 
         info = json.loads(r.stdout)
         return {
@@ -67,18 +145,20 @@ def download_audio(url):
     t0 = time.time()
 
     try:
-        r = subprocess.run(
+        r, used_proxy = _run_ytdlp_with_fallback(
             [
                 "yt-dlp",
+                *_YTDLP_RETRY_ARGS,
                 "--no-playlist",
                 "-f", "bestaudio/best",
                 "--extract-audio",
                 "--audio-format", "mp3",
                 "--audio-quality", "9",
                 "-o", out,
-                url
+                url,
             ],
-            capture_output=True, text=True, timeout=120
+            timeout=120,
+            url=url,
         )
 
         dl_time = time.time() - t0
@@ -86,7 +166,7 @@ def download_audio(url):
 
         if r.returncode != 0:
             log.error("[download] yt-dlp failed: %s", r.stderr.strip()[:200])
-            return None, f"Download failed: {r.stderr.strip()[:200]}"
+            return None, _format_yt_dlp_error(r.stderr, "Audio download", used_proxy)
 
         for f in os.listdir(tmpdir):
             if f.endswith((".mp3", ".wav", ".m4a", ".ogg", ".webm")):
@@ -137,10 +217,16 @@ def process_url(url, model="whisper-large-v3-turbo"):
     log.info("[pipeline] start url=%s model=%s", url, model)
     t_total = time.time()
 
+    metadata_error = None
     meta = get_metadata(url)
     if "error" in meta:
-        log.warning("[pipeline] metadata error: %s", meta["error"])
-        return {"url": url, "status": "error", "error": meta["error"]}
+        metadata_error = meta["error"]
+        if _is_youtube_url(url):
+            log.warning("[pipeline] metadata error (continuing for YouTube): %s", metadata_error)
+            meta = {}
+        else:
+            log.warning("[pipeline] metadata error: %s", metadata_error)
+            return {"url": url, "status": "error", "error": metadata_error}
 
     # Download
     filepath, err = download_audio(url)
@@ -149,6 +235,7 @@ def process_url(url, model="whisper-large-v3-turbo"):
             "url": url,
             "status": "error",
             "error": err,
+            "metadata_error": metadata_error,
             **{k: meta.get(k, 0) for k in ["views", "likes", "comments", "duration"]},
         }
 
@@ -179,5 +266,6 @@ def process_url(url, model="whisper-large-v3-turbo"):
         "duration": dur,
         "duration_formatted": dur_fmt,
         "uploader": meta.get("uploader", ""),
+        "metadata_error": metadata_error,
         "error": result.get("error"),
     }
