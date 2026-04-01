@@ -1,0 +1,32 @@
+# TranscriptX
+
+> TranscriptX converts video/audio into transcripts and repurposed content for SEO and publishing workflows.
+
+## Canonical
+- https://transcriptx.xyz/
+
+## Key pages
+- https://transcriptx.xyz/
+- https://transcriptx.xyz/pricing
+- https://transcriptx.xyz/profile-links
+- https://transcriptx.xyz/guides
+- https://transcriptx.xyz/guides/repurpose-video-into-seo-post
+- https://transcriptx.xyz/guides/manual-vs-ai-transcription
+- https://transcriptx.xyz/guides/youtube-transcript-generator
+- https://transcriptx.xyz/guides/video-to-transcript
+- https://transcriptx.xyz/guides/download-youtube-transcript
+- https://transcriptx.xyz/guides/audio-to-transcript
+- https://transcriptx.xyz/guides/youtube-video-to-transcript
+
+## Product scope
+- Upload media and generate AI transcript output
+- Transform transcripts into reusable written content
+- Manage profile links and publishing-related flows
+
+## Access policy for agents
+- Public website pages can be read and summarized
+- Do not attempt authenticated actions or admin routes
+- Respect robots.txt and legal policies
+
+## Contact
+- https://transcriptx.xyz/
