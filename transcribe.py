@@ -199,13 +199,29 @@ def transcribe(filepath, model="whisper-large-v3-turbo"):
                 file=f,
                 model=model,
                 response_format="verbose_json",
+                timestamp_granularities=["word", "segment"],
             )
         elapsed = time.time() - t0
         lang = getattr(result, "language", "unknown")
         log.info("[transcribe] done in %.1fs lang=%s chars=%d", elapsed, lang, len(result.text))
+
+        # Groq SDK object can be pydantic-like; normalize for safe access.
+        result_data = result.model_dump() if hasattr(result, "model_dump") else result
+        segments = []
+        words = []
+        if isinstance(result_data, dict):
+            segments = result_data.get("segments") or []
+            words = result_data.get("words") or []
+        else:
+            # Groq SDK may return object-like responses with attrs.
+            segments = getattr(result, "segments", None) or []
+            words = getattr(result, "words", None) or []
+
         return {
             "transcript": result.text.strip(),
             "language": lang,
+            "segments": segments,
+            "words": words,
         }
     except Exception as e:
         log.exception("[transcribe] failed after %.1fs", time.time() - t0)
@@ -260,6 +276,8 @@ def process_url(url, model="whisper-large-v3-turbo"):
         "status": status,
         "transcript": result.get("transcript", ""),
         "language": result.get("language", "unknown"),
+        "segments": result.get("segments", []),
+        "words": result.get("words", []),
         "views": meta.get("views", 0),
         "likes": meta.get("likes", 0),
         "comments": meta.get("comments", 0),

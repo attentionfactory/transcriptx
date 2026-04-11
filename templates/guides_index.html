@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX Guides</title>
+    <meta name="description" content="Actionable guides for transcription workflows, repurposing video content, and SEO publishing systems.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://transcriptx.xyz/guides">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/guides">
+    <meta property="og:title" content="TranscriptX Guides">
+    <meta property="og:description" content="Actionable guides for transcription workflows, repurposing video content, and SEO publishing systems.">
+    <meta name="twitter:card" content="summary">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f5;
+            --card: #ffffff;
+            --ink: #141414;
+            --text: #141414;
+            --muted: #4f4f55;
+            --link: #b84b3f;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #050505;
+                --card: #c4c5c7;
+                --ink: #0a0a0a;
+                --text: #c4c5c7;
+                --muted: #b3b3bb;
+                --link: #b84b3f;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Mono", monospace; }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        h1 { margin-bottom: 0.5rem; }
+        p.lead { margin-top: 0; color: var(--muted); }
+        .list { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .item { background: var(--card); color: var(--ink); padding: 1rem 1.2rem; border-radius: 16px; }
+        .item a { color: var(--ink); text-decoration: none; font-weight: 700; }
+        .item a:hover { color: var(--link); }
+        .item p { color: #2b2b2b; }
+        @media (prefers-color-scheme: dark) { .item p { color: #2b2b2b; } }
+        .topnav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
+        .topnav a { color:var(--text); text-decoration:none; font-size:0.8rem; font-weight:700; }
+        .topnav a:hover { color:var(--link); }
+        .topnav .logo { font-size:1rem; letter-spacing:0.02em; }
+        .topnav .links { display:flex; gap:1rem; align-items:center; }
+        .cta-banner { margin-top:2rem; padding:1.2rem; background:var(--card); color:var(--ink); border-radius:14px; text-align:center; }
+        .cta-banner a { color:var(--link); font-weight:700; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="topnav">
+            <a href="/" class="logo">TranscriptX</a>
+            <div class="links">
+                <a href="/">Transcribe</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/guides">Guides</a>
+            </div>
+        </nav>
+        <h1>TranscriptX Guides</h1>
+        <p class="lead">Practical guides for repurposing video, running transcription workflows, and shipping SEO content faster.</p>
+        <div class="list">
+            {% for item in guides %}
+            <article class="item">
+                <a href="/guides/{{ item.slug }}">{{ item.title }}</a>
+                <p>{{ item.description }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="cta-banner">
+            <p style="margin:0 0 0.3rem;font-weight:700;">Ready to transcribe?</p>
+            <a href="/">Start transcribing free &rarr;</a>
+        </div>
+    </main>
+</body>
+</html>

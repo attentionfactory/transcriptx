@@ -1,0 +1,533 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Profile Link Extractor</title>
+    <meta name="description" content="Extract all video links from any TikTok, YouTube, Instagram, or X profile. Links stream in live — no waiting. Powered by TranscriptX.">
+    <meta name="theme-color" content="#111111">
+    <link rel="canonical" href="https://transcriptx.xyz/profile-links">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/profile-links">
+    <meta property="og:title" content="TranscriptX — Profile Link Extractor">
+    <meta property="og:description" content="Extract all video links from any TikTok, YouTube, Instagram, or X profile. Links stream in live.">
+    <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="TranscriptX — Profile Link Extractor">
+    <meta name="twitter:description" content="Extract all video links from any social media profile. Links stream in live.">
+    <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
+    <script>
+        !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
+        if ("{{ config.featurebase_app_id }}") {
+            Featurebase("boot", {
+                appId: "{{ config.featurebase_app_id }}",
+                theme: "dark",
+                language: "en"
+            });
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #050505;
+            --orange: #F0A860;
+            --electricgreen: #9BBA45;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; overflow-x:hidden; }
+
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; width:100%; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
+        }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; text-decoration:none; color:var(--ink); }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        .nav-links { display:flex; align-items:center; gap:0.5rem; }
+        .nav-links a {
+            color:var(--ink); text-decoration:none; font-size:0.7rem; font-weight:700;
+            text-transform:uppercase; padding:0.5rem 1rem; border-radius:4px;
+            border:1px solid transparent; transition:all 0.2s;
+        }
+        .nav-links a:hover { border-color:var(--ink); background:rgba(0,0,0,0.05); }
+        .nav-badge {
+            font-size:0.6rem; padding:0.4rem 0.8rem; border-radius:4px;
+            font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+        }
+        .nav-badge.free { background:rgba(0,0,0,0.08); }
+        .nav-badge.starter { background:rgba(66,85,212,0.15); color:#4255d4; }
+        .nav-badge.pro { background:rgba(112,148,114,0.3); }
+
+        .panel { border-radius:var(--radius); padding:2rem; }
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; display:block; margin-bottom:0.3rem; }
+        h1 { font-family:var(--f-wide); font-size:1.6rem; text-transform:uppercase; line-height:0.95; margin-bottom:1rem; }
+        .sub { font-size:0.8rem; border-left:2px solid var(--ink); padding-left:1rem; margin-bottom:2rem; line-height:1.6; opacity:0.8; }
+
+        .input-row { border:var(--bw) solid var(--ink); display:grid; grid-template-columns:1fr auto; }
+        .input-row input {
+            background:transparent; border:none; padding:1.2rem;
+            font-family:var(--f-tech); font-size:0.9rem; color:var(--ink); outline:none;
+        }
+        .input-row input::placeholder { color:rgba(10,10,10,0.3); }
+        .input-row button {
+            background:var(--ink); color:var(--orange); border:none; padding:0 1.8rem;
+            font-family:var(--f-wide); font-size:0.65rem; text-transform:uppercase; cursor:pointer;
+        }
+        .input-row button:hover { background:#333; }
+        .input-row button:disabled { opacity:0.4; cursor:wait; }
+
+        .options { display:flex; align-items:center; gap:1.2rem; margin-top:0.8rem; flex-wrap:wrap; }
+        .options select {
+            background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:0.4rem 0.6rem; font-family:var(--f-tech); font-size:0.65rem;
+        }
+
+        .status { background:var(--grey); border-radius:var(--radius); padding:1.2rem 2rem; margin-bottom:0; display:none; }
+        .status.on { display:flex; align-items:center; gap:10px; }
+        .dot { width:6px; height:6px; border-radius:50%; background:var(--ink); animation:blink 1s ease infinite; flex-shrink:0; }
+        @keyframes blink { 50%{opacity:0.2} }
+        .status-text { flex:1; font-size:0.75rem; }
+        .stop-btn {
+            background:var(--red); color:#fff; border:none; padding:6px 14px;
+            font-family:var(--f-tech); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            border-radius:4px;
+        }
+        .stop-btn:hover { opacity:0.8; }
+        .counter {
+            font-family:var(--f-wide); font-size:2rem; font-weight:700;
+            min-width:60px; text-align:center;
+        }
+
+        .results { background:var(--grey); border-radius:var(--radius); padding:2rem; display:none; }
+        .results.on { display:block; }
+        .results-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
+        .results-head h2 { font-family:var(--f-wide); font-size:0.9rem; text-transform:uppercase; }
+        .btn-row { display:flex; gap:6px; }
+        .btn-sm {
+            background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:4px 12px; font-family:var(--f-tech); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+        }
+        .btn-sm:hover { background:var(--ink); color:var(--orange); }
+        .btn-sm.green { border-color:var(--green); }
+        .btn-sm.green:hover { background:var(--green); color:#fff; }
+
+        .link-list {
+            max-height:50vh; overflow-y:auto; border:var(--bw) solid var(--ink);
+            padding:1rem; font-size:0.72rem; line-height:2; word-break:break-all;
+        }
+        .link-list a { color:var(--ink); text-decoration:none; display:block; opacity:0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .link-list a:hover { opacity:1; text-decoration:underline; }
+        .link-list a.new { animation:fadeIn 0.3s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:0.8;transform:none} }
+
+        .err { background:var(--red); color:#fff; border-radius:var(--radius); padding:1.2rem 2rem; font-size:0.8rem; display:none; }
+        .err.on { display:block; }
+
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between; letter-spacing:0.05em;
+        }
+        .tech-footer a { color:#555; text-decoration:none; }
+        .tech-footer a:hover { color:var(--orange); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
+        .modal-overlay.open { display:flex; }
+        .modal-box { background:var(--grey); border-radius:var(--radius); padding:2rem; width:90%; max-width:380px; text-align:center; }
+        .modal-title { font-family:var(--f-wide); font-size:0.9rem; text-transform:uppercase; margin-bottom:4px; }
+        .modal-sub { font-size:0.75rem; opacity:0.6; }
+        .modal-input {
+            width:100%; margin-top:1rem; background:transparent; border:var(--bw) solid var(--ink);
+            padding:1rem; font-family:var(--f-tech); font-size:0.85rem; color:var(--ink); outline:none;
+        }
+        .modal-input::placeholder { color:rgba(10,10,10,0.35); }
+        .modal-btn {
+            width:100%; margin-top:0.8rem; background:var(--ink); color:var(--orange); border:none;
+            padding:1rem; font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase; cursor:pointer;
+        }
+        .modal-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .modal-err { color:var(--red); font-size:0.7rem; margin-top:0.5rem; min-height:1.2em; }
+        .auth-tab {
+            flex:1; background:transparent; border:var(--bw) solid var(--ink); padding:0.7rem;
+            font-family:var(--f-wide); font-size:0.6rem; text-transform:uppercase; cursor:pointer;
+            color:var(--ink); opacity:0.4; transition:all 0.2s;
+        }
+        .auth-tab.active { opacity:1; background:var(--ink); color:var(--orange); }
+
+        @media (max-width:600px) {
+            body { padding:0; }
+            .layout { padding:0.5rem; gap:0.5rem; }
+            nav { padding:0.6rem 1rem; border-radius:60px; }
+            .nav-logo { font-size:0.85rem; }
+            .nav-links { gap:0.2rem; }
+            .nav-links a { font-size:0.55rem; padding:0.35rem 0.5rem; }
+            .nav-badge { font-size:0.5rem; padding:0.3rem 0.5rem; }
+            .panel { padding:1.5rem; border-radius:1.2rem; }
+            h1 { font-size:1.2rem; }
+            .input-row { grid-template-columns:1fr; }
+            .input-row button { padding:0.9rem 1.5rem; }
+            .results { padding:1.2rem; border-radius:1.2rem; }
+            .status { border-radius:1.2rem; padding:1rem; }
+            .modal-box { padding:1.5rem; border-radius:1rem; width:95%; }
+            .tech-footer { flex-direction:column; gap:0.5rem; text-align:center; padding:1rem; font-size:0.55rem; }
+        }
+    </style>
+</head>
+<body>
+    {% if banner.enabled and banner.text %}
+    <div id="siteBanner" style="background:var(--electricgreen);color:var(--ink);padding:0.6rem 2rem;font-size:0.7rem;font-family:var(--f-tech);position:relative;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:0.7rem;flex-wrap:wrap;text-align:center;">
+            <span>{{ banner.text }}</span>
+            {% if banner.cta %}
+            <a href="{{ banner.cta.url }}" style="
+                text-decoration:none;
+                {% if banner.cta.style == 'primary' %}
+                background:var(--ink); color:var(--grey); border:1px solid var(--ink);
+                {% elif banner.cta.style == 'ghost' %}
+                background:transparent; color:var(--ink); border:1px solid var(--ink);
+                {% else %}
+                background:transparent; color:var(--ink); border:1px solid transparent; text-decoration:underline;
+                {% endif %}
+                padding:0.28rem 0.65rem; border-radius:0.4rem; font-size:0.65rem; font-weight:700;
+            ">{{ banner.cta.label }}</a>
+            {% endif %}
+        </div>
+        {% if banner.dismissible %}
+        <button onclick="document.getElementById('siteBanner').remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1rem;cursor:pointer;opacity:0.6;">✕</button>
+        {% endif %}
+    </div>
+    {% endif %}
+    <div class="layout">
+        <nav>
+            <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
+            <div class="nav-links">
+                {% if user.logged_in %}
+                <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
+                {% if user.plan != 'free' %}
+                <a href="{{ config.customer_portal }}" data-umami-event="nav-billing">Billing</a>
+                {% else %}
+                <a href="/pricing" data-umami-event="nav-upgrade">Upgrade</a>
+                {% endif %}
+                <a href="/" data-umami-event="nav-transcribe">Transcribe</a>
+                <a href="#" onclick="logout();return false" data-umami-event="nav-logout">Logout</a>
+                {% else %}
+                <a href="/" data-umami-event="nav-transcribe">Transcribe</a>
+                <a href="#" onclick="showAuth('login');return false" data-umami-event="nav-login">Login</a>
+                <a href="#" onclick="showAuth('signup');return false" data-umami-event="nav-signup">Sign Up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <div class="panel" style="background:var(--orange);">
+            <span class="label">Profile Link Extractor</span>
+            <h1>Get All<br>Video Links</h1>
+            <div class="sub">Paste a TikTok, YouTube, Instagram, or X profile URL. Links stream in live — no waiting for all of them. <strong>1 credit per 5 links.</strong></div>
+            <span class="label">Profile URL</span>
+            <div class="input-row">
+                <input type="text" id="url" placeholder="https://tiktok.com/@username" onkeydown="if(event.key==='Enter')go()">
+                <button id="btn" onclick="go()" data-umami-event="extract-links">EXTRACT ➔</button>
+            </div>
+            <div class="options">
+                <span class="label" style="margin:0">Limit:</span>
+                <select id="limit">
+                    <option value="0">All videos</option>
+                    <option value="10" selected>Last 10</option>
+                    <option value="25">Last 25</option>
+                    <option value="50">Last 50</option>
+                    <option value="100">Last 100</option>
+                    <option value="200">Last 200</option>
+                    <option value="500">Last 500</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            <div class="dot"></div>
+            <span class="status-text" id="msg">Extracting links...</span>
+            <div class="counter" id="liveCount">0</div>
+            <button class="stop-btn" onclick="stop()" data-umami-event="stop-extraction">Stop</button>
+        </div>
+
+        <div class="err" id="err"></div>
+
+        <div class="results" id="results">
+            <div class="results-head">
+                <h2><span id="count">0</span> Links Found</h2>
+                <div class="btn-row">
+                    <button class="btn-sm" onclick="copyAll()" data-umami-event="copy-all-links">Copy All</button>
+                    <button class="btn-sm green" onclick="downloadTxt()" data-umami-event="download-txt">Download .txt</button>
+                </div>
+            </div>
+            <div class="link-list" id="links"></div>
+        </div>
+
+        <!-- Auth modal -->
+        <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
+            <div class="modal-box">
+                <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.2rem;">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')" data-umami-event="tab-login">LOG IN</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')" data-umami-event="tab-signup">SIGN UP</button>
+                </div>
+                <div id="loginForm">
+                    <input type="email" class="modal-input" id="loginEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
+                    <div class="modal-err" id="loginErr"></div>
+                    <button class="modal-btn" onclick="doLogin()" data-umami-event="login-submit">LOG IN ➔</button>
+                </div>
+                <div id="signupForm" style="display:none;">
+                    <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
+                    <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <div class="modal-err" id="signupErr"></div>
+                    <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
+                </div>
+                <div id="verifyForm" style="display:none;">
+                    <div class="modal-title">Check Your Email</div>
+                    <div class="modal-sub" id="verifySub">Enter the 6-digit code we sent</div>
+                    <input type="text" class="modal-input" id="verifyCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;" onkeydown="if(event.key==='Enter')doVerify()">
+                    <div class="modal-err" id="verifyErr"></div>
+                    <button class="modal-btn" onclick="doVerify()" data-umami-event="verify-submit">VERIFY ➔</button>
+                    <div style="margin-top:0.8rem;text-align:center;">
+                        <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;" data-umami-event="resend-code">Resend code</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="tech-footer">
+            <div>TranscriptX Systems</div>
+            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a></div>
+        </footer>
+    </div>
+
+    <script>
+        let allLinks = [];
+        let eventSource = null;
+
+        function go() {
+            {% if not user.logged_in %}
+            showAuth('signup');
+            return;
+            {% endif %}
+
+            const url = document.getElementById('url').value.trim();
+            if (!url) return;
+
+            const limit = document.getElementById('limit').value;
+            const btn = document.getElementById('btn');
+            const status = document.getElementById('status');
+            const err = document.getElementById('err');
+            const results = document.getElementById('results');
+            const linksEl = document.getElementById('links');
+
+            allLinks = [];
+            linksEl.innerHTML = '';
+            btn.disabled = true;
+            err.classList.remove('on');
+            results.classList.add('on');
+            status.classList.add('on');
+            document.getElementById('msg').textContent = 'Extracting links...';
+            document.getElementById('liveCount').textContent = '0';
+            document.getElementById('count').textContent = '0';
+
+            if (eventSource) eventSource.close();
+
+            const params = new URLSearchParams({url, limit});
+            eventSource = new EventSource(`/api/profile-links?${params}`);
+
+            eventSource.onmessage = function(e) {
+                const d = JSON.parse(e.data);
+
+                if (d.type === 'link') {
+                    allLinks.push(d.url);
+                    document.getElementById('liveCount').textContent = d.n;
+                    document.getElementById('count').textContent = d.n;
+
+                    const a = document.createElement('a');
+                    a.href = d.url;
+                    a.target = '_blank';
+                    a.textContent = d.url;
+                    a.className = 'new';
+                    linksEl.appendChild(a);
+                    linksEl.scrollTop = linksEl.scrollHeight;
+                }
+                else if (d.type === 'done') {
+                    finish(`Done — ${d.count} links extracted` + (d.credits_used ? ` (${d.credits_used} credit${d.credits_used > 1 ? 's' : ''})` : ''));
+                    updateCredits();
+                }
+                else if (d.type === 'error') {
+                    finish();
+                    err.textContent = d.msg;
+                    err.classList.add('on');
+                    if (allLinks.length === 0) results.classList.remove('on');
+                    updateCredits();
+                }
+            };
+
+            eventSource.onerror = function() {
+                finish();
+                if (allLinks.length === 0) {
+                    err.textContent = 'Connection lost. Try again.';
+                    err.classList.add('on');
+                    results.classList.remove('on');
+                }
+                updateCredits();
+            };
+        }
+
+        function stop() {
+            if (eventSource) eventSource.close();
+            finish('Stopped');
+            updateCredits();
+        }
+
+        function finish(msg) {
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            document.getElementById('btn').disabled = false;
+            document.getElementById('status').classList.remove('on');
+            if (msg) document.getElementById('msg').textContent = msg;
+        }
+
+        function copyAll() {
+            navigator.clipboard.writeText(allLinks.join('\\n'));
+            event.target.textContent = 'Copied!';
+            setTimeout(() => event.target.textContent = 'Copy All', 1500);
+        }
+
+        function downloadTxt() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([allLinks.join('\\n')], {type:'text/plain'}));
+            a.download = 'profile-links.txt';
+            a.click();
+        }
+
+        async function updateCredits() {
+            try {
+                const r = await fetch('/api/me');
+                const u = await r.json();
+                const badge = document.querySelector('.nav-badge');
+                if (badge) {
+                    badge.textContent = `${u.plan_name} — ${u.credits_label}`;
+                    badge.className = `nav-badge ${u.plan}`;
+                }
+            } catch(e) {}
+        }
+
+        let authEmail = '';
+        function showAuth(tab) {
+            document.getElementById('authModal').classList.add('open');
+            switchTab(tab || 'login');
+        }
+        function hideAuth() {
+            document.getElementById('authModal').classList.remove('open');
+            document.getElementById('loginErr').textContent = '';
+            document.getElementById('signupErr').textContent = '';
+            document.getElementById('verifyErr').textContent = '';
+        }
+        function switchTab(tab) {
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            if (tab === 'signup') se.value = le.value;
+            if (tab === 'login') le.value = se.value;
+            document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+            document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
+            document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+            if (tab === 'login') le.focus();
+            if (tab === 'signup') se.focus();
+            if (tab === 'verify') document.getElementById('verifyCode').focus();
+        }
+        async function doSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const err = document.getElementById('signupErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
+            try {
+                const r = await fetch('/api/signup', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.step === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                } else {
+                    err.textContent = d.error || 'Something went wrong';
+                }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function doVerify() {
+            const code = document.getElementById('verifyCode').value.trim();
+            const err = document.getElementById('verifyErr');
+            err.textContent = '';
+            if (code.length !== 6) { err.textContent = 'Enter the 6-digit code'; return; }
+            try {
+                const r = await fetch('/api/verify', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail, code})
+                });
+                const d = await r.json();
+                if (r.ok) { location.reload(); }
+                else { err.textContent = d.error || 'Invalid code'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function resendCode() {
+            if (!authEmail) return;
+            try {
+                await fetch('/api/resend-code', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: authEmail})
+                });
+                document.getElementById('verifyErr').textContent = '';
+                document.getElementById('verifySub').textContent = 'New code sent to ' + authEmail;
+            } catch(e) {}
+        }
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const err = document.getElementById('loginErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            if (!password) { err.textContent = 'Enter your password'; return; }
+            try {
+                const r = await fetch('/api/login', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const d = await r.json();
+                if (d.status === 'ok') { location.reload(); }
+                else if (d.status === 'verify') {
+                    authEmail = email;
+                    document.getElementById('verifySub').textContent = 'Code sent to ' + email;
+                    switchTab('verify');
+                }
+                else { err.textContent = d.error || 'Login failed'; }
+            } catch(e) { err.textContent = 'Something went wrong'; }
+        }
+        async function logout() {
+            await fetch('/api/logout', {method:'POST'});
+            location.reload();
+        }
+
+    </script>
+</body>
+</html>

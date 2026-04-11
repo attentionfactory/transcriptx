@@ -57,6 +57,7 @@ from database import (
     effective_entitlement,
 )
 from transcribe import process_url
+from routes_pages import register_page_routes
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.uuid4().hex)
@@ -214,6 +215,47 @@ EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
 
 def _is_production():
     return os.environ.get("FLASK_ENV") == "production"
+
+
+def _normalize_banner_payload(data):
+    payload = data if isinstance(data, dict) else {}
+    enabled = bool(payload.get("enabled"))
+    text = str(payload.get("text", "")).strip()
+    dismissible = bool(payload.get("dismissible", True))
+
+    cta = payload.get("cta")
+    if cta is None:
+        return {
+            "enabled": enabled,
+            "text": text,
+            "cta": None,
+            "dismissible": dismissible,
+        }, None
+
+    if not isinstance(cta, dict):
+        return None, "CTA must be an object."
+
+    label = str(cta.get("label", "")).strip()
+    url = str(cta.get("url", "")).strip()
+    style = str(cta.get("style", "primary")).strip().lower()
+
+    if not label or len(label) > 24:
+        return None, "CTA label must be 1-24 characters."
+    if style not in ("primary", "ghost", "link"):
+        return None, "CTA style must be primary, ghost, or link."
+    if not url:
+        return None, "CTA URL is required when CTA is set."
+    if not (url.startswith("/") or url.startswith("https://") or url.startswith("http://")):
+        return None, "CTA URL must be https:// or an internal path."
+    if url.startswith(("javascript:", "data:")):
+        return None, "CTA URL scheme is not allowed."
+
+    return {
+        "enabled": enabled,
+        "text": text,
+        "cta": {"label": label, "url": url, "style": style},
+        "dismissible": dismissible,
+    }, None
 
 
 def _client_ip():
@@ -731,9 +773,14 @@ def admin_banner():
     has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
     if not has_admin_email:
         return "Not found", 404
-    data = request.get_json()
-    set_config("banner_enabled", "1" if data.get("enabled") else "0")
-    set_config("banner_text", data.get("text", ""))
+    data = request.get_json() or {}
+    banner_payload, err = _normalize_banner_payload(data)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    set_config("banner_enabled", "1" if banner_payload["enabled"] else "0")
+    set_config("banner_text", banner_payload["text"])
+    set_config("banner_json", json.dumps(banner_payload))
     return jsonify({"status": "ok"})
 
 
@@ -1165,7 +1212,24 @@ ADMIN_TEMPLATE = """
                 <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Enabled</label>
                 <input type="checkbox" id="bannerEnabled" {% if banner.enabled %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
             </div>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Dismissible</label>
+                <input type="checkbox" id="bannerDismissible" {% if banner.dismissible %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
             <input type="text" id="bannerText" value="{{ banner.text }}" placeholder="Banner message..." style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">CTA</label>
+                <input type="checkbox" id="bannerCtaEnabled" {% if banner.cta %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 170px; gap:0.6rem;">
+                <input type="text" id="bannerCtaLabel" value="{{ banner.cta.label if banner.cta else '' }}" placeholder="CTA label (max 24)" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                <input type="text" id="bannerCtaUrl" value="{{ banner.cta.url if banner.cta else '' }}" placeholder="https://... or /path" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                <select id="bannerCtaStyle" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                    <option value="primary" {% if banner.cta and banner.cta.style == 'primary' %}selected{% endif %}>primary</option>
+                    <option value="ghost" {% if banner.cta and banner.cta.style == 'ghost' %}selected{% endif %}>ghost</option>
+                    <option value="link" {% if banner.cta and banner.cta.style == 'link' %}selected{% endif %}>link</option>
+                </select>
+            </div>
             <button onclick="saveBanner()" style="align-self:flex-start; background:var(--ink); color:var(--grey); border:none; padding:0.6rem 1.5rem; border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">Save Banner</button>
             <div id="bannerStatus" style="font-size:0.7rem; opacity:0.6;"></div>
         </div>
@@ -1207,14 +1271,28 @@ ADMIN_TEMPLATE = """
         async function saveBanner() {
             const enabled = document.getElementById('bannerEnabled').checked;
             const text = document.getElementById('bannerText').value;
+            const dismissible = document.getElementById('bannerDismissible').checked;
+            const ctaEnabled = document.getElementById('bannerCtaEnabled').checked;
+            const ctaLabel = document.getElementById('bannerCtaLabel').value.trim();
+            const ctaUrl = document.getElementById('bannerCtaUrl').value.trim();
+            const ctaStyle = document.getElementById('bannerCtaStyle').value;
             const st = document.getElementById('bannerStatus');
+            const payload = {enabled, text, dismissible, cta: null};
+            if (ctaEnabled) {
+                payload.cta = {label: ctaLabel, url: ctaUrl, style: ctaStyle};
+            }
             try {
                 const r = await fetch('/admin/banner', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({enabled, text})
+                    body: JSON.stringify(payload)
                 });
-                st.textContent = r.ok ? 'Saved!' : 'Error saving';
+                if (r.ok) {
+                    st.textContent = 'Saved!';
+                } else {
+                    const d = await r.json().catch(() => ({}));
+                    st.textContent = d.error || 'Error saving';
+                }
                 setTimeout(() => st.textContent = '', 2000);
             } catch(e) { st.textContent = 'Error: ' + e.message; }
         }
@@ -1960,83 +2038,16 @@ GUIDES_CONTENT = {
 }
 
 
-@app.route("/")
-def index():
-    user = _get_current_user()
-    return render_template_string(HTML_TEMPLATE, user=user, banner=get_banner(), config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/pricing")
-def pricing():
-    user = _get_current_user()
-    return render_template_string(PRICING_TEMPLATE, user=user, config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/profile-links")
-def profile_links():
-    user = _get_current_user()
-    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, banner=get_banner(), config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/guides")
-def guides_index():
-    guides = [
-        {"slug": slug, "title": guide["title"], "description": guide["description"]}
-        for slug, guide in GUIDES_CONTENT.items()
-    ]
-    return render_template_string(GUIDES_INDEX_TEMPLATE, guides=guides)
-
-
-@app.route("/guides/<slug>")
-def guide_page(slug):
-    guide = GUIDES_CONTENT.get(slug)
-    if not guide:
-        return ("Guide not found", 404)
-
-    article_schema = {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": guide["title"],
-        "description": guide["description"],
-        "author": {"@type": "Organization", "name": "TranscriptX"},
-        "publisher": {"@type": "Organization", "name": "TranscriptX"},
-        "mainEntityOfPage": f"https://transcriptx.xyz/guides/{slug}",
-    }
-    faq_schema = {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {
-                "@type": "Question",
-                "name": item["q"],
-                "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
-            }
-            for item in guide["faq"]
-        ],
-    }
-
-    return render_template_string(
-        GUIDE_TEMPLATE,
-        guide=guide,
-        slug=slug,
-        article_schema_json=json.dumps(article_schema),
-        faq_schema_json=json.dumps(faq_schema),
-    )
+register_page_routes(
+    app,
+    get_current_user=_get_current_user,
+    get_banner=get_banner,
+    checkout_starter=POLAR_CHECKOUT_STARTER,
+    checkout_pro=POLAR_CHECKOUT_PRO,
+    customer_portal=POLAR_CUSTOMER_PORTAL,
+    featurebase_app_id=FEATUREBASE_APP_ID,
+    guides_content=GUIDES_CONTENT,
+)
 
 
 # ── Main Template ──────────────────────────────────────────
@@ -2261,7 +2272,9 @@ HTML_TEMPLATE = """
         .spec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; opacity:0.5; margin-top:4px; }
 
         .transcript-box { border:var(--bw) solid var(--ink); padding:1.2rem; }
-        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; }
+        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; gap:8px; flex-wrap:wrap; }
+        .head-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .head-actions { display:flex; align-items:center; gap:6px; }
         .copy-btn {
             background:none; border:var(--bw) solid var(--ink); color:var(--ink);
             padding:3px 10px; font-size:0.55rem; cursor:pointer; font-family:var(--f-tech);
@@ -2270,6 +2283,19 @@ HTML_TEMPLATE = """
         .copy-btn:hover { background:var(--ink); color:var(--orange); }
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
+        .transcript-text.hidden { display:none; }
+        .view-btn {
+            background:none; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:3px 10px; font-size:0.55rem; cursor:pointer; font-family:var(--f-tech);
+            text-transform:uppercase; transition:0.2s;
+        }
+        .view-btn:hover { background:var(--ink); color:var(--orange); }
+        .timed-view { display:flex; flex-direction:column; gap:8px; }
+        .timed-view.hidden { display:none; }
+        .seg-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; align-items:start; font-size:0.75rem; line-height:1.55; }
+        .seg-time { font-weight:700; opacity:0.75; white-space:nowrap; }
+        .seg-text { opacity:0.9; }
+        .seg-empty { font-size:0.75rem; opacity:0.6; }
 
         /* ── Auth modal ── */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
@@ -2651,6 +2677,43 @@ HTML_TEMPLATE = """
             return n.toLocaleString();
         }
 
+        function fmtSec(v) {
+            const n = Number(v || 0);
+            if (!Number.isFinite(n) || n < 0) return '0:00';
+            const m = Math.floor(n / 60);
+            const s = Math.floor(n % 60);
+            return `${m}:${String(s).padStart(2, '0')}`;
+        }
+
+        function esc(v) {
+            return String(v || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;');
+        }
+
+        function segmentsHtml(segments) {
+            if (!segments.length) return '<div class="seg-empty">No timestamp segments returned.</div>';
+            return segments.map((seg) => `
+                <div class="seg-row">
+                    <span class="seg-time">${fmtSec(seg.start)}-${fmtSec(seg.end)}</span>
+                    <span class="seg-text">${esc(seg.text || '')}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleTsView(baseId) {
+            const plain = document.getElementById(baseId + '-plain');
+            const timed = document.getElementById(baseId + '-timed');
+            const btn = document.getElementById(baseId + '-toggle');
+            if (!plain || !timed || !btn) return;
+            const showTimed = timed.classList.contains('hidden');
+            timed.classList.toggle('hidden', !showTimed);
+            plain.classList.toggle('hidden', showTimed);
+            btn.textContent = showTimed ? 'TEXT' : 'TIMED';
+        }
+
         function render(d) {
             const c = document.getElementById('results');
             if (d.status === 'error') {
@@ -2661,7 +2724,14 @@ HTML_TEMPLATE = """
                     </div>`);
                 return;
             }
-            const id = 'tx-'+Date.now();
+            const id = 'tx-'+Date.now()+'-'+Math.floor(Math.random()*100000);
+            const segments = Array.isArray(d.segments) ? d.segments : [];
+            const words = Array.isArray(d.words) ? d.words : [];
+            const firstSeg = segments[0];
+            const tsLabel = firstSeg
+                ? `${fmtSec(firstSeg.start)}–${fmtSec(firstSeg.end)}`
+                : 'none';
+            const timed = segmentsHtml(segments);
             c.insertAdjacentHTML('afterbegin', `
                 <div class="result-card">
                     <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
@@ -2673,10 +2743,17 @@ HTML_TEMPLATE = """
                     </div>
                     <div class="transcript-box">
                         <div class="transcript-head">
-                            <span class="label" style="margin:0">${d.language||'auto'}</span>
-                            <button class="copy-btn" onclick="clip(this,'${id}')" data-umami-event="copy-transcript">COPY</button>
+                            <div class="head-meta">
+                                <span class="label" style="margin:0">${d.language||'auto'}</span>
+                                <span class="label" style="margin:0;opacity:0.7;">TS ${segments.length}/${words.length} · ${tsLabel}</span>
+                            </div>
+                            <div class="head-actions">
+                                <button class="view-btn" id="${id}-toggle" onclick="toggleTsView('${id}')">TIMED</button>
+                                <button class="copy-btn" onclick="clip(this,'${id}-plain')" data-umami-event="copy-transcript">COPY</button>
+                            </div>
                         </div>
-                        <div class="transcript-text" id="${id}">${d.transcript||'No transcript'}</div>
+                        <div class="transcript-text" id="${id}-plain">${d.transcript||'No transcript'}</div>
+                        <div class="timed-view hidden" id="${id}-timed">${timed}</div>
                     </div>
                 </div>`);
         }

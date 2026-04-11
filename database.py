@@ -4,6 +4,7 @@ database.py — SQLite: users + credits + auth
 
 import sqlite3
 import os
+import json
 from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 
@@ -850,9 +851,44 @@ def set_config(key, value):
 
 def get_banner():
     with get_db() as db:
-        rows = db.execute("SELECT key, value FROM site_config WHERE key IN ('banner_enabled', 'banner_text')").fetchall()
+        rows = db.execute(
+            "SELECT key, value FROM site_config WHERE key IN ('banner_enabled', 'banner_text', 'banner_json')"
+        ).fetchall()
         d = {r["key"]: r["value"] for r in rows}
-    return {
+    fallback = {
         "enabled": d.get("banner_enabled", "0") == "1",
         "text": d.get("banner_text", ""),
+        "cta": None,
+        "dismissible": True,
+    }
+    raw = d.get("banner_json")
+    if not raw:
+        return fallback
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return fallback
+
+    if not isinstance(parsed, dict):
+        return fallback
+
+    cta = parsed.get("cta")
+    if not isinstance(cta, dict):
+        cta = None
+    else:
+        label = str(cta.get("label", "")).strip()
+        url = str(cta.get("url", "")).strip()
+        style = str(cta.get("style", "primary")).strip().lower()
+        if not label or not url:
+            cta = None
+        else:
+            if style not in ("primary", "ghost", "link"):
+                style = "primary"
+            cta = {"label": label, "url": url, "style": style}
+
+    return {
+        "enabled": bool(parsed.get("enabled", fallback["enabled"])),
+        "text": str(parsed.get("text", fallback["text"])),
+        "cta": cta,
+        "dismissible": bool(parsed.get("dismissible", True)),
     }
