@@ -1,0 +1,25 @@
+<nav>
+    <a href="/" class="nav-logo">TRANSCRIPTX<em>®</em></a>
+    <div class="nav-links">
+        {% if nav_mode == "app" %}
+            {% if user.logged_in %}
+            <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
+                {% if user.plan != "free" %}
+                <a href="{{ config.customer_portal }}" data-umami-event="nav-billing">Billing</a>
+                {% else %}
+                <a href="/pricing" data-umami-event="nav-upgrade">Upgrade</a>
+                {% endif %}
+            <a href="/profile-links" data-umami-event="nav-links">Links</a>
+            <a href="#" onclick="logout();return false" data-umami-event="nav-logout">Logout</a>
+            {% else %}
+            <a href="/profile-links" data-umami-event="nav-links">Links</a>
+            <a href="#" onclick="showAuth('login');return false" data-umami-event="nav-login">Login</a>
+            <a href="#" onclick="showAuth('signup');return false" data-umami-event="nav-signup">Sign Up</a>
+            {% endif %}
+        {% else %}
+        <a href="/">Transcribe</a>
+        <a href="/guides">Guides</a>
+        <a href="/pricing">Pricing</a>
+        {% endif %}
+    </div>
+</nav>

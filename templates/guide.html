@@ -81,8 +81,9 @@
         <div class="panel"><strong>Quick answer:</strong> {{ guide.quick_answer }}</div>
         {{ guide.body_html | safe }}
         <div class="sticky-cta">
-            <a href="/">Try TranscriptX free &rarr;</a>
+            <a href="{{ primary_tool_path }}">Try TranscriptX free &rarr;</a>
         </div>
     </main>
+    {% include "_site_footer.html" %}
 </body>
 </html>

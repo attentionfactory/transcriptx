@@ -17,7 +17,10 @@ import functools
 import hashlib
 import hmac
 import time
+import tempfile
+import shutil
 from datetime import datetime, timedelta
+from xml.sax.saxutils import escape as _xml_escape
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 from disposable_email_domains import blocklist as _disposable_pkg
@@ -40,7 +43,7 @@ load_dotenv()  # Load .env file automatically
 
 import bcrypt
 import requests as http_requests
-from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory
+from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory, send_file, after_this_request
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
@@ -56,8 +59,9 @@ from database import (
     sync_polar_subscription_webhook,
     effective_entitlement,
 )
-from transcribe import process_url
+from transcribe import process_url, download_video_mp4, clip_video_segment, _sanitize_filename
 from routes_pages import register_page_routes
+from seo_catalog import current_lastmod, get_platform_pages, get_static_seo_paths
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.uuid4().hex)
@@ -106,21 +110,26 @@ def llms_txt():
 
 @app.route("/sitemap.xml")
 def sitemap_xml():
-    xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://transcriptx.xyz/</loc><priority>1.0</priority></url>
-  <url><loc>https://transcriptx.xyz/pricing</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/profile-links</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/repurpose-video-into-seo-post</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/manual-vs-ai-transcription</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/youtube-transcript-generator</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/video-to-transcript</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/download-youtube-transcript</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/audio-to-transcript</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/youtube-video-to-transcript</loc><priority>0.7</priority></url>
-</urlset>"""
-    return Response(xml, mimetype="application/xml")
+    base = "https://transcriptx.xyz"
+    lastmod = current_lastmod()
+    rows = [
+        ("/", "1.0"),
+        ("/pricing", "0.8"),
+        ("/profile-links", "0.7"),
+        ("/guides", "0.7"),
+    ]
+    rows.extend((path, "0.85") for path in sorted(get_static_seo_paths()))
+    rows.extend((f"/guides/{slug}", "0.75") for slug in sorted(GUIDES_CONTENT.keys()))
+    rows.extend((f"/platform/{slug}-transcript-generator", "0.7") for slug in sorted(get_platform_pages().keys()))
+
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, priority in rows:
+        loc = _xml_escape(f"{base}{path}")
+        parts.append(
+            f"  <url><loc>{loc}</loc><lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq><priority>{priority}</priority></url>"
+        )
+    parts.append("</urlset>")
+    return Response("\n".join(parts), mimetype="application/xml")
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -395,6 +404,138 @@ def api_extract():
     if result.get("status") == "error":
         refund_credit_for_user(user["user_id"])
     return jsonify(result)
+
+
+@app.route("/api/extract-preview", methods=["POST"])
+def api_extract_preview():
+    """
+    Limited unauthenticated preview flow for SEO landing pages.
+    Returns a truncated transcript without consuming user credits.
+    """
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    if not url:
+        return jsonify({"status": "error", "error": "No URL provided"}), 400
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
+
+    now = datetime.utcnow()
+    reset_at_raw = session.get("preview_reset_at")
+    count = int(session.get("preview_count", 0))
+    try:
+        reset_at = datetime.fromisoformat(reset_at_raw) if reset_at_raw else None
+    except Exception:
+        reset_at = None
+    if not reset_at or reset_at <= now:
+        reset_at = now + timedelta(days=1)
+        count = 0
+    if count >= 1:
+        return jsonify({"status": "error", "error": "Preview limit reached. Try again later or log in for full extraction."}), 429
+
+    model = data.get("model", "whisper-large-v3-turbo")
+    if model not in ("whisper-large-v3-turbo", "whisper-large-v3"):
+        model = "whisper-large-v3-turbo"
+
+    result = process_url(url, model=model)
+    if result.get("status") == "error":
+        return jsonify(result), 400
+
+    full = str(result.get("transcript", "") or "")
+    preview = full[:1200]
+    if len(full) > 1200:
+        preview += "\n\n[preview truncated]"
+
+    session["preview_count"] = count + 1
+    session["preview_reset_at"] = reset_at.isoformat()
+    session.modified = True
+
+    return jsonify(
+        {
+            "status": "success",
+            "url": result.get("url", url),
+            "title": result.get("title", ""),
+            "thumbnail": result.get("thumbnail", ""),
+            "language": result.get("language", "unknown"),
+            "transcript_preview": preview,
+            "preview_char_count": len(preview),
+            "full_char_count": len(full),
+            "segments_count": len(result.get("segments") or []),
+            "words_count": len(result.get("words") or []),
+            "preview_only": True,
+        }
+    )
+
+
+@app.route("/api/download-video", methods=["POST"])
+def api_download_video():
+    """Prototype: download full MP4 from URL for logged-in users."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Login required"}), 401
+
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    title = str(data.get("title", "")).strip()
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL"}), 400
+
+    tmpdir = tempfile.mkdtemp(prefix="tx_dl_")
+
+    @after_this_request
+    def _cleanup(response):
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        return response
+
+    video_fp, err = download_video_mp4(url, tmpdir)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    base = _sanitize_filename(title or os.path.splitext(os.path.basename(video_fp))[0], "video")
+    return send_file(video_fp, as_attachment=True, download_name=f"{base}.mp4", mimetype="video/mp4")
+
+
+@app.route("/api/download-segment", methods=["POST"])
+def api_download_segment():
+    """Prototype: download MP4 segment by [start, end] seconds for logged-in users."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Login required"}), 401
+
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    title = str(data.get("title", "")).strip()
+    try:
+        start = float(data.get("start", 0))
+        end = float(data.get("end", 0))
+    except Exception:
+        return jsonify({"status": "error", "error": "Invalid start/end values"}), 400
+
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL"}), 400
+    if start < 0 or end <= start:
+        return jsonify({"status": "error", "error": "Invalid segment range"}), 400
+    if (end - start) > 1800:
+        return jsonify({"status": "error", "error": "Segment too long (max 30 min)"}), 400
+
+    tmpdir = tempfile.mkdtemp(prefix="tx_seg_")
+
+    @after_this_request
+    def _cleanup(response):
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        return response
+
+    src_fp, err = download_video_mp4(url, tmpdir)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    seg_fp = os.path.join(tmpdir, "segment.mp4")
+    clip_err = clip_video_segment(src_fp, seg_fp, start, end)
+    if clip_err:
+        return jsonify({"status": "error", "error": clip_err}), 400
+
+    base = _sanitize_filename(title or os.path.splitext(os.path.basename(src_fp))[0], "segment")
+    span = f"{int(start)}-{int(end)}"
+    return send_file(seg_fp, as_attachment=True, download_name=f"{base}_{span}.mp4", mimetype="video/mp4")
 
 
 @app.route("/api/profile-links")

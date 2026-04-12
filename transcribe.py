@@ -10,6 +10,7 @@ import logging
 import subprocess
 import tempfile
 import time
+import re
 from groq import Groq
 
 log = logging.getLogger(__name__)
@@ -274,6 +275,8 @@ def process_url(url, model="whisper-large-v3-turbo"):
     return {
         "url": url,
         "status": status,
+        "title": meta.get("title", ""),
+        "thumbnail": meta.get("thumbnail", ""),
         "transcript": result.get("transcript", ""),
         "language": result.get("language", "unknown"),
         "segments": result.get("segments", []),
@@ -287,3 +290,85 @@ def process_url(url, model="whisper-large-v3-turbo"):
         "metadata_error": metadata_error,
         "error": result.get("error"),
     }
+
+
+def _sanitize_filename(value, fallback="video"):
+    raw = (value or "").strip()
+    if not raw:
+        raw = fallback
+    return re.sub(r"[^a-zA-Z0-9._-]+", "_", raw)[:120] or fallback
+
+
+def download_video_mp4(url, output_dir):
+    """Download best MP4 video+audio into output_dir. Returns (filepath, error)."""
+    out = os.path.join(output_dir, "%(id)s.%(ext)s")
+    try:
+        r, used_proxy = _run_ytdlp_with_fallback(
+            [
+                "yt-dlp",
+                *_YTDLP_RETRY_ARGS,
+                "--no-playlist",
+                "-f", "bv*+ba/b[ext=mp4]/b",
+                "--merge-output-format", "mp4",
+                "-o", out,
+                url,
+            ],
+            timeout=240,
+            url=url,
+        )
+        if r.returncode != 0:
+            return None, _format_yt_dlp_error(r.stderr, "Video download", used_proxy)
+
+        candidates = []
+        for name in os.listdir(output_dir):
+            p = os.path.join(output_dir, name)
+            if os.path.isfile(p) and name.lower().endswith(".mp4"):
+                candidates.append(p)
+        if not candidates:
+            return None, "No mp4 file produced by yt-dlp"
+        candidates.sort(key=lambda p: os.path.getsize(p), reverse=True)
+        return candidates[0], None
+    except subprocess.TimeoutExpired:
+        return None, "Video download timed out"
+    except Exception as e:
+        return None, str(e)
+
+
+def clip_video_segment(input_file, output_file, start_seconds, end_seconds):
+    """Clip a segment from input_file into output_file. Returns error or None."""
+    try:
+        # Fast path: stream copy (can fail if no keyframe near cut points).
+        cmd_copy = [
+            "ffmpeg",
+            "-y",
+            "-ss", str(start_seconds),
+            "-to", str(end_seconds),
+            "-i", input_file,
+            "-c", "copy",
+            output_file,
+        ]
+        r = subprocess.run(cmd_copy, capture_output=True, text=True, timeout=180)
+        if r.returncode == 0 and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+            return None
+
+        # Fallback: re-encode for robust cuts.
+        cmd_encode = [
+            "ffmpeg",
+            "-y",
+            "-ss", str(start_seconds),
+            "-to", str(end_seconds),
+            "-i", input_file,
+            "-c:v", "libx264",
+            "-c:a", "aac",
+            "-movflags", "+faststart",
+            output_file,
+        ]
+        r2 = subprocess.run(cmd_encode, capture_output=True, text=True, timeout=240)
+        if r2.returncode != 0 or not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+            msg = (r2.stderr or r.stderr or "").strip()[:220]
+            return f"ffmpeg clip failed: {msg or 'unknown error'}"
+        return None
+    except subprocess.TimeoutExpired:
+        return "ffmpeg clip timed out"
+    except Exception as e:
+        return str(e)

@@ -4,19 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TranscriptX — Instant Transcripts from Any Video</title>
-    <meta name="description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper.">
+    <title>{{ seo_title or "TranscriptX — Instant Transcripts from Any Video" }}</title>
+    <meta name="description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper." }}">
+    <meta name="robots" content="{{ seo_robots or 'index,follow' }}">
     <meta name="theme-color" content="#111111">
-    <link rel="canonical" href="https://transcriptx.xyz/">
+    <link rel="canonical" href="{{ canonical_url or "https://transcriptx.xyz/" }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://transcriptx.xyz/">
-    <meta property="og:title" content="TranscriptX — Instant Transcripts from Any Video">
-    <meta property="og:description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms.">
+    <meta property="og:url" content="{{ canonical_url or "https://transcriptx.xyz/" }}">
+    <meta property="og:title" content="{{ seo_title or "TranscriptX — Instant Transcripts from Any Video" }}">
+    <meta property="og:description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms." }}">
     <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="TranscriptX — Instant Transcripts from Any Video">
-    <meta name="twitter:description" content="Transcribe any video instantly with AI. 1000+ platforms supported.">
+    <meta name="twitter:title" content="{{ seo_title or "TranscriptX — Instant Transcripts from Any Video" }}">
+    <meta name="twitter:description" content="{{ seo_description or "Transcribe any video instantly with AI. 1000+ platforms supported." }}">
     <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    {% if app_schema_json %}
+    <script type="application/ld+json">{{ app_schema_json|safe }}</script>
+    {% endif %}
+    {% if faq_schema_json %}
+    <script type="application/ld+json">{{ faq_schema_json|safe }}</script>
+    {% endif %}
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -59,7 +66,8 @@
             display:flex; justify-content:space-between; align-items:center;
             padding:1rem 2rem; background:var(--grey); border-radius:100px;
         }
-        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; color:var(--ink); text-decoration:none; }
+        .nav-logo:visited, .nav-logo:hover, .nav-logo:active { color:var(--ink); text-decoration:none; }
         .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
         .nav-links { display:flex; align-items:center; gap:0.5rem; }
         .nav-links a {
@@ -91,7 +99,7 @@
         .hero-main { justify-content:space-between; }
         .hero-top { display:flex; justify-content:space-between; border-bottom:var(--bw) solid var(--ink); padding-bottom:1rem; margin-bottom:2rem; }
 
-        .hero-h1 { font-family:var(--f-wide); font-size:clamp(2rem,4.2vw,3.8rem); line-height:0.92; text-transform:uppercase; margin-bottom:1.5rem; letter-spacing:-0.02em; }
+        .hero-h1 { font-family:var(--f-wide); font-size:clamp(2rem,4.2vw,3.8rem); line-height:0.92; margin-bottom:1.5rem; letter-spacing:-0.02em; }
         .hero-sub { font-size:0.85rem; max-width:38ch; border-left:2px solid var(--ink); padding-left:1rem; line-height:1.6; }
 
         /* ── Input machine ── */
@@ -207,6 +215,61 @@
         .result-card + .result-card { margin-top:1rem; }
         .result-card.err { border-left:4px solid var(--red); }
         @keyframes cardUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+        .seo-extra { background:var(--grey); border-radius:var(--radius); padding:2rem; }
+        .seo-extra h2 {
+            font-family:var(--f-wide);
+            font-size:0.95rem;
+            text-transform:uppercase;
+            margin-bottom:0.5rem;
+        }
+        .seo-extra p { font-size:0.82rem; line-height:1.65; opacity:0.82; margin-bottom:1rem; }
+        .seo-faq-list { display:grid; gap:10px; margin-top:0.4rem; }
+        .seo-links {
+            margin-top:1rem;
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+        }
+        .seo-links a {
+            text-decoration:none;
+            border:var(--bw) solid rgba(10,10,10,0.28);
+            border-radius:10px;
+            padding:0.45rem 0.65rem;
+            color:var(--ink);
+            font-size:0.72rem;
+            text-transform:uppercase;
+            font-weight:700;
+            letter-spacing:0.02em;
+        }
+        .seo-links a:hover { background:rgba(10,10,10,0.08); }
+        .seo-faq-item {
+            border:var(--bw) solid rgba(10,10,10,0.26);
+            border-radius:10px;
+            background:rgba(255,255,255,0.28);
+            overflow:hidden;
+        }
+        .seo-faq-item summary {
+            list-style:none;
+            cursor:pointer;
+            font-size:0.74rem;
+            text-transform:uppercase;
+            letter-spacing:0.03em;
+            font-weight:700;
+            padding:0.8rem 0.9rem;
+            position:relative;
+        }
+        .seo-faq-item summary::-webkit-details-marker { display:none; }
+        .seo-faq-item summary::after {
+            content:"+";
+            position:absolute;
+            right:0.9rem;
+            top:50%;
+            transform:translateY(-50%);
+            font-size:1rem;
+            line-height:1;
+        }
+        .seo-faq-item[open] summary::after { content:"-"; }
+        .seo-faq-answer { font-size:0.78rem; opacity:0.88; line-height:1.55; padding:0 0.9rem 0.9rem; }
 
         .result-url { font-size:0.6rem; opacity:0.5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:1rem; }
         .result-url a { color:var(--ink); text-decoration:none; }
@@ -349,25 +412,8 @@
     {% endif %}
     <div class="layout">
         <!-- Nav -->
-        <nav>
-            <div class="nav-logo">TRANSCRIPTX<em>®</em></div>
-            <div class="nav-links">
-                {% if user.logged_in %}
-                <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
-                {% if user.plan != 'free' %}
-                <a href="{{ config.customer_portal }}" data-umami-event="nav-billing">Billing</a>
-                {% else %}
-                <a href="/pricing" data-umami-event="nav-upgrade">Upgrade</a>
-                {% endif %}
-                <a href="/profile-links" data-umami-event="nav-links">Links</a>
-                <a href="#" onclick="logout();return false" data-umami-event="nav-logout">Logout</a>
-                {% else %}
-                <a href="/profile-links" data-umami-event="nav-links">Links</a>
-                <a href="#" onclick="showAuth('login');return false" data-umami-event="nav-login">Login</a>
-                <a href="#" onclick="showAuth('signup');return false" data-umami-event="nav-signup">Sign Up</a>
-                {% endif %}
-            </div>
-        </nav>
+        {% set nav_mode = "app" %}
+        {% include "_site_nav.html" %}
 
         <!-- Hero -->
         <div class="hero">
@@ -378,17 +424,17 @@
                 </div>
 
                 <div>
-                    <h1 class="hero-h1">Instant<br>Transcripts</h1>
-                    <div class="hero-sub">
-                        Paste any video link. Get a perfect transcript in seconds. YouTube, TikTok, Instagram, X — 1000+ platforms.
+                    <h1 class="hero-h1">{{ hero_h1|default("Instant<br>transcripts for any video online")|safe }}</h1>
+                    <div class="">
+                        {{ hero_intro or "Paste any video link. Get a perfect transcript in seconds. YouTube, TikTok, Instagram, X — 1000+ platforms." }}
                     </div>
                 </div>
 
                 <div style="margin-top:auto; padding-top:2rem;">
-                    <span class="label">Initialize Transcription</span>
+                    <span class="label">{{ hero_label or "Initialize Transcription" }}</span>
                     <div class="input-machine">
                         <input type="text" id="urlInput" placeholder="PASTE_VIDEO_URL" onkeydown="if(event.key==='Enter')go()">
-                        <button id="goBtn" onclick="go()" data-umami-event="extract-transcript">EXTRACT ➔</button>
+                        <button id="goBtn" onclick="go()" data-umami-event="extract-transcript">{{ cta_label or "EXTRACT ➔" }}</button>
                     </div>
                     <div class="controls">
                         <label class="toggle-wrap" {% if not user.batch %}style="opacity:0.3;pointer-events:none"{% endif %}>
@@ -477,6 +523,36 @@
         <!-- Results -->
         <div id="results"></div>
 
+        {% if seo_text_sections or seo_faq_items %}
+        <section class="seo-extra">
+            {% for section in seo_text_sections or [] %}
+            <article>
+                <h2>{{ section.title }}</h2>
+                <p>{{ section.body }}</p>
+            </article>
+            {% endfor %}
+            {% if seo_faq_items %}
+            <h2>FAQ</h2>
+            <div class="seo-faq-list">
+                {% for row in seo_faq_items %}
+                <details class="seo-faq-item">
+                    <summary>{{ row.q }}</summary>
+                    <div class="seo-faq-answer">{{ row.a }}</div>
+                </details>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if seo_related_links %}
+            <h2>Related</h2>
+            <div class="seo-links">
+                {% for item in seo_related_links %}
+                <a href="{{ item.href }}">{{ item.label }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
         <!-- Auth modal -->
         <div class="modal-overlay" id="authModal" onclick="if(event.target===this)hideAuth()">
             <div class="modal-box">
@@ -516,12 +592,8 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="tech-footer">
-            <div>TranscriptX Systems</div>
-            <div style="text-align:right;">Built by <a href="https://google.com">x362 IIC</a><br>1000+ platforms supported</div>
-        </footer>
     </div>
+    {% include "_site_footer.html" %}
 
     <script>
         let all = [];

@@ -1,0 +1,100 @@
+<footer class="tx-global-footer">
+    <style>
+        .tx-global-footer {
+            margin-top: 1.2rem;
+            background: #0c0c0c;
+            color: #d8dceb;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .tx-global-footer * { box-sizing: border-box; }
+        .tx-footer-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.2rem 1rem 1.6rem;
+        }
+        .tx-footer-brand {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: #b8c0d7;
+            margin-bottom: 1.1rem;
+            max-width: 62ch;
+        }
+        .tx-footer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .tx-footer-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #f3f5fb;
+            margin-bottom: 0.5rem;
+        }
+        .tx-footer-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .tx-footer-links a {
+            color: #bec6dd;
+            text-decoration: none;
+            font-size: 0.75rem;
+        }
+        .tx-footer-links a:hover { color: #ffffff; text-decoration: underline; }
+        .tx-footer-meta {
+            border-top: 1px solid rgba(255,255,255,0.09);
+            margin-top: 1rem;
+            padding-top: 0.8rem;
+            font-size: 0.7rem;
+            color: #a9b2cc;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .tx-footer-meta a { color: #d9e2ff; }
+        @media (max-width: 780px) {
+            .tx-footer-grid { grid-template-columns: 1fr; }
+            .tx-footer-wrap { padding: 1.5rem 0.9rem 1.1rem; }
+        }
+    </style>
+    <div class="tx-footer-wrap">
+        <p class="tx-footer-brand">
+            TranscriptX extracts the transcripts of any video / audio online.
+        </p>
+        <div class="tx-footer-grid">
+            <section>
+                <div class="tx-footer-title">Product</div>
+                <ul class="tx-footer-links">
+                    <li><a href="/">Transcribe</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="/profile-links">Profile Links</a></li>
+                    <li><a href="/youtube-transcript-generator">YouTube Transcript Generator</a></li>
+                </ul>
+            </section>
+            <section>
+                <div class="tx-footer-title">Resources</div>
+                <ul class="tx-footer-links">
+                    <li><a href="/guides">Guides</a></li>
+                    <li><a href="/compare/best-youtube-transcript-tools">Tool Comparison</a></li>
+                    <li><a href="/research/platform-support-index">Platform Support Index</a></li>
+                    <li><a href="/press-kit">Press Kit</a></li>
+                </ul>
+            </section>
+            <section>
+                <div class="tx-footer-title">Company</div>
+                <ul class="tx-footer-links">
+                    <li><a href="https://attentionfactory.io" target="_blank" rel="noopener">Attention Factory</a></li>
+                    <li><a href="https://attentionfactory.io/contact" target="_blank" rel="noopener">Contact</a></li>
+                </ul>
+            </section>
+        </div>
+        <div class="tx-footer-meta">
+            <span>TranscriptX is built by <a href="https://attentionfactory.io" target="_blank" rel="noopener">Attention Factory</a>.</span>
+            <span>&copy; {{ year if year is defined else "2026" }} TranscriptX</span>
+        </div>
+    </div>
+</footer>
