@@ -28,13 +28,23 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <script>
         !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
-        if ("{{ config.featurebase_app_id }}") {
-            Featurebase("boot", {
-                appId: "{{ config.featurebase_app_id }}",
-                theme: "dark",
-                language: "en"
-            });
+        async function bootFeaturebase() {
+            const appId = "{{ config.featurebase_app_id }}";
+            if (!appId) return;
+            const base = { appId, theme: "dark", language: "en" };
+            {% if user.logged_in %}
+            try {
+                const r = await fetch("/api/featurebase-token");
+                const d = await r.json();
+                if (r.ok && d.token) {
+                    Featurebase("boot", { ...base, featurebaseJwt: d.token });
+                    return;
+                }
+            } catch (e) {}
+            {% endif %}
+            Featurebase("boot", base);
         }
+        bootFeaturebase();
     </script>
     <style>
         :root {

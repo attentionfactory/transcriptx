@@ -47,6 +47,7 @@ def init_db():
                 plan TEXT DEFAULT 'free',
                 credits_used INTEGER DEFAULT 0,
                 credits_reset_at TEXT,
+                password_changed_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -70,6 +71,19 @@ def init_db():
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS transcript_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                email TEXT,
+                url TEXT,
+                status TEXT,
+                credits_used INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        db.execute("CREATE INDEX IF NOT EXISTS idx_transcript_logs_user_time ON transcript_logs(user_id, created_at DESC)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_transcript_logs_email_time ON transcript_logs(email, created_at DESC)")
 
         # Migrate existing users table — add new auth columns if missing
         _migrate_columns(db)
@@ -83,6 +97,7 @@ def _migrate_columns(db):
         ("email_verified", "INTEGER DEFAULT 0"),
         ("verify_code", "TEXT"),
         ("verify_code_expires", "TEXT"),
+        ("password_changed_at", "TEXT DEFAULT CURRENT_TIMESTAMP"),
         ("billing_state", "TEXT DEFAULT 'none'"),
         ("grace_until", "TEXT"),
         ("cancel_at_period_end", "INTEGER DEFAULT 0"),
@@ -95,6 +110,14 @@ def _migrate_columns(db):
                 db.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
             except sqlite3.OperationalError:
                 pass
+
+    # Backfill password marker for older rows so reset-session invalidation works consistently.
+    try:
+        db.execute(
+            "UPDATE users SET password_changed_at = COALESCE(password_changed_at, created_at, CURRENT_TIMESTAMP)"
+        )
+    except sqlite3.OperationalError:
+        pass
 
     # Make email UNIQUE if it isn't already — SQLite can't ALTER constraints,
     # but we can add an index for lookup speed
@@ -563,6 +586,49 @@ def verify_email(email, code):
         )
         user["email_verified"] = 1
         return user
+
+
+def verify_code_for_user(email, code):
+    """Check code + expiry for a user. Returns user dict or None."""
+    with get_db() as db:
+        row = db.execute(
+            "SELECT * FROM users WHERE LOWER(email) = ?",
+            (email.lower().strip(),)
+        ).fetchone()
+        if not row:
+            return None
+
+        user = dict(row)
+        if not user.get("verify_code") or user.get("verify_code") != code:
+            return None
+        if user.get("verify_code_expires") and datetime.fromisoformat(user["verify_code_expires"]) < datetime.utcnow():
+            return None
+        return user
+
+
+def set_user_password(user_id, password_hash):
+    """Update password hash and clear outstanding verify code."""
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET password_hash = ?, password_changed_at = ?, verify_code = NULL, verify_code_expires = NULL WHERE id = ?",
+            (password_hash, datetime.utcnow().isoformat(), user_id),
+        )
+
+
+def log_transcript_attempt(user_id, email, url, status, credits_used=0):
+    """Write one transcript attempt row for audit/ops visibility."""
+    with get_db() as db:
+        db.execute(
+            """INSERT INTO transcript_logs (user_id, email, url, status, credits_used)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                user_id,
+                (email or "").strip().lower() or None,
+                (url or "").strip(),
+                (status or "").strip().lower() or "unknown",
+                int(credits_used or 0),
+            ),
+        )
 
 
 # ── Credits (unified — works by user id) ──────────────────

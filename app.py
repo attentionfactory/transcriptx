@@ -19,6 +19,7 @@ import hmac
 import time
 import tempfile
 import shutil
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from xml.sax.saxutils import escape as _xml_escape
 
@@ -43,13 +44,14 @@ load_dotenv()  # Load .env file automatically
 
 import bcrypt
 import requests as http_requests
-from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory, send_file, after_this_request
+from flask import Flask, request, jsonify, session, redirect, render_template, render_template_string, Response, stream_with_context, send_from_directory, send_file, after_this_request
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
     get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
-    set_verify_code, verify_email,
+    set_verify_code, verify_email, verify_code_for_user, set_user_password,
+    log_transcript_attempt,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -74,6 +76,7 @@ POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
 FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
+FEATUREBASE_JWT_SECRET = os.environ.get("FEATUREBASE_JWT_SECRET", "").strip()
 
 # Standard Webhooks (Polar) — timestamp skew tolerance for signature verification
 WEBHOOK_TS_TOLERANCE_SEC = 300
@@ -148,6 +151,18 @@ def _get_current_user():
     if user_id:
         user = get_user_by_id(user_id)
         if user:
+            current_pwd_marker = user.get("password_changed_at") or ""
+            has_session_marker = "pwd_changed_at" in session
+            session_pwd_marker = session.get("pwd_changed_at", "")
+            if (has_session_marker and session_pwd_marker != current_pwd_marker) or (
+                not has_session_marker and current_pwd_marker
+            ):
+                session.pop("user_id", None)
+                session.pop("pwd_changed_at", None)
+            else:
+                if not has_session_marker:
+                    session["pwd_changed_at"] = current_pwd_marker
+                    session.modified = True
             ent = effective_entitlement(user)
             eff_plan = ent["effective_plan"]
             plan = PLANS.get(eff_plan, PLANS["free"])
@@ -185,10 +200,11 @@ def _generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def _send_otp_email(email, code):
+def _send_otp_email(email, code, purpose="verification"):
     """Send OTP via Resend API. Returns True on success."""
+    noun = "password reset" if purpose == "password_reset" else "verification"
     if not RESEND_API_KEY:
-        print(f"⚠️  RESEND_API_KEY not set. OTP for {email}: {code}")
+        print(f"⚠️  RESEND_API_KEY not set. {noun} OTP for {email}: {code}")
         return True  # Dev mode — just print
 
     try:
@@ -201,11 +217,11 @@ def _send_otp_email(email, code):
             json={
                 "from": RESEND_FROM_EMAIL,
                 "to": [email],
-                "subject": f"TranscriptX — Your verification code is {code}",
+                "subject": f"TranscriptX — Your {noun} code is {code}",
                 "html": f"""
                     <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
                         <h2 style="margin:0 0 1rem;">TranscriptX</h2>
-                        <p>Your verification code:</p>
+                        <p>Your {noun} code:</p>
                         <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
                         <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
                     </div>
@@ -217,6 +233,52 @@ def _send_otp_email(email, code):
     except Exception as e:
         print(f"❌ Resend error: {e}")
         return False
+
+
+def _b64url_json(obj):
+    raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _featurebase_jwt_for_user(user):
+    """Create HS256 JWT for Featurebase secure Messenger boot."""
+    if not FEATUREBASE_JWT_SECRET or not user:
+        return None
+    email = (user.get("email") or "").strip().lower()
+    user_id = str(user.get("id") or "")
+    if not email and not user_id:
+        return None
+
+    ent = effective_entitlement(user)
+    effective_plan = ent.get("effective_plan", "free")
+    plan_cfg = PLANS.get(effective_plan, PLANS["free"])
+    billing_state = (user.get("billing_state") or "").strip().lower() or "none"
+
+    now = int(time.time())
+    payload = {
+        "sub": user_id or email,
+        "userId": user_id or None,
+        "email": email or None,
+        "name": (email.split("@")[0] if email else f"user-{user_id}"),
+        # Custom attributes (must exist in Featurebase Settings > Attributes).
+        "plan": effective_plan,
+        "plan_name": plan_cfg.get("name", effective_plan.title()),
+        "subscription_status": "paid" if ent.get("has_paid_access") else "free",
+        "billing_state": billing_state,
+        "iat": now,
+        "exp": now + 1800,
+    }
+    payload = {k: v for k, v in payload.items() if v is not None and v != ""}
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    signing_input = f"{_b64url_json(header)}.{_b64url_json(payload)}"
+    sig = hmac.new(
+        FEATUREBASE_JWT_SECRET.encode("utf-8"),
+        signing_input.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    sig_b64 = base64.urlsafe_b64encode(sig).decode("ascii").rstrip("=")
+    return f"{signing_input}.{sig_b64}"
 
 
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
@@ -382,17 +444,23 @@ def api_extract():
 
     data = request.json or {}
     url = data.get("url", "").strip()
+    user_id = user.get("user_id")
+    email = user.get("email")
 
     if not url:
+        log_transcript_attempt(user_id, email, url, "error_no_url", credits_used=0)
         return jsonify({"status": "error", "error": "No URL provided"}), 400
 
     if not url.startswith(("https://", "http://")):
+        log_transcript_attempt(user_id, email, url, "error_invalid_url", credits_used=0)
         return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
 
     # Check + deduct credits
     if user["credits"] != -1 and user["credits"] <= 0:
+        log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
         return jsonify({"status": "error", "error": "No credits remaining. Upgrade your plan!"}), 403
     if not use_credit_for_user(user["user_id"]):
+        log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
         return jsonify({"status": "error", "error": "No credits remaining."}), 403
 
     # Process
@@ -403,6 +471,9 @@ def api_extract():
     result = process_url(url, model=model)
     if result.get("status") == "error":
         refund_credit_for_user(user["user_id"])
+        log_transcript_attempt(user_id, email, url, "error", credits_used=0)
+    else:
+        log_transcript_attempt(user_id, email, url, "success", credits_used=1)
     return jsonify(result)
 
 
@@ -622,6 +693,21 @@ def api_me():
     return jsonify(_get_current_user())
 
 
+@app.route("/api/featurebase-token")
+def api_featurebase_token():
+    """Return secure Featurebase JWT for logged-in user."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    db_user = get_user_by_id(user["user_id"])
+    if not db_user:
+        return jsonify({"status": "error", "error": "User not found"}), 404
+    token = _featurebase_jwt_for_user(db_user)
+    if not token:
+        return jsonify({"status": "error", "error": "Featurebase JWT unavailable"}), 503
+    return jsonify({"status": "ok", "token": token})
+
+
 # ── Auth Routes ─────────────────────────────────────────────
 
 @app.route("/api/signup", methods=["POST"])
@@ -648,7 +734,10 @@ def api_signup():
         pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         from database import get_db
         with get_db() as db:
-            db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, existing["id"]))
+            db.execute(
+                "UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?",
+                (pw_hash, datetime.utcnow().isoformat(), existing["id"]),
+            )
         code = _generate_otp()
         expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
         set_verify_code(email, code, expires)
@@ -686,6 +775,7 @@ def api_verify():
         return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
 
     session["user_id"] = user["id"]
+    session["pwd_changed_at"] = user.get("password_changed_at") or ""
     session.pop("polar_customer_id", None)  # clean up legacy
     return jsonify({"status": "ok"})
 
@@ -709,6 +799,58 @@ def api_resend_code():
     set_verify_code(email, code, expires)
     _send_otp_email(email, code)
 
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/forgot-password/request", methods=["POST"])
+@rate_limit_auth(5, 3600)
+def api_forgot_password_request():
+    """Send password reset OTP if account exists."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+
+    user = get_user_by_email(email)
+    if user:
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code, purpose="password_reset")
+
+    # Always return success shape to avoid account enumeration.
+    return jsonify(
+        {
+            "status": "ok",
+            "message": "If the account exists, a reset code has been sent.",
+        }
+    )
+
+
+@app.route("/api/forgot-password/confirm", methods=["POST"])
+@rate_limit_auth(10, 3600)
+def api_forgot_password_confirm():
+    """Reset password using email + OTP code."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+    new_password = data.get("password", "")
+
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if len(code) != 6 or not code.isdigit():
+        return jsonify({"status": "error", "error": "Valid 6-digit code required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
+
+    user = verify_code_for_user(email, code)
+    if not user:
+        return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
+
+    pw_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    set_user_password(user["id"], pw_hash)
+    session.pop("user_id", None)
+    session.pop("pwd_changed_at", None)
     return jsonify({"status": "ok"})
 
 
@@ -845,6 +987,7 @@ def api_login():
         return jsonify({"status": "verify", "error": "Email not verified. Code sent."}), 200
 
     session["user_id"] = user["id"]
+    session["pwd_changed_at"] = user.get("password_changed_at") or ""
     ent = effective_entitlement(user)
     return jsonify({"status": "ok", "plan": ent["effective_plan"]})
 
@@ -853,6 +996,7 @@ def api_login():
 def api_logout():
     """Clear session."""
     session.pop("user_id", None)
+    session.pop("pwd_changed_at", None)
     session.pop("polar_customer_id", None)
     return jsonify({"status": "ok"})
 
@@ -923,6 +1067,126 @@ def admin_banner():
     set_config("banner_text", banner_payload["text"])
     set_config("banner_json", json.dumps(banner_payload))
     return jsonify({"status": "ok"})
+
+
+@app.route("/admin/logs")
+def admin_logs():
+    """Transcript extraction logs with filtering + pagination."""
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    if not has_admin_email:
+        return "Not found", 404
+
+    try:
+        page = max(1, int(request.args.get("page", "1") or "1"))
+    except (TypeError, ValueError):
+        page = 1
+    per_page = 100
+    email_q = (request.args.get("email") or "").strip().lower()
+    status_q = (request.args.get("status") or "all").strip().lower()
+    platform_q = (request.args.get("platform") or "all").strip().lower()
+
+    platform_patterns = {
+        "youtube": ["youtube.com", "youtu.be"],
+        "tiktok": ["tiktok.com"],
+        "instagram": ["instagram.com"],
+        "x": ["x.com", "twitter.com"],
+        "pinterest": ["pinterest.com"],
+        "facebook": ["facebook.com", "fb.watch"],
+        "reddit": ["reddit.com", "redd.it"],
+        "vimeo": ["vimeo.com"],
+    }
+
+    where = []
+    params = []
+    if email_q:
+        where.append("LOWER(COALESCE(l.email, u.email, '')) LIKE ?")
+        params.append(f"%{email_q}%")
+
+    if status_q == "success":
+        where.append("l.status = 'success'")
+    elif status_q == "failed":
+        where.append("l.status != 'success'")
+
+    if platform_q in platform_patterns:
+        ors = []
+        for token in platform_patterns[platform_q]:
+            ors.append("LOWER(l.url) LIKE ?")
+            params.append(f"%{token}%")
+        where.append("(" + " OR ".join(ors) + ")")
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+    offset = (page - 1) * per_page
+
+    from database import get_db
+
+    with get_db() as db:
+        from_sql = (
+            "FROM transcript_logs l "
+            "LEFT JOIN users u ON u.id = l.user_id OR LOWER(COALESCE(u.email, '')) = LOWER(COALESCE(l.email, ''))"
+        )
+        total = db.execute(
+            f"SELECT COUNT(*) AS c {from_sql} {where_sql}",
+            params,
+        ).fetchone()["c"]
+        rows = [
+            dict(r)
+            for r in db.execute(
+                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.created_at,
+                           CASE WHEN COALESCE(u.plan, 'free') IN ('starter','pro') THEN COALESCE(u.plan, 'free') ELSE '' END AS plan_pill
+                    {from_sql}
+                    {where_sql}
+                    ORDER BY l.id DESC
+                    LIMIT ? OFFSET ?""",
+                params + [per_page, offset],
+            ).fetchall()
+        ]
+
+    def _platform_guess(url):
+        u = (url or "").lower()
+        if "youtube.com" in u or "youtu.be" in u:
+            return "youtube"
+        if "tiktok.com" in u:
+            return "tiktok"
+        if "instagram.com" in u:
+            return "instagram"
+        if "x.com" in u or "twitter.com" in u:
+            return "x"
+        if "pinterest.com" in u:
+            return "pinterest"
+        if "facebook.com" in u or "fb.watch" in u:
+            return "facebook"
+        if "reddit.com" in u or "redd.it" in u:
+            return "reddit"
+        if "vimeo.com" in u:
+            return "vimeo"
+        return "other"
+
+    for row in rows:
+        row["platform_guess"] = _platform_guess(row.get("url"))
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    has_prev = page > 1
+    has_next = page < total_pages
+
+    base_filters = {"email": email_q, "status": status_q, "platform": platform_q}
+    prev_qs = urlencode({**base_filters, "page": page - 1})
+    next_qs = urlencode({**base_filters, "page": page + 1})
+
+    return render_template(
+        "admin_logs.html",
+        rows=rows,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        has_prev=has_prev,
+        has_next=has_next,
+        prev_qs=prev_qs,
+        next_qs=next_qs,
+        filters=base_filters,
+    )
 
 
 ADMIN_TEMPLATE = """
@@ -1180,6 +1444,7 @@ ADMIN_TEMPLATE = """
             <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
             <div class="nav-right">
                 <span class="nav-badge">Admin</span>
+                <a href="/admin/logs">Logs</a>
                 <a href="/">← App</a>
             </div>
         </nav>

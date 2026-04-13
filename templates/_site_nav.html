@@ -1,7 +1,12 @@
 <nav>
     <a href="/" class="nav-logo">TRANSCRIPTX<em>®</em></a>
     <div class="nav-links">
-        {% if nav_mode == "app" %}
+        {% if nav_mode == "admin" %}
+            <span class="nav-badge">Admin</span>
+            <a href="/admin">Dashboard</a>
+            <a href="/admin/logs">Logs</a>
+            <a href="/">App</a>
+        {% elif nav_mode == "app" %}
             {% if user.logged_in %}
             <span class="nav-badge {{ user.plan }}">{{ user.plan_name }} — {{ user.credits_label }}</span>
                 {% if user.plan != "free" %}

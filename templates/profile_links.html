@@ -28,13 +28,23 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <script>
         !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
-        if ("{{ config.featurebase_app_id }}") {
-            Featurebase("boot", {
-                appId: "{{ config.featurebase_app_id }}",
-                theme: "dark",
-                language: "en"
-            });
+        async function bootFeaturebase() {
+            const appId = "{{ config.featurebase_app_id }}";
+            if (!appId) return;
+            const base = { appId, theme: "dark", language: "en" };
+            {% if user.logged_in %}
+            try {
+                const r = await fetch("/api/featurebase-token");
+                const d = await r.json();
+                if (r.ok && d.token) {
+                    Featurebase("boot", { ...base, featurebaseJwt: d.token });
+                    return;
+                }
+            } catch (e) {}
+            {% endif %}
+            Featurebase("boot", base);
         }
+        bootFeaturebase();
     </script>
     <style>
         :root {
@@ -296,6 +306,9 @@
                     <input type="password" class="modal-input" id="loginPassword" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doLogin()">
                     <div class="modal-err" id="loginErr"></div>
                     <button class="modal-btn" onclick="doLogin()" data-umami-event="login-submit">LOG IN ➔</button>
+                    <div style="margin-top:0.7rem;text-align:center;">
+                        <a href="#" onclick="showForgot();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.6;" data-umami-event="forgot-password-link">Forgot password?</a>
+                    </div>
                 </div>
                 <div id="signupForm" style="display:none;">
                     <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
@@ -312,6 +325,24 @@
                     <div style="margin-top:0.8rem;text-align:center;">
                         <a href="#" onclick="resendCode();return false" style="font-size:0.7rem;color:var(--ink);opacity:0.5;" data-umami-event="resend-code">Resend code</a>
                     </div>
+                </div>
+                <div id="forgotForm" style="display:none;">
+                    <div class="modal-title">Reset Password</div>
+                    <div class="modal-sub">Enter your account email to get a reset code</div>
+                    <input type="email" class="modal-input" id="forgotEmail" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter')requestPasswordReset()">
+                    <div class="modal-err" id="forgotErr"></div>
+                    <button class="modal-btn" onclick="requestPasswordReset()" data-umami-event="forgot-password-request">SEND RESET CODE ➔</button>
+                    <div style="margin-top:0.7rem;text-align:center;">
+                        <a href="#" onclick="switchTab('login');return false" style="font-size:0.7rem;color:var(--ink);opacity:0.6;">Back to login</a>
+                    </div>
+                </div>
+                <div id="resetForm" style="display:none;">
+                    <div class="modal-title">Set New Password</div>
+                    <div class="modal-sub" id="resetSub">Enter code and your new password</div>
+                    <input type="text" class="modal-input" id="resetCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:1.2rem;letter-spacing:0.25em;">
+                    <input type="password" class="modal-input" id="resetPassword" placeholder="New Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')confirmPasswordReset()">
+                    <div class="modal-err" id="resetErr"></div>
+                    <button class="modal-btn" onclick="confirmPasswordReset()" data-umami-event="forgot-password-confirm">RESET PASSWORD ➔</button>
                 </div>
             </div>
         </div>
@@ -433,6 +464,7 @@
         }
 
         let authEmail = '';
+        let resetEmail = '';
         function showAuth(tab) {
             document.getElementById('authModal').classList.add('open');
             switchTab(tab || 'login');
@@ -442,20 +474,30 @@
             document.getElementById('loginErr').textContent = '';
             document.getElementById('signupErr').textContent = '';
             document.getElementById('verifyErr').textContent = '';
+            document.getElementById('forgotErr').textContent = '';
+            document.getElementById('resetErr').textContent = '';
         }
         function switchTab(tab) {
-            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail');
+            var le = document.getElementById('loginEmail'), se = document.getElementById('signupEmail'), fe = document.getElementById('forgotEmail');
             if (tab === 'signup') se.value = le.value;
             if (tab === 'login') le.value = se.value;
+            if (tab === 'forgot') fe.value = le.value || se.value;
             document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
             document.getElementById('verifyForm').style.display = tab === 'verify' ? '' : 'none';
-            document.getElementById('authTabs').style.display = tab === 'verify' ? 'none' : 'flex';
+            document.getElementById('forgotForm').style.display = tab === 'forgot' ? '' : 'none';
+            document.getElementById('resetForm').style.display = tab === 'reset' ? '' : 'none';
+            document.getElementById('authTabs').style.display = (tab === 'verify' || tab === 'forgot' || tab === 'reset') ? 'none' : 'flex';
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
             document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
             if (tab === 'login') le.focus();
             if (tab === 'signup') se.focus();
             if (tab === 'verify') document.getElementById('verifyCode').focus();
+            if (tab === 'forgot') fe.focus();
+            if (tab === 'reset') document.getElementById('resetCode').focus();
+        }
+        function showForgot() {
+            switchTab('forgot');
         }
         async function doSignup() {
             const email = document.getElementById('signupEmail').value.trim();
@@ -504,6 +546,49 @@
                 document.getElementById('verifyErr').textContent = '';
                 document.getElementById('verifySub').textContent = 'New code sent to ' + authEmail;
             } catch(e) {}
+        }
+        async function requestPasswordReset() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const err = document.getElementById('forgotErr');
+            err.textContent = '';
+            if (!email) { err.textContent = 'Enter your email'; return; }
+            try {
+                const r = await fetch('/api/forgot-password/request', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email})
+                });
+                const d = await r.json();
+                if (!r.ok) {
+                    err.textContent = d.error || 'Could not send reset code';
+                    return;
+                }
+                resetEmail = email;
+                document.getElementById('resetSub').textContent = `Enter the code sent to ${email}`;
+                switchTab('reset');
+            } catch(e) { err.textContent = 'Could not send reset code'; }
+        }
+        async function confirmPasswordReset() {
+            const code = document.getElementById('resetCode').value.trim();
+            const password = document.getElementById('resetPassword').value;
+            const err = document.getElementById('resetErr');
+            err.textContent = '';
+            if (!resetEmail) { err.textContent = 'Restart reset flow from forgot password.'; return; }
+            if (code.length !== 6) { err.textContent = 'Enter the 6-digit code'; return; }
+            if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
+            try {
+                const r = await fetch('/api/forgot-password/confirm', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({email: resetEmail, code, password})
+                });
+                const d = await r.json();
+                if (!r.ok) {
+                    err.textContent = d.error || 'Could not reset password';
+                    return;
+                }
+                switchTab('login');
+                document.getElementById('loginEmail').value = resetEmail;
+                document.getElementById('loginErr').textContent = 'Password updated. Log in with your new password.';
+            } catch(e) { err.textContent = 'Could not reset password'; }
         }
         async function doLogin() {
             const email = document.getElementById('loginEmail').value.trim();
