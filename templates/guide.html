@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ guide.title }} | TranscriptX</title>
+    <meta name="description" content="{{ guide.description }}">
+    <meta name="keywords" content="{{ guide.keywords }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://transcriptx.xyz/guides/{{ slug }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://transcriptx.xyz/guides/{{ slug }}">
+    <meta property="og:title" content="{{ guide.title }}">
+    <meta property="og:description" content="{{ guide.description }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ guide.title }}">
+    <meta name="twitter:description" content="{{ guide.description }}">
+    <script type="application/ld+json">{{ article_schema_json | safe }}</script>
+    <script type="application/ld+json">{{ faq_schema_json | safe }}</script>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f5;
+            --card: #ffffff;
+            --ink: #141414;
+            --text: #141414;
+            --muted: #3f3f46;
+            --accent: #b84b3f;
+            --table-bg: #ffffff;
+            --table-border: #d1d1d6;
+            --table-head: #f0f0f2;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #050505;
+                --card: #c4c5c7;
+                --ink: #0a0a0a;
+                --text: #c4c5c7;
+                --muted: #b3b3bb;
+                --accent: #b84b3f;
+                --table-bg: #efefef;
+                --table-border: #b1b1b1;
+                --table-head: #dddddd;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Mono", monospace; line-height: 1.6; }
+        main { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .nav { margin-bottom: 1.25rem; }
+        .nav a { color: var(--text); text-decoration: none; opacity: 0.9; }
+        .panel { background: var(--card); color: var(--ink); border-radius: 18px; padding: 1.2rem 1.4rem; margin: 1rem 0 1.25rem; }
+        h1, h2, h3 { line-height: 1.25; }
+        h1 { margin-bottom: 0.7rem; }
+        h2 { margin-top: 1.3rem; }
+        p, li { color: var(--muted); }
+        a { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: var(--table-bg); }
+        th, td { border: 1px solid var(--table-border); padding: 0.6rem; text-align: left; color: #111; }
+        th { background: var(--table-head); }
+        .topnav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
+        .topnav a { color:var(--text); text-decoration:none; font-size:0.8rem; font-weight:700; }
+        .topnav a:hover { color:var(--accent); }
+        .topnav .logo { font-size:1rem; letter-spacing:0.02em; }
+        .topnav .links { display:flex; gap:1rem; align-items:center; }
+        .sticky-cta { position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--muted); padding:0.8rem 1rem; text-align:center; margin:2rem -1rem 0; }
+        .sticky-cta a { color:var(--accent); font-weight:700; text-decoration:none; font-size:0.85rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="topnav">
+            <a href="/" class="logo">TranscriptX</a>
+            <div class="links">
+                <a href="/">Transcribe</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/guides">Guides</a>
+            </div>
+        </nav>
+        <h1>{{ guide.h1 }}</h1>
+        <div class="panel"><strong>Quick answer:</strong> {{ guide.quick_answer }}</div>
+        {{ guide.body_html | safe }}
+        <div class="sticky-cta">
+            <a href="{{ primary_tool_path }}">Try TranscriptX free &rarr;</a>
+        </div>
+    </main>
+    {% include "_site_footer.html" %}
+</body>
+</html>

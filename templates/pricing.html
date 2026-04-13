@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Pricing</title>
+    <meta name="description" content="Simple pricing for TranscriptX. Starter plan at $2/mo for 50 transcripts, or Pro at $4/mo for unlimited. All 1000+ platforms included.">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#111111">
+    <link rel="canonical" href="https://transcriptx.xyz/pricing">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://transcriptx.xyz/pricing">
+    <meta property="og:title" content="TranscriptX — Pricing">
+    <meta property="og:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited. All 1000+ platforms included.">
+    <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="TranscriptX — Pricing">
+    <meta name="twitter:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited.">
+    <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
+    <script>
+        !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
+        async function bootFeaturebase() {
+            const appId = "{{ config.featurebase_app_id }}";
+            if (!appId) return;
+            const base = { appId, theme: "dark", language: "en" };
+            {% if user.logged_in %}
+            try {
+                const r = await fetch("/api/featurebase-token");
+                const d = await r.json();
+                if (r.ok && d.token) {
+                    Featurebase("boot", { ...base, featurebaseJwt: d.token });
+                    return;
+                }
+            } catch (e) {}
+            {% endif %}
+            Featurebase("boot", base);
+        }
+        bootFeaturebase();
+    </script>
+    <style>
+        :root {
+            --bg: #050505;
+            --orange: #F0A860;
+            --red: #B84B3F;
+            --green: #709472;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --f-wide: 'Michroma', sans-serif;
+            --f-tech: 'Space Mono', monospace;
+            --radius: 2rem;
+            --bw: 1.5px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.4; }
+
+        .layout { max-width:1100px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 2rem; background:var(--grey); border-radius:100px;
+        }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; text-decoration:none; color:var(--ink); }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        nav a.back { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--ink); text-decoration:none; border:1px solid transparent; padding:0.5rem 1rem; border-radius:4px; }
+        nav a.back:hover { border-color:var(--ink); }
+
+        .panel { border-radius:var(--radius); padding:2rem; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+        .p-orange { background:var(--orange); }
+        .p-green { background:var(--green); }
+        .p-grey { background:var(--grey); }
+
+        .label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.6; margin-bottom:0.3rem; display:block; }
+
+        .pricing-head { text-align:center; color:var(--grey); padding:3rem 0 1rem; }
+        .pricing-head h1 { font-family:var(--f-wide); font-size:clamp(1.5rem,3vw,2.5rem); text-transform:uppercase; }
+        .pricing-head p { font-size:0.8rem; opacity:0.6; margin-top:0.5rem; }
+
+        .plans { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+
+        .plan-name { font-family:var(--f-wide); font-size:0.85rem; text-transform:uppercase; margin-bottom:0.5rem; }
+        .plan-price { font-size:2.2rem; font-weight:700; font-family:var(--f-wide); }
+        .plan-price span { font-size:0.8rem; font-weight:400; }
+        .plan-features { list-style:none; margin:1.5rem 0; font-size:0.75rem; line-height:2.2; }
+        .plan-features li::before { content:'→ '; opacity:0.5; }
+
+        .plan-btn {
+            display:block; width:100%; padding:1rem; text-align:center;
+            font-family:var(--f-wide); font-size:0.7rem; text-transform:uppercase;
+            text-decoration:none; cursor:pointer; border:none; transition:0.2s;
+        }
+        .plan-btn.dark { background:var(--ink); color:var(--orange); }
+        .plan-btn.dark:hover { background:#333; }
+        .plan-btn.outline { background:transparent; border:var(--bw) solid var(--ink); color:var(--ink); }
+        .plan-btn.green { background:var(--ink); color:var(--green); }
+        .plan-btn.green:hover { background:#333; }
+
+        .spec-grid { display:grid; border:var(--bw) solid var(--ink); background:var(--ink); gap:var(--bw); margin-top:1rem; }
+        .spec-grid.cols-2 { grid-template-columns:1fr 1fr; }
+        .spec-cell { padding:1rem; text-align:center; }
+        .p-orange .spec-cell { background:var(--orange); }
+        .p-green .spec-cell { background:var(--green); }
+        .p-grey .spec-cell { background:var(--grey); }
+
+        .tech-footer {
+            border:1px solid #333; color:#555; padding:1.5rem 2rem; font-size:0.6rem;
+            text-transform:uppercase; display:flex; justify-content:space-between;
+        }
+
+        @media (max-width:800px) {
+            .plans { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <nav>
+            <a class="nav-logo" href="/">TRANSCRIPTX<em>®</em></a>
+            <div style="display:flex;gap:0.5rem;">
+                <a class="back" href="/profile-links">Links</a>
+                <a class="back" href="/">← Back</a>
+            </div>
+        </nav>
+
+        <div class="pricing-head">
+            <h1>Simple Pricing</h1>
+            <p>Instagram, TikTok, YouTube, X, and 1000+ more. Start free.</p>
+        </div>
+
+        <div class="plans">
+            <div class="panel p-grey">
+                <span class="label">Free Tier</span>
+                <div class="plan-name">Free</div>
+                <div class="plan-price">$0</div>
+                <ul class="plan-features">
+                    <li>3 transcripts / month</li>
+                    <li>Any platform, any video</li>
+                    <li>AI-powered transcription</li>
+                    <li>Copy to clipboard</li>
+                </ul>
+                <div class="plan-btn outline" style="cursor:default; margin-top:auto;">Current</div>
+            </div>
+
+            <div class="panel p-orange">
+                <span class="label">Most Popular</span>
+                <div class="plan-name">Starter</div>
+                <div class="plan-price">$2<span>/mo</span></div>
+                <ul class="plan-features">
+                    <li>50 transcripts / month</li>
+                    <li>All 1000+ platforms</li>
+                    <li>Batch mode</li>
+                    <li>CSV + JSON export</li>
+                </ul>
+                <a href="{{ config.checkout_starter }}" class="plan-btn dark" style="margin-top:auto;" data-umami-event="checkout-starter">GET STARTER ➔</a>
+                <div class="spec-grid cols-2">
+                    <div class="spec-cell"><span class="label">Cost Per</span><div>$0.04</div></div>
+                    <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
+                </div>
+            </div>
+
+            <div class="panel p-green">
+                <span class="label">Unlimited</span>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$4<span>/mo</span></div>
+                <ul class="plan-features">
+                    <li>Unlimited transcripts</li>
+                    <li>All 1000+ platforms</li>
+                    <li>Batch mode</li>
+                    <li>CSV + JSON export</li>
+                </ul>
+                <a href="{{ config.checkout_pro }}" class="plan-btn green" style="margin-top:auto;" data-umami-event="checkout-pro">GET PRO ➔</a>
+                <div class="spec-grid cols-2">
+                    <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
+                    <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% include "_site_footer.html" %}
+</body>
+</html>

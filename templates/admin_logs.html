@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriptX — Admin Logs</title>
+    <meta name="robots" content="noindex,nofollow">
+    <style>
+        :root {
+            --bg: #050505;
+            --grey: #C4C5C7;
+            --ink: #0a0a0a;
+            --orange: #F0A860;
+            --green: #709472;
+            --red: #B84B3F;
+            --f-wide: "Michroma", sans-serif;
+            --f-tech: "Space Mono", monospace;
+            --radius: 1.2rem;
+            --bw: 1.5px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--ink); font-family: var(--f-tech); }
+        .layout { max-width: 1200px; margin: 0 auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+        nav {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:1rem 2rem;
+            background:var(--grey);
+            border-radius:100px;
+        }
+        .nav-logo {
+            color: var(--ink);
+            text-decoration: none;
+            font-family: var(--f-wide);
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+        .nav-logo em { font-style: normal; font-size: .5em; vertical-align: super; }
+        .nav-links { display:flex; align-items:center; gap:.5rem; }
+        .nav-links a {
+            color: var(--ink);
+            text-decoration: none;
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: .5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover { border-color: var(--ink); background: rgba(0,0,0,0.05); }
+        .nav-badge {
+            font-size:.6rem;
+            padding:.4rem .8rem;
+            border-radius:4px;
+            font-weight:700;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+            background:rgba(0,0,0,0.08);
+        }
+        .panel { background: var(--grey); border-radius: var(--radius); padding: 1rem; }
+        .title { font-family: var(--f-wide); font-size: .9rem; text-transform: uppercase; margin-bottom: .7rem; }
+        .filters { display: grid; grid-template-columns: 1.5fr 1fr 1fr auto; gap: .6rem; align-items: end; }
+        .filters label { font-size: .62rem; text-transform: uppercase; opacity: .7; display: block; margin-bottom: .3rem; }
+        .filters input, .filters select { width: 100%; padding: .55rem .65rem; border: var(--bw) solid rgba(0,0,0,.2); background: rgba(255,255,255,.65); color: var(--ink); border-radius: .45rem; font-family: var(--f-tech); font-size: .74rem; }
+        .filters button, .filters a { padding: .58rem .8rem; border-radius: .45rem; border: var(--bw) solid var(--ink); font-family: var(--f-tech); font-size: .7rem; font-weight: 700; text-transform: uppercase; text-decoration: none; color: var(--ink); background: transparent; cursor: pointer; }
+        .filters button:hover, .filters a:hover { background: rgba(0,0,0,.08); }
+        .meta { margin-top: .7rem; font-size: .68rem; opacity: .65; }
+        .table-wrap { overflow: auto; border: var(--bw) solid rgba(0,0,0,.12); border-radius: .6rem; margin-top: .9rem; }
+        table { width: 100%; border-collapse: collapse; min-width: 950px; }
+        th, td { text-align: left; border-bottom: var(--bw) solid rgba(0,0,0,.09); padding: .65rem .7rem; }
+        th { font-size: .58rem; text-transform: uppercase; letter-spacing: .06em; opacity: .62; background: rgba(0,0,0,.06); }
+        td { font-size: .72rem; vertical-align: top; }
+        .mono { font-family: var(--f-tech); font-size: .66rem; opacity: .75; }
+        .url-cell { max-width: 520px; word-break: break-word; }
+        .url-cell a { color: var(--ink); text-decoration: none; }
+        .url-cell a:visited, .url-cell a:hover, .url-cell a:active { color: var(--ink); text-decoration: none; }
+        .badge { display: inline-block; padding: .2rem .45rem; border-radius: .35rem; border: var(--bw) solid rgba(0,0,0,.24); font-size: .58rem; text-transform: uppercase; font-weight: 700; }
+        .ok { background: rgba(112,148,114,.28); }
+        .bad { background: rgba(184,75,63,.25); }
+        .plan-pill {
+            display:inline-block;
+            margin-right:.45rem;
+            padding:.14rem .4rem;
+            border-radius:.3rem;
+            border:var(--bw) solid rgba(0,0,0,.24);
+            font-size:.52rem;
+            text-transform:uppercase;
+            font-weight:700;
+            letter-spacing:.04em;
+            vertical-align:middle;
+        }
+        .plan-pill.starter { background: rgba(240,168,96,.3); }
+        .plan-pill.pro { background: rgba(112,148,114,.3); }
+        .pager { display: flex; align-items: center; justify-content: space-between; margin-top: .8rem; }
+        .pager .left { font-size: .67rem; opacity: .7; }
+        .pager .right { display: flex; gap: .45rem; }
+        .pager a, .pager span { padding: .45rem .65rem; border-radius: .4rem; border: var(--bw) solid rgba(0,0,0,.2); color: var(--ink); text-decoration: none; font-size: .66rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,.2); }
+        .pager a:hover { background: rgba(0,0,0,.06); }
+        .pager span { opacity: .5; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        {% set nav_mode = "admin" %}
+        {% include "_site_nav.html" %}
+
+        <section class="panel">
+            <div class="title">Transcript Logs</div>
+            <form method="get" action="/admin/logs" class="filters">
+                <div>
+                    <label>Email</label>
+                    <input type="text" name="email" value="{{ filters.email }}" placeholder="user@email.com">
+                </div>
+                <div>
+                    <label>Platform</label>
+                    <select name="platform">
+                        {% set p = filters.platform %}
+                        <option value="all" {{ 'selected' if p == 'all' else '' }}>All</option>
+                        <option value="youtube" {{ 'selected' if p == 'youtube' else '' }}>YouTube</option>
+                        <option value="tiktok" {{ 'selected' if p == 'tiktok' else '' }}>TikTok</option>
+                        <option value="instagram" {{ 'selected' if p == 'instagram' else '' }}>Instagram</option>
+                        <option value="x" {{ 'selected' if p == 'x' else '' }}>X / Twitter</option>
+                        <option value="pinterest" {{ 'selected' if p == 'pinterest' else '' }}>Pinterest</option>
+                        <option value="facebook" {{ 'selected' if p == 'facebook' else '' }}>Facebook</option>
+                        <option value="reddit" {{ 'selected' if p == 'reddit' else '' }}>Reddit</option>
+                        <option value="vimeo" {{ 'selected' if p == 'vimeo' else '' }}>Vimeo</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Status</label>
+                    <select name="status">
+                        {% set s = filters.status %}
+                        <option value="all" {{ 'selected' if s == 'all' else '' }}>All</option>
+                        <option value="success" {{ 'selected' if s == 'success' else '' }}>Success</option>
+                        <option value="failed" {{ 'selected' if s == 'failed' else '' }}>Failed</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:.45rem;">
+                    <button type="submit">Search</button>
+                    <a href="/admin/logs">Reset</a>
+                </div>
+            </form>
+
+            <div class="meta">Showing {{ rows|length }} of {{ total }} records · Page {{ page }} / {{ total_pages }} · 100 per page</div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>When</th>
+                            <th>Email</th>
+                            <th>User ID</th>
+                            <th>Platform</th>
+                            <th>Status</th>
+                            <th>Credits</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if not rows %}
+                        <tr><td colspan="8" style="text-align:center;opacity:.55;padding:1rem;">No logs for current filters.</td></tr>
+                        {% endif %}
+                        {% for row in rows %}
+                        <tr>
+                            <td class="mono">{{ row.id }}</td>
+                            <td class="mono">{{ row.created_at }}</td>
+                            <td>
+                                {% if row.plan_pill == 'starter' %}
+                                <span class="plan-pill starter">Starter</span>
+                                {% elif row.plan_pill == 'pro' %}
+                                <span class="plan-pill pro">Pro</span>
+                                {% endif %}
+                                {{ row.email or '—' }}
+                            </td>
+                            <td class="mono">{{ row.user_id or '—' }}</td>
+                            <td><span class="badge">{{ row.platform_guess }}</span></td>
+                            <td>
+                                <span class="badge {{ 'ok' if row.status == 'success' else 'bad' }}">{{ row.status }}</span>
+                            </td>
+                            <td class="mono">{{ row.credits_used }}</td>
+                            <td class="url-cell">
+                                {% if row.url %}
+                                <a href="{{ row.url }}" target="_blank" rel="noopener noreferrer">{{ row.url }}</a>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pager">
+                <div class="left">Total records: {{ total }}</div>
+                <div class="right">
+                    {% if has_prev %}
+                    <a href="/admin/logs?{{ prev_qs }}">Prev</a>
+                    {% else %}
+                    <span>Prev</span>
+                    {% endif %}
+                    {% if has_next %}
+                    <a href="/admin/logs?{{ next_qs }}">Next</a>
+                    {% else %}
+                    <span>Next</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

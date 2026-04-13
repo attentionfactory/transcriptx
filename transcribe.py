@@ -10,6 +10,7 @@ import logging
 import subprocess
 import tempfile
 import time
+import re
 from groq import Groq
 
 log = logging.getLogger(__name__)
@@ -199,13 +200,29 @@ def transcribe(filepath, model="whisper-large-v3-turbo"):
                 file=f,
                 model=model,
                 response_format="verbose_json",
+                timestamp_granularities=["word", "segment"],
             )
         elapsed = time.time() - t0
         lang = getattr(result, "language", "unknown")
         log.info("[transcribe] done in %.1fs lang=%s chars=%d", elapsed, lang, len(result.text))
+
+        # Groq SDK object can be pydantic-like; normalize for safe access.
+        result_data = result.model_dump() if hasattr(result, "model_dump") else result
+        segments = []
+        words = []
+        if isinstance(result_data, dict):
+            segments = result_data.get("segments") or []
+            words = result_data.get("words") or []
+        else:
+            # Groq SDK may return object-like responses with attrs.
+            segments = getattr(result, "segments", None) or []
+            words = getattr(result, "words", None) or []
+
         return {
             "transcript": result.text.strip(),
             "language": lang,
+            "segments": segments,
+            "words": words,
         }
     except Exception as e:
         log.exception("[transcribe] failed after %.1fs", time.time() - t0)
@@ -258,8 +275,12 @@ def process_url(url, model="whisper-large-v3-turbo"):
     return {
         "url": url,
         "status": status,
+        "title": meta.get("title", ""),
+        "thumbnail": meta.get("thumbnail", ""),
         "transcript": result.get("transcript", ""),
         "language": result.get("language", "unknown"),
+        "segments": result.get("segments", []),
+        "words": result.get("words", []),
         "views": meta.get("views", 0),
         "likes": meta.get("likes", 0),
         "comments": meta.get("comments", 0),
@@ -269,3 +290,85 @@ def process_url(url, model="whisper-large-v3-turbo"):
         "metadata_error": metadata_error,
         "error": result.get("error"),
     }
+
+
+def _sanitize_filename(value, fallback="video"):
+    raw = (value or "").strip()
+    if not raw:
+        raw = fallback
+    return re.sub(r"[^a-zA-Z0-9._-]+", "_", raw)[:120] or fallback
+
+
+def download_video_mp4(url, output_dir):
+    """Download best MP4 video+audio into output_dir. Returns (filepath, error)."""
+    out = os.path.join(output_dir, "%(id)s.%(ext)s")
+    try:
+        r, used_proxy = _run_ytdlp_with_fallback(
+            [
+                "yt-dlp",
+                *_YTDLP_RETRY_ARGS,
+                "--no-playlist",
+                "-f", "bv*+ba/b[ext=mp4]/b",
+                "--merge-output-format", "mp4",
+                "-o", out,
+                url,
+            ],
+            timeout=240,
+            url=url,
+        )
+        if r.returncode != 0:
+            return None, _format_yt_dlp_error(r.stderr, "Video download", used_proxy)
+
+        candidates = []
+        for name in os.listdir(output_dir):
+            p = os.path.join(output_dir, name)
+            if os.path.isfile(p) and name.lower().endswith(".mp4"):
+                candidates.append(p)
+        if not candidates:
+            return None, "No mp4 file produced by yt-dlp"
+        candidates.sort(key=lambda p: os.path.getsize(p), reverse=True)
+        return candidates[0], None
+    except subprocess.TimeoutExpired:
+        return None, "Video download timed out"
+    except Exception as e:
+        return None, str(e)
+
+
+def clip_video_segment(input_file, output_file, start_seconds, end_seconds):
+    """Clip a segment from input_file into output_file. Returns error or None."""
+    try:
+        # Fast path: stream copy (can fail if no keyframe near cut points).
+        cmd_copy = [
+            "ffmpeg",
+            "-y",
+            "-ss", str(start_seconds),
+            "-to", str(end_seconds),
+            "-i", input_file,
+            "-c", "copy",
+            output_file,
+        ]
+        r = subprocess.run(cmd_copy, capture_output=True, text=True, timeout=180)
+        if r.returncode == 0 and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+            return None
+
+        # Fallback: re-encode for robust cuts.
+        cmd_encode = [
+            "ffmpeg",
+            "-y",
+            "-ss", str(start_seconds),
+            "-to", str(end_seconds),
+            "-i", input_file,
+            "-c:v", "libx264",
+            "-c:a", "aac",
+            "-movflags", "+faststart",
+            output_file,
+        ]
+        r2 = subprocess.run(cmd_encode, capture_output=True, text=True, timeout=240)
+        if r2.returncode != 0 or not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+            msg = (r2.stderr or r.stderr or "").strip()[:220]
+            return f"ffmpeg clip failed: {msg or 'unknown error'}"
+        return None
+    except subprocess.TimeoutExpired:
+        return "ffmpeg clip timed out"
+    except Exception as e:
+        return str(e)

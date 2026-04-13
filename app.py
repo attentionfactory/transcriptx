@@ -17,7 +17,11 @@ import functools
 import hashlib
 import hmac
 import time
+import tempfile
+import shutil
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
+from xml.sax.saxutils import escape as _xml_escape
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 from disposable_email_domains import blocklist as _disposable_pkg
@@ -40,13 +44,14 @@ load_dotenv()  # Load .env file automatically
 
 import bcrypt
 import requests as http_requests
-from flask import Flask, request, jsonify, session, redirect, render_template_string, Response, stream_with_context, send_from_directory
+from flask import Flask, request, jsonify, session, redirect, render_template, render_template_string, Response, stream_with_context, send_from_directory, send_file, after_this_request
 from database import (
     init_db, PLANS,
     get_free_credits, use_free_credit,
     get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
-    set_verify_code, verify_email,
+    set_verify_code, verify_email, verify_code_for_user, set_user_password,
+    log_transcript_attempt,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -56,7 +61,9 @@ from database import (
     sync_polar_subscription_webhook,
     effective_entitlement,
 )
-from transcribe import process_url
+from transcribe import process_url, download_video_mp4, clip_video_segment, _sanitize_filename
+from routes_pages import register_page_routes
+from seo_catalog import current_lastmod, get_platform_pages, get_static_seo_paths
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.uuid4().hex)
@@ -69,6 +76,7 @@ POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
 FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
+FEATUREBASE_JWT_SECRET = os.environ.get("FEATUREBASE_JWT_SECRET", "").strip()
 
 # Standard Webhooks (Polar) — timestamp skew tolerance for signature verification
 WEBHOOK_TS_TOLERANCE_SEC = 300
@@ -105,21 +113,26 @@ def llms_txt():
 
 @app.route("/sitemap.xml")
 def sitemap_xml():
-    xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://transcriptx.xyz/</loc><priority>1.0</priority></url>
-  <url><loc>https://transcriptx.xyz/pricing</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/profile-links</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/repurpose-video-into-seo-post</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/manual-vs-ai-transcription</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/youtube-transcript-generator</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/video-to-transcript</loc><priority>0.8</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/download-youtube-transcript</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/audio-to-transcript</loc><priority>0.7</priority></url>
-  <url><loc>https://transcriptx.xyz/guides/youtube-video-to-transcript</loc><priority>0.7</priority></url>
-</urlset>"""
-    return Response(xml, mimetype="application/xml")
+    base = "https://transcriptx.xyz"
+    lastmod = current_lastmod()
+    rows = [
+        ("/", "1.0"),
+        ("/pricing", "0.8"),
+        ("/profile-links", "0.7"),
+        ("/guides", "0.7"),
+    ]
+    rows.extend((path, "0.85") for path in sorted(get_static_seo_paths()))
+    rows.extend((f"/guides/{slug}", "0.75") for slug in sorted(GUIDES_CONTENT.keys()))
+    rows.extend((f"/platform/{slug}-transcript-generator", "0.7") for slug in sorted(get_platform_pages().keys()))
+
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, priority in rows:
+        loc = _xml_escape(f"{base}{path}")
+        parts.append(
+            f"  <url><loc>{loc}</loc><lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq><priority>{priority}</priority></url>"
+        )
+    parts.append("</urlset>")
+    return Response("\n".join(parts), mimetype="application/xml")
 
 
 # ── Helpers ─────────────────────────────────────────────────
@@ -138,6 +151,18 @@ def _get_current_user():
     if user_id:
         user = get_user_by_id(user_id)
         if user:
+            current_pwd_marker = user.get("password_changed_at") or ""
+            has_session_marker = "pwd_changed_at" in session
+            session_pwd_marker = session.get("pwd_changed_at", "")
+            if (has_session_marker and session_pwd_marker != current_pwd_marker) or (
+                not has_session_marker and current_pwd_marker
+            ):
+                session.pop("user_id", None)
+                session.pop("pwd_changed_at", None)
+            else:
+                if not has_session_marker:
+                    session["pwd_changed_at"] = current_pwd_marker
+                    session.modified = True
             ent = effective_entitlement(user)
             eff_plan = ent["effective_plan"]
             plan = PLANS.get(eff_plan, PLANS["free"])
@@ -175,10 +200,11 @@ def _generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def _send_otp_email(email, code):
+def _send_otp_email(email, code, purpose="verification"):
     """Send OTP via Resend API. Returns True on success."""
+    noun = "password reset" if purpose == "password_reset" else "verification"
     if not RESEND_API_KEY:
-        print(f"⚠️  RESEND_API_KEY not set. OTP for {email}: {code}")
+        print(f"⚠️  RESEND_API_KEY not set. {noun} OTP for {email}: {code}")
         return True  # Dev mode — just print
 
     try:
@@ -191,11 +217,11 @@ def _send_otp_email(email, code):
             json={
                 "from": RESEND_FROM_EMAIL,
                 "to": [email],
-                "subject": f"TranscriptX — Your verification code is {code}",
+                "subject": f"TranscriptX — Your {noun} code is {code}",
                 "html": f"""
                     <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
                         <h2 style="margin:0 0 1rem;">TranscriptX</h2>
-                        <p>Your verification code:</p>
+                        <p>Your {noun} code:</p>
                         <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
                         <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
                     </div>
@@ -209,11 +235,98 @@ def _send_otp_email(email, code):
         return False
 
 
+def _b64url_json(obj):
+    raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _featurebase_jwt_for_user(user):
+    """Create HS256 JWT for Featurebase secure Messenger boot."""
+    if not FEATUREBASE_JWT_SECRET or not user:
+        return None
+    email = (user.get("email") or "").strip().lower()
+    user_id = str(user.get("id") or "")
+    if not email and not user_id:
+        return None
+
+    ent = effective_entitlement(user)
+    effective_plan = ent.get("effective_plan", "free")
+    plan_cfg = PLANS.get(effective_plan, PLANS["free"])
+    billing_state = (user.get("billing_state") or "").strip().lower() or "none"
+
+    now = int(time.time())
+    payload = {
+        "sub": user_id or email,
+        "userId": user_id or None,
+        "email": email or None,
+        "name": (email.split("@")[0] if email else f"user-{user_id}"),
+        # Custom attributes (must exist in Featurebase Settings > Attributes).
+        "plan": effective_plan,
+        "plan_name": plan_cfg.get("name", effective_plan.title()),
+        "subscription_status": "paid" if ent.get("has_paid_access") else "free",
+        "billing_state": billing_state,
+        "iat": now,
+        "exp": now + 1800,
+    }
+    payload = {k: v for k, v in payload.items() if v is not None and v != ""}
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    signing_input = f"{_b64url_json(header)}.{_b64url_json(payload)}"
+    sig = hmac.new(
+        FEATUREBASE_JWT_SECRET.encode("utf-8"),
+        signing_input.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    sig_b64 = base64.urlsafe_b64encode(sig).decode("ascii").rstrip("=")
+    return f"{signing_input}.{sig_b64}"
+
+
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
 
 
 def _is_production():
     return os.environ.get("FLASK_ENV") == "production"
+
+
+def _normalize_banner_payload(data):
+    payload = data if isinstance(data, dict) else {}
+    enabled = bool(payload.get("enabled"))
+    text = str(payload.get("text", "")).strip()
+    dismissible = bool(payload.get("dismissible", True))
+
+    cta = payload.get("cta")
+    if cta is None:
+        return {
+            "enabled": enabled,
+            "text": text,
+            "cta": None,
+            "dismissible": dismissible,
+        }, None
+
+    if not isinstance(cta, dict):
+        return None, "CTA must be an object."
+
+    label = str(cta.get("label", "")).strip()
+    url = str(cta.get("url", "")).strip()
+    style = str(cta.get("style", "primary")).strip().lower()
+
+    if not label or len(label) > 24:
+        return None, "CTA label must be 1-24 characters."
+    if style not in ("primary", "ghost", "link"):
+        return None, "CTA style must be primary, ghost, or link."
+    if not url:
+        return None, "CTA URL is required when CTA is set."
+    if not (url.startswith("/") or url.startswith("https://") or url.startswith("http://")):
+        return None, "CTA URL must be https:// or an internal path."
+    if url.startswith(("javascript:", "data:")):
+        return None, "CTA URL scheme is not allowed."
+
+    return {
+        "enabled": enabled,
+        "text": text,
+        "cta": {"label": label, "url": url, "style": style},
+        "dismissible": dismissible,
+    }, None
 
 
 def _client_ip():
@@ -331,17 +444,23 @@ def api_extract():
 
     data = request.json or {}
     url = data.get("url", "").strip()
+    user_id = user.get("user_id")
+    email = user.get("email")
 
     if not url:
+        log_transcript_attempt(user_id, email, url, "error_no_url", credits_used=0)
         return jsonify({"status": "error", "error": "No URL provided"}), 400
 
     if not url.startswith(("https://", "http://")):
+        log_transcript_attempt(user_id, email, url, "error_invalid_url", credits_used=0)
         return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
 
     # Check + deduct credits
     if user["credits"] != -1 and user["credits"] <= 0:
+        log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
         return jsonify({"status": "error", "error": "No credits remaining. Upgrade your plan!"}), 403
     if not use_credit_for_user(user["user_id"]):
+        log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
         return jsonify({"status": "error", "error": "No credits remaining."}), 403
 
     # Process
@@ -352,7 +471,142 @@ def api_extract():
     result = process_url(url, model=model)
     if result.get("status") == "error":
         refund_credit_for_user(user["user_id"])
+        log_transcript_attempt(user_id, email, url, "error", credits_used=0)
+    else:
+        log_transcript_attempt(user_id, email, url, "success", credits_used=1)
     return jsonify(result)
+
+
+@app.route("/api/extract-preview", methods=["POST"])
+def api_extract_preview():
+    """
+    Limited unauthenticated preview flow for SEO landing pages.
+    Returns a truncated transcript without consuming user credits.
+    """
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    if not url:
+        return jsonify({"status": "error", "error": "No URL provided"}), 400
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL. Must start with https://"}), 400
+
+    now = datetime.utcnow()
+    reset_at_raw = session.get("preview_reset_at")
+    count = int(session.get("preview_count", 0))
+    try:
+        reset_at = datetime.fromisoformat(reset_at_raw) if reset_at_raw else None
+    except Exception:
+        reset_at = None
+    if not reset_at or reset_at <= now:
+        reset_at = now + timedelta(days=1)
+        count = 0
+    if count >= 1:
+        return jsonify({"status": "error", "error": "Preview limit reached. Try again later or log in for full extraction."}), 429
+
+    model = data.get("model", "whisper-large-v3-turbo")
+    if model not in ("whisper-large-v3-turbo", "whisper-large-v3"):
+        model = "whisper-large-v3-turbo"
+
+    result = process_url(url, model=model)
+    if result.get("status") == "error":
+        return jsonify(result), 400
+
+    full = str(result.get("transcript", "") or "")
+    preview = full[:1200]
+    if len(full) > 1200:
+        preview += "\n\n[preview truncated]"
+
+    session["preview_count"] = count + 1
+    session["preview_reset_at"] = reset_at.isoformat()
+    session.modified = True
+
+    return jsonify(
+        {
+            "status": "success",
+            "url": result.get("url", url),
+            "title": result.get("title", ""),
+            "thumbnail": result.get("thumbnail", ""),
+            "language": result.get("language", "unknown"),
+            "transcript_preview": preview,
+            "preview_char_count": len(preview),
+            "full_char_count": len(full),
+            "segments_count": len(result.get("segments") or []),
+            "words_count": len(result.get("words") or []),
+            "preview_only": True,
+        }
+    )
+
+
+@app.route("/api/download-video", methods=["POST"])
+def api_download_video():
+    """Prototype: download full MP4 from URL for logged-in users."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Login required"}), 401
+
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    title = str(data.get("title", "")).strip()
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL"}), 400
+
+    tmpdir = tempfile.mkdtemp(prefix="tx_dl_")
+
+    @after_this_request
+    def _cleanup(response):
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        return response
+
+    video_fp, err = download_video_mp4(url, tmpdir)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    base = _sanitize_filename(title or os.path.splitext(os.path.basename(video_fp))[0], "video")
+    return send_file(video_fp, as_attachment=True, download_name=f"{base}.mp4", mimetype="video/mp4")
+
+
+@app.route("/api/download-segment", methods=["POST"])
+def api_download_segment():
+    """Prototype: download MP4 segment by [start, end] seconds for logged-in users."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Login required"}), 401
+
+    data = request.json or {}
+    url = str(data.get("url", "")).strip()
+    title = str(data.get("title", "")).strip()
+    try:
+        start = float(data.get("start", 0))
+        end = float(data.get("end", 0))
+    except Exception:
+        return jsonify({"status": "error", "error": "Invalid start/end values"}), 400
+
+    if not url.startswith(("https://", "http://")):
+        return jsonify({"status": "error", "error": "Invalid URL"}), 400
+    if start < 0 or end <= start:
+        return jsonify({"status": "error", "error": "Invalid segment range"}), 400
+    if (end - start) > 1800:
+        return jsonify({"status": "error", "error": "Segment too long (max 30 min)"}), 400
+
+    tmpdir = tempfile.mkdtemp(prefix="tx_seg_")
+
+    @after_this_request
+    def _cleanup(response):
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        return response
+
+    src_fp, err = download_video_mp4(url, tmpdir)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    seg_fp = os.path.join(tmpdir, "segment.mp4")
+    clip_err = clip_video_segment(src_fp, seg_fp, start, end)
+    if clip_err:
+        return jsonify({"status": "error", "error": clip_err}), 400
+
+    base = _sanitize_filename(title or os.path.splitext(os.path.basename(src_fp))[0], "segment")
+    span = f"{int(start)}-{int(end)}"
+    return send_file(seg_fp, as_attachment=True, download_name=f"{base}_{span}.mp4", mimetype="video/mp4")
 
 
 @app.route("/api/profile-links")
@@ -439,6 +693,21 @@ def api_me():
     return jsonify(_get_current_user())
 
 
+@app.route("/api/featurebase-token")
+def api_featurebase_token():
+    """Return secure Featurebase JWT for logged-in user."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    db_user = get_user_by_id(user["user_id"])
+    if not db_user:
+        return jsonify({"status": "error", "error": "User not found"}), 404
+    token = _featurebase_jwt_for_user(db_user)
+    if not token:
+        return jsonify({"status": "error", "error": "Featurebase JWT unavailable"}), 503
+    return jsonify({"status": "ok", "token": token})
+
+
 # ── Auth Routes ─────────────────────────────────────────────
 
 @app.route("/api/signup", methods=["POST"])
@@ -465,7 +734,10 @@ def api_signup():
         pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         from database import get_db
         with get_db() as db:
-            db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, existing["id"]))
+            db.execute(
+                "UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?",
+                (pw_hash, datetime.utcnow().isoformat(), existing["id"]),
+            )
         code = _generate_otp()
         expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
         set_verify_code(email, code, expires)
@@ -503,6 +775,7 @@ def api_verify():
         return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
 
     session["user_id"] = user["id"]
+    session["pwd_changed_at"] = user.get("password_changed_at") or ""
     session.pop("polar_customer_id", None)  # clean up legacy
     return jsonify({"status": "ok"})
 
@@ -526,6 +799,58 @@ def api_resend_code():
     set_verify_code(email, code, expires)
     _send_otp_email(email, code)
 
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/forgot-password/request", methods=["POST"])
+@rate_limit_auth(5, 3600)
+def api_forgot_password_request():
+    """Send password reset OTP if account exists."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+
+    user = get_user_by_email(email)
+    if user:
+        code = _generate_otp()
+        expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        set_verify_code(email, code, expires)
+        _send_otp_email(email, code, purpose="password_reset")
+
+    # Always return success shape to avoid account enumeration.
+    return jsonify(
+        {
+            "status": "ok",
+            "message": "If the account exists, a reset code has been sent.",
+        }
+    )
+
+
+@app.route("/api/forgot-password/confirm", methods=["POST"])
+@rate_limit_auth(10, 3600)
+def api_forgot_password_confirm():
+    """Reset password using email + OTP code."""
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+    new_password = data.get("password", "")
+
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"status": "error", "error": "Valid email required"}), 400
+    if len(code) != 6 or not code.isdigit():
+        return jsonify({"status": "error", "error": "Valid 6-digit code required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
+
+    user = verify_code_for_user(email, code)
+    if not user:
+        return jsonify({"status": "error", "error": "Invalid or expired code"}), 400
+
+    pw_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    set_user_password(user["id"], pw_hash)
+    session.pop("user_id", None)
+    session.pop("pwd_changed_at", None)
     return jsonify({"status": "ok"})
 
 
@@ -662,6 +987,7 @@ def api_login():
         return jsonify({"status": "verify", "error": "Email not verified. Code sent."}), 200
 
     session["user_id"] = user["id"]
+    session["pwd_changed_at"] = user.get("password_changed_at") or ""
     ent = effective_entitlement(user)
     return jsonify({"status": "ok", "plan": ent["effective_plan"]})
 
@@ -670,6 +996,7 @@ def api_login():
 def api_logout():
     """Clear session."""
     session.pop("user_id", None)
+    session.pop("pwd_changed_at", None)
     session.pop("polar_customer_id", None)
     return jsonify({"status": "ok"})
 
@@ -731,10 +1058,135 @@ def admin_banner():
     has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
     if not has_admin_email:
         return "Not found", 404
-    data = request.get_json()
-    set_config("banner_enabled", "1" if data.get("enabled") else "0")
-    set_config("banner_text", data.get("text", ""))
+    data = request.get_json() or {}
+    banner_payload, err = _normalize_banner_payload(data)
+    if err:
+        return jsonify({"status": "error", "error": err}), 400
+
+    set_config("banner_enabled", "1" if banner_payload["enabled"] else "0")
+    set_config("banner_text", banner_payload["text"])
+    set_config("banner_json", json.dumps(banner_payload))
     return jsonify({"status": "ok"})
+
+
+@app.route("/admin/logs")
+def admin_logs():
+    """Transcript extraction logs with filtering + pagination."""
+    user = _get_current_user()
+    has_admin_email = user["logged_in"] and user.get("email", "").lower() in ADMIN_EMAILS
+    if not has_admin_email:
+        return "Not found", 404
+
+    try:
+        page = max(1, int(request.args.get("page", "1") or "1"))
+    except (TypeError, ValueError):
+        page = 1
+    per_page = 100
+    email_q = (request.args.get("email") or "").strip().lower()
+    status_q = (request.args.get("status") or "all").strip().lower()
+    platform_q = (request.args.get("platform") or "all").strip().lower()
+
+    platform_patterns = {
+        "youtube": ["youtube.com", "youtu.be"],
+        "tiktok": ["tiktok.com"],
+        "instagram": ["instagram.com"],
+        "x": ["x.com", "twitter.com"],
+        "pinterest": ["pinterest.com"],
+        "facebook": ["facebook.com", "fb.watch"],
+        "reddit": ["reddit.com", "redd.it"],
+        "vimeo": ["vimeo.com"],
+    }
+
+    where = []
+    params = []
+    if email_q:
+        where.append("LOWER(COALESCE(l.email, u.email, '')) LIKE ?")
+        params.append(f"%{email_q}%")
+
+    if status_q == "success":
+        where.append("l.status = 'success'")
+    elif status_q == "failed":
+        where.append("l.status != 'success'")
+
+    if platform_q in platform_patterns:
+        ors = []
+        for token in platform_patterns[platform_q]:
+            ors.append("LOWER(l.url) LIKE ?")
+            params.append(f"%{token}%")
+        where.append("(" + " OR ".join(ors) + ")")
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+    offset = (page - 1) * per_page
+
+    from database import get_db
+
+    with get_db() as db:
+        from_sql = (
+            "FROM transcript_logs l "
+            "LEFT JOIN users u ON u.id = l.user_id OR LOWER(COALESCE(u.email, '')) = LOWER(COALESCE(l.email, ''))"
+        )
+        total = db.execute(
+            f"SELECT COUNT(*) AS c {from_sql} {where_sql}",
+            params,
+        ).fetchone()["c"]
+        rows = [
+            dict(r)
+            for r in db.execute(
+                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.created_at,
+                           CASE WHEN COALESCE(u.plan, 'free') IN ('starter','pro') THEN COALESCE(u.plan, 'free') ELSE '' END AS plan_pill
+                    {from_sql}
+                    {where_sql}
+                    ORDER BY l.id DESC
+                    LIMIT ? OFFSET ?""",
+                params + [per_page, offset],
+            ).fetchall()
+        ]
+
+    def _platform_guess(url):
+        u = (url or "").lower()
+        if "youtube.com" in u or "youtu.be" in u:
+            return "youtube"
+        if "tiktok.com" in u:
+            return "tiktok"
+        if "instagram.com" in u:
+            return "instagram"
+        if "x.com" in u or "twitter.com" in u:
+            return "x"
+        if "pinterest.com" in u:
+            return "pinterest"
+        if "facebook.com" in u or "fb.watch" in u:
+            return "facebook"
+        if "reddit.com" in u or "redd.it" in u:
+            return "reddit"
+        if "vimeo.com" in u:
+            return "vimeo"
+        return "other"
+
+    for row in rows:
+        row["platform_guess"] = _platform_guess(row.get("url"))
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    has_prev = page > 1
+    has_next = page < total_pages
+
+    base_filters = {"email": email_q, "status": status_q, "platform": platform_q}
+    prev_qs = urlencode({**base_filters, "page": page - 1})
+    next_qs = urlencode({**base_filters, "page": page + 1})
+
+    return render_template(
+        "admin_logs.html",
+        rows=rows,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        has_prev=has_prev,
+        has_next=has_next,
+        prev_qs=prev_qs,
+        next_qs=next_qs,
+        filters=base_filters,
+    )
 
 
 ADMIN_TEMPLATE = """
@@ -992,6 +1444,7 @@ ADMIN_TEMPLATE = """
             <a class="nav-logo" href="/">TRANSCRIPTX<em>&reg;</em></a>
             <div class="nav-right">
                 <span class="nav-badge">Admin</span>
+                <a href="/admin/logs">Logs</a>
                 <a href="/">← App</a>
             </div>
         </nav>
@@ -1165,7 +1618,24 @@ ADMIN_TEMPLATE = """
                 <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Enabled</label>
                 <input type="checkbox" id="bannerEnabled" {% if banner.enabled %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
             </div>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">Dismissible</label>
+                <input type="checkbox" id="bannerDismissible" {% if banner.dismissible %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
             <input type="text" id="bannerText" value="{{ banner.text }}" placeholder="Banner message..." style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase;">CTA</label>
+                <input type="checkbox" id="bannerCtaEnabled" {% if banner.cta %}checked{% endif %} style="width:18px; height:18px; cursor:pointer;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 170px; gap:0.6rem;">
+                <input type="text" id="bannerCtaLabel" value="{{ banner.cta.label if banner.cta else '' }}" placeholder="CTA label (max 24)" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                <input type="text" id="bannerCtaUrl" value="{{ banner.cta.url if banner.cta else '' }}" placeholder="https://... or /path" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                <select id="bannerCtaStyle" style="width:100%; padding:0.8rem 1rem; border:var(--bw) solid rgba(0,0,0,0.15); border-radius:0.5rem; font-family:var(--f-tech); font-size:0.75rem; background:rgba(255,255,255,0.6);">
+                    <option value="primary" {% if banner.cta and banner.cta.style == 'primary' %}selected{% endif %}>primary</option>
+                    <option value="ghost" {% if banner.cta and banner.cta.style == 'ghost' %}selected{% endif %}>ghost</option>
+                    <option value="link" {% if banner.cta and banner.cta.style == 'link' %}selected{% endif %}>link</option>
+                </select>
+            </div>
             <button onclick="saveBanner()" style="align-self:flex-start; background:var(--ink); color:var(--grey); border:none; padding:0.6rem 1.5rem; border-radius:0.5rem; font-family:var(--f-tech); font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">Save Banner</button>
             <div id="bannerStatus" style="font-size:0.7rem; opacity:0.6;"></div>
         </div>
@@ -1207,14 +1677,28 @@ ADMIN_TEMPLATE = """
         async function saveBanner() {
             const enabled = document.getElementById('bannerEnabled').checked;
             const text = document.getElementById('bannerText').value;
+            const dismissible = document.getElementById('bannerDismissible').checked;
+            const ctaEnabled = document.getElementById('bannerCtaEnabled').checked;
+            const ctaLabel = document.getElementById('bannerCtaLabel').value.trim();
+            const ctaUrl = document.getElementById('bannerCtaUrl').value.trim();
+            const ctaStyle = document.getElementById('bannerCtaStyle').value;
             const st = document.getElementById('bannerStatus');
+            const payload = {enabled, text, dismissible, cta: null};
+            if (ctaEnabled) {
+                payload.cta = {label: ctaLabel, url: ctaUrl, style: ctaStyle};
+            }
             try {
                 const r = await fetch('/admin/banner', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({enabled, text})
+                    body: JSON.stringify(payload)
                 });
-                st.textContent = r.ok ? 'Saved!' : 'Error saving';
+                if (r.ok) {
+                    st.textContent = 'Saved!';
+                } else {
+                    const d = await r.json().catch(() => ({}));
+                    st.textContent = d.error || 'Error saving';
+                }
                 setTimeout(() => st.textContent = '', 2000);
             } catch(e) { st.textContent = 'Error: ' + e.message; }
         }
@@ -1960,83 +2444,16 @@ GUIDES_CONTENT = {
 }
 
 
-@app.route("/")
-def index():
-    user = _get_current_user()
-    return render_template_string(HTML_TEMPLATE, user=user, banner=get_banner(), config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/pricing")
-def pricing():
-    user = _get_current_user()
-    return render_template_string(PRICING_TEMPLATE, user=user, config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/profile-links")
-def profile_links():
-    user = _get_current_user()
-    return render_template_string(PROFILE_LINKS_TEMPLATE, user=user, banner=get_banner(), config={
-        "checkout_starter": POLAR_CHECKOUT_STARTER,
-        "checkout_pro": POLAR_CHECKOUT_PRO,
-        "customer_portal": POLAR_CUSTOMER_PORTAL,
-        "featurebase_app_id": FEATUREBASE_APP_ID,
-    })
-
-
-@app.route("/guides")
-def guides_index():
-    guides = [
-        {"slug": slug, "title": guide["title"], "description": guide["description"]}
-        for slug, guide in GUIDES_CONTENT.items()
-    ]
-    return render_template_string(GUIDES_INDEX_TEMPLATE, guides=guides)
-
-
-@app.route("/guides/<slug>")
-def guide_page(slug):
-    guide = GUIDES_CONTENT.get(slug)
-    if not guide:
-        return ("Guide not found", 404)
-
-    article_schema = {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": guide["title"],
-        "description": guide["description"],
-        "author": {"@type": "Organization", "name": "TranscriptX"},
-        "publisher": {"@type": "Organization", "name": "TranscriptX"},
-        "mainEntityOfPage": f"https://transcriptx.xyz/guides/{slug}",
-    }
-    faq_schema = {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {
-                "@type": "Question",
-                "name": item["q"],
-                "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
-            }
-            for item in guide["faq"]
-        ],
-    }
-
-    return render_template_string(
-        GUIDE_TEMPLATE,
-        guide=guide,
-        slug=slug,
-        article_schema_json=json.dumps(article_schema),
-        faq_schema_json=json.dumps(faq_schema),
-    )
+register_page_routes(
+    app,
+    get_current_user=_get_current_user,
+    get_banner=get_banner,
+    checkout_starter=POLAR_CHECKOUT_STARTER,
+    checkout_pro=POLAR_CHECKOUT_PRO,
+    customer_portal=POLAR_CUSTOMER_PORTAL,
+    featurebase_app_id=FEATUREBASE_APP_ID,
+    guides_content=GUIDES_CONTENT,
+)
 
 
 # ── Main Template ──────────────────────────────────────────
@@ -2261,7 +2678,9 @@ HTML_TEMPLATE = """
         .spec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; opacity:0.5; margin-top:4px; }
 
         .transcript-box { border:var(--bw) solid var(--ink); padding:1.2rem; }
-        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; }
+        .transcript-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; gap:8px; flex-wrap:wrap; }
+        .head-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .head-actions { display:flex; align-items:center; gap:6px; }
         .copy-btn {
             background:none; border:var(--bw) solid var(--ink); color:var(--ink);
             padding:3px 10px; font-size:0.55rem; cursor:pointer; font-family:var(--f-tech);
@@ -2270,6 +2689,19 @@ HTML_TEMPLATE = """
         .copy-btn:hover { background:var(--ink); color:var(--orange); }
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
+        .transcript-text.hidden { display:none; }
+        .view-btn {
+            background:none; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:3px 10px; font-size:0.55rem; cursor:pointer; font-family:var(--f-tech);
+            text-transform:uppercase; transition:0.2s;
+        }
+        .view-btn:hover { background:var(--ink); color:var(--orange); }
+        .timed-view { display:flex; flex-direction:column; gap:8px; }
+        .timed-view.hidden { display:none; }
+        .seg-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; align-items:start; font-size:0.75rem; line-height:1.55; }
+        .seg-time { font-weight:700; opacity:0.75; white-space:nowrap; }
+        .seg-text { opacity:0.9; }
+        .seg-empty { font-size:0.75rem; opacity:0.6; }
 
         /* ── Auth modal ── */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
@@ -2651,6 +3083,43 @@ HTML_TEMPLATE = """
             return n.toLocaleString();
         }
 
+        function fmtSec(v) {
+            const n = Number(v || 0);
+            if (!Number.isFinite(n) || n < 0) return '0:00';
+            const m = Math.floor(n / 60);
+            const s = Math.floor(n % 60);
+            return `${m}:${String(s).padStart(2, '0')}`;
+        }
+
+        function esc(v) {
+            return String(v || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;');
+        }
+
+        function segmentsHtml(segments) {
+            if (!segments.length) return '<div class="seg-empty">No timestamp segments returned.</div>';
+            return segments.map((seg) => `
+                <div class="seg-row">
+                    <span class="seg-time">${fmtSec(seg.start)}-${fmtSec(seg.end)}</span>
+                    <span class="seg-text">${esc(seg.text || '')}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleTsView(baseId) {
+            const plain = document.getElementById(baseId + '-plain');
+            const timed = document.getElementById(baseId + '-timed');
+            const btn = document.getElementById(baseId + '-toggle');
+            if (!plain || !timed || !btn) return;
+            const showTimed = timed.classList.contains('hidden');
+            timed.classList.toggle('hidden', !showTimed);
+            plain.classList.toggle('hidden', showTimed);
+            btn.textContent = showTimed ? 'TEXT' : 'TIMED';
+        }
+
         function render(d) {
             const c = document.getElementById('results');
             if (d.status === 'error') {
@@ -2661,7 +3130,14 @@ HTML_TEMPLATE = """
                     </div>`);
                 return;
             }
-            const id = 'tx-'+Date.now();
+            const id = 'tx-'+Date.now()+'-'+Math.floor(Math.random()*100000);
+            const segments = Array.isArray(d.segments) ? d.segments : [];
+            const words = Array.isArray(d.words) ? d.words : [];
+            const firstSeg = segments[0];
+            const tsLabel = firstSeg
+                ? `${fmtSec(firstSeg.start)}–${fmtSec(firstSeg.end)}`
+                : 'none';
+            const timed = segmentsHtml(segments);
             c.insertAdjacentHTML('afterbegin', `
                 <div class="result-card">
                     <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
@@ -2673,10 +3149,17 @@ HTML_TEMPLATE = """
                     </div>
                     <div class="transcript-box">
                         <div class="transcript-head">
-                            <span class="label" style="margin:0">${d.language||'auto'}</span>
-                            <button class="copy-btn" onclick="clip(this,'${id}')" data-umami-event="copy-transcript">COPY</button>
+                            <div class="head-meta">
+                                <span class="label" style="margin:0">${d.language||'auto'}</span>
+                                <span class="label" style="margin:0;opacity:0.7;">TS ${segments.length}/${words.length} · ${tsLabel}</span>
+                            </div>
+                            <div class="head-actions">
+                                <button class="view-btn" id="${id}-toggle" onclick="toggleTsView('${id}')">TIMED</button>
+                                <button class="copy-btn" onclick="clip(this,'${id}-plain')" data-umami-event="copy-transcript">COPY</button>
+                            </div>
                         </div>
-                        <div class="transcript-text" id="${id}">${d.transcript||'No transcript'}</div>
+                        <div class="transcript-text" id="${id}-plain">${d.transcript||'No transcript'}</div>
+                        <div class="timed-view hidden" id="${id}-timed">${timed}</div>
                     </div>
                 </div>`);
         }
