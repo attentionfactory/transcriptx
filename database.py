@@ -5,8 +5,18 @@ database.py — SQLite: users + credits + auth
 import sqlite3
 import os
 import json
+import secrets
 from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
+
+# Unambiguous base32 alphabet (no 0/O/1/I/L) — copy-friendly referral codes.
+_REFERRAL_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+REFERRAL_CODE_LENGTH = 8
+# Cap the lifetime credits one user can earn from referrals (tunable via config).
+REFERRAL_MAX_CREDITS_PER_REFERRER = 200
+# Credits awarded to both referee (at signup) and referrer (on referee's first
+# successful transcription).
+REFERRAL_REWARD_CREDITS = 20
 
 DB_PATH = os.environ.get("DB_PATH", "transcriptx.db")
 
@@ -120,6 +130,9 @@ def _migrate_columns(db):
         ("dunning_stage", "TEXT"),
         ("dunning_sent_at", "TEXT"),
         ("billing_interval", "TEXT"),
+        ("referral_code", "TEXT"),
+        ("referred_by", "INTEGER"),
+        ("referral_credit_paid", "INTEGER DEFAULT 0"),
     ]
     for col, col_type in migrations:
         if col not in existing:
@@ -142,6 +155,15 @@ def _migrate_columns(db):
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
     except sqlite3.IntegrityError:
         pass  # duplicate emails exist — skip, we'll handle at app layer
+
+    # Referral code uniqueness (ignore NULLs so pre-existing rows don't collide).
+    try:
+        db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code "
+            "ON users(referral_code) WHERE referral_code IS NOT NULL"
+        )
+    except sqlite3.OperationalError:
+        pass
 
 
 def _parse_iso_utc_naive(s):
@@ -733,6 +755,22 @@ def grant_credits(user_id, amount):
         )
 
 
+def add_bonus_credits(user_id, amount):
+    """Add credits that stack on top of the monthly pool (no zero-clamp).
+
+    Unlike ``grant_credits``, this can push ``credits_used`` below zero so that
+    referral / promo rewards persist even when the user hasn't consumed any
+    credits yet. Used by the referral loop (signup bonus + referrer payout).
+    """
+    if not user_id or not amount or amount <= 0:
+        return
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET credits_used = credits_used - ? WHERE id = ?",
+            (amount, user_id),
+        )
+
+
 def maybe_claim_dunning_stage(user_id, stage):
     """Atomically claim a dunning stage for a user so we only email once per stage.
 
@@ -755,6 +793,137 @@ def maybe_claim_dunning_stage(user_id, stage):
             (stage, user_id, stage),
         )
         return cur.rowcount > 0
+
+
+def _generate_referral_code():
+    return "".join(secrets.choice(_REFERRAL_ALPHABET) for _ in range(REFERRAL_CODE_LENGTH))
+
+
+def get_or_create_referral_code(user_id):
+    """Return the user's referral code, generating and persisting one if missing.
+
+    Generation is best-effort — the unique index means collisions retry.
+    """
+    if not user_id:
+        return None
+    with get_db() as db:
+        row = db.execute(
+            "SELECT referral_code FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if not row:
+            return None
+        if row["referral_code"]:
+            return row["referral_code"]
+
+        for _ in range(8):
+            code = _generate_referral_code()
+            try:
+                db.execute(
+                    "UPDATE users SET referral_code = ? WHERE id = ? AND referral_code IS NULL",
+                    (code, user_id),
+                )
+                # Confirm the write actually landed (the row may have been updated
+                # by a concurrent request in the meantime).
+                row = db.execute(
+                    "SELECT referral_code FROM users WHERE id = ?", (user_id,)
+                ).fetchone()
+                if row and row["referral_code"]:
+                    return row["referral_code"]
+            except sqlite3.IntegrityError:
+                continue
+    return None
+
+
+def get_user_by_referral_code(code):
+    """Return the user dict for a referral code, or None."""
+    if not code:
+        return None
+    code = code.strip().upper()
+    if not code:
+        return None
+    with get_db() as db:
+        row = db.execute(
+            "SELECT * FROM users WHERE referral_code = ?", (code,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def set_referred_by(user_id, referrer_id):
+    """Record that ``user_id`` was referred by ``referrer_id``. Idempotent."""
+    if not user_id or not referrer_id or user_id == referrer_id:
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            "UPDATE users SET referred_by = ? WHERE id = ? AND referred_by IS NULL",
+            (referrer_id, user_id),
+        )
+        return cur.rowcount > 0
+
+
+def pay_referrer_if_due(referee_id):
+    """If the referee was referred and hasn't triggered payout yet, pay both sides.
+
+    Called after a referee's first successful transcription. Returns the
+    referrer_id if a payout happened, else None. Respects
+    REFERRAL_MAX_CREDITS_PER_REFERRER as a lifetime cap per referrer.
+    """
+    if not referee_id:
+        return None
+    with get_db() as db:
+        row = db.execute(
+            "SELECT referred_by, referral_credit_paid FROM users WHERE id = ?",
+            (referee_id,),
+        ).fetchone()
+        if not row or not row["referred_by"] or row["referral_credit_paid"]:
+            return None
+
+        referrer_id = row["referred_by"]
+
+        # Atomically claim the payout slot for this referee.
+        cur = db.execute(
+            "UPDATE users SET referral_credit_paid = 1 "
+            "WHERE id = ? AND referral_credit_paid = 0",
+            (referee_id,),
+        )
+        if cur.rowcount == 0:
+            return None
+
+    # Check referrer's lifetime earnings cap before granting.
+    with get_db() as db:
+        count_row = db.execute(
+            "SELECT COUNT(*) AS c FROM users WHERE referred_by = ? AND referral_credit_paid = 1",
+            (referrer_id,),
+        ).fetchone()
+    paid_referrals = int(count_row["c"]) if count_row else 1
+    total_earned_after = paid_referrals * REFERRAL_REWARD_CREDITS
+    if total_earned_after > REFERRAL_MAX_CREDITS_PER_REFERRER:
+        # Cap hit — referrer doesn't get paid for this one, but we still close
+        # out the referee's slot so we don't retry forever.
+        return None
+
+    add_bonus_credits(referrer_id, REFERRAL_REWARD_CREDITS)
+    return referrer_id
+
+
+def get_referral_stats(user_id):
+    """Return the user's referral overview: {code, referred_count, credits_earned}."""
+    code = get_or_create_referral_code(user_id)
+    with get_db() as db:
+        row = db.execute(
+            """SELECT
+                 COUNT(*) AS total,
+                 SUM(CASE WHEN referral_credit_paid = 1 THEN 1 ELSE 0 END) AS paid
+               FROM users WHERE referred_by = ?""",
+            (user_id,),
+        ).fetchone()
+    paid_count = int((row["paid"] if row else 0) or 0)
+    total_count = int((row["total"] if row else 0) or 0)
+    return {
+        "code": code,
+        "referred_count": total_count,
+        "credits_earned": paid_count * REFERRAL_REWARD_CREDITS,
+        "reward_per_referral": REFERRAL_REWARD_CREDITS,
+    }
 
 
 def set_billing_interval(polar_customer_id, interval):

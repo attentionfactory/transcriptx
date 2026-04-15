@@ -54,6 +54,9 @@ from database import (
     log_transcript_attempt, set_transcript_rating,
     maybe_claim_dunning_stage, clear_dunning_stage,
     set_billing_interval,
+    get_or_create_referral_code, get_user_by_referral_code,
+    set_referred_by, pay_referrer_if_due, get_referral_stats,
+    add_bonus_credits, REFERRAL_REWARD_CREDITS,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -567,6 +570,12 @@ def api_extract():
         log_id = log_transcript_attempt(user_id, email, url, "success", credits_used=1)
         if log_id:
             result["log_id"] = log_id
+        # If this user was referred, pay the referrer on their first success.
+        # pay_referrer_if_due is idempotent — safe to call on every success.
+        try:
+            pay_referrer_if_due(user_id)
+        except Exception:
+            logging.exception("referral payout failed (non-fatal)")
     return jsonify(result)
 
 
@@ -810,6 +819,16 @@ def api_me():
     return jsonify(_get_current_user())
 
 
+@app.route("/api/me/referral")
+def api_me_referral():
+    """Current user's referral code + lifetime stats. Requires auth."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    stats = get_referral_stats(user["user_id"])
+    return jsonify({"status": "ok", **stats})
+
+
 @app.route("/api/featurebase-token")
 def api_featurebase_token():
     """Return secure Featurebase JWT for logged-in user."""
@@ -827,6 +846,35 @@ def api_featurebase_token():
 
 # ── Auth Routes ─────────────────────────────────────────────
 
+
+def _apply_referral_on_signup(new_user_id, new_email, code):
+    """Resolve a signup-time referral code. Grants +REFERRAL_REWARD_CREDITS
+    to the new user now; the referrer is paid later on the first successful
+    transcription (see /api/extract). Safely ignores invalid/self/match codes.
+    """
+    if not code:
+        return None
+    referrer = get_user_by_referral_code(code)
+    if not referrer:
+        return None
+    referrer_id = referrer.get("id")
+    referrer_email = (referrer.get("email") or "").strip().lower()
+    new_email_lc = (new_email or "").strip().lower()
+
+    # Self-referral guard: the new user cannot reuse their own code (not
+    # possible on pure signup, but also block email-match in case an
+    # unverified account is completing signup).
+    if not referrer_id or referrer_id == new_user_id:
+        return None
+    if new_email_lc and referrer_email and new_email_lc == referrer_email:
+        return None
+
+    if set_referred_by(new_user_id, referrer_id):
+        add_bonus_credits(new_user_id, REFERRAL_REWARD_CREDITS)
+        return referrer_id
+    return None
+
+
 @app.route("/api/signup", methods=["POST"])
 @rate_limit_auth(5, 60)
 def api_signup():
@@ -834,6 +882,7 @@ def api_signup():
     data = request.json or {}
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    referral_code = (data.get("referral_code") or "").strip().upper()
 
     if not email or not EMAIL_RE.match(email):
         return jsonify({"status": "error", "error": "Valid email required"}), 400
@@ -847,7 +896,9 @@ def api_signup():
     if existing and existing.get("email_verified"):
         return jsonify({"status": "error", "error": "Account already exists. Log in instead."}), 409
     if existing and not existing.get("email_verified"):
-        # Re-signup for unverified account — update password + resend code
+        # Re-signup for unverified account — update password + resend code.
+        # Also apply referral in case this is their second attempt and they
+        # provided a code now. set_referred_by is a no-op if already set.
         pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         from database import get_db
         with get_db() as db:
@@ -855,6 +906,7 @@ def api_signup():
                 "UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?",
                 (pw_hash, datetime.utcnow().isoformat(), existing["id"]),
             )
+        _apply_referral_on_signup(existing["id"], email, referral_code)
         code = _generate_otp()
         expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
         set_verify_code(email, code, expires)
@@ -866,6 +918,8 @@ def api_signup():
 
     if not user_id:
         return jsonify({"status": "error", "error": "Account already exists."}), 409
+
+    _apply_referral_on_signup(user_id, email, referral_code)
 
     # Generate + send OTP
     code = _generate_otp()

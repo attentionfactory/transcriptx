@@ -307,6 +307,31 @@
             display:inline-flex; align-items:center; justify-content:center; line-height:0;
         }
         .rate-btn svg { display:block; }
+
+        /* ── Invite card ── */
+        .invite-card {
+            background:var(--grey); border-radius:var(--radius); padding:1.4rem 1.6rem;
+            margin-top:1rem; display:flex; flex-direction:column; gap:.8rem;
+        }
+        .invite-head { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+        .invite-title { font-family:var(--f-wide); font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+        .invite-sub { font-size:.72rem; opacity:.65; margin-top:.25rem; max-width:52ch; line-height:1.5; }
+        .invite-stats { font-size:.7rem; font-family:var(--f-tech); opacity:.75; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
+        .invite-stats span { font-weight:700; font-size:.95rem; opacity:1; }
+        .invite-row { display:flex; gap:.5rem; align-items:stretch; }
+        .invite-input {
+            flex:1; min-width:0; padding:.6rem .75rem; font-family:var(--f-tech);
+            font-size:.75rem; border:var(--bw) solid rgba(0,0,0,.25);
+            background:rgba(255,255,255,.45); color:var(--ink); border-radius:.4rem;
+        }
+        .invite-btn {
+            background:var(--ink); color:var(--orange); border:none; cursor:pointer;
+            padding:.6rem 1rem; font-family:var(--f-wide); font-size:.6rem;
+            text-transform:uppercase; letter-spacing:.05em; border-radius:.4rem;
+            transition:.18s;
+        }
+        .invite-btn:hover { background:#333; }
+        .invite-btn.ok { background:var(--green); color:#fff; }
         .rate-btn:hover:not(:disabled) { background:var(--ink); color:var(--orange); }
         .rate-btn:disabled { cursor:default; opacity:0.45; }
         .rate-btn.up.on { background:var(--green); color:#fff; border-color:var(--green); opacity:1; }
@@ -544,6 +569,23 @@
         <!-- Results -->
         <div id="results"></div>
 
+        <!-- Referral card (logged-in only; populated via /api/me/referral) -->
+        <div id="inviteCard" class="invite-card" style="display:none;">
+            <div class="invite-head">
+                <div>
+                    <div class="invite-title">Invite friends, get +20 credits each</div>
+                    <div class="invite-sub" id="inviteSub">Share your link. When they run their first transcription, we top you both up.</div>
+                </div>
+                <div class="invite-stats">
+                    <span id="inviteEarned">0</span>&nbsp;credits earned
+                </div>
+            </div>
+            <div class="invite-row">
+                <input type="text" id="inviteLink" class="invite-input" readonly value="">
+                <button class="invite-btn" id="inviteCopy" onclick="copyInviteLink(this)" data-umami-event="copy-referral-link">Copy link</button>
+            </div>
+        </div>
+
         {% if seo_text_sections or seo_faq_items %}
         <section class="seo-extra">
             {% for section in seo_text_sections or [] %}
@@ -598,6 +640,10 @@
                 <div id="signupForm" style="display:none;">
                     <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <input type="hidden" id="signupReferralCode" value="">
+                    <div id="signupReferralHint" style="display:none;font-size:0.7rem;opacity:0.75;margin-top:0.5rem;text-align:center;">
+                        Referral code <span id="signupReferralCodeLabel" style="font-weight:700;"></span> applied — you'll get +20 credits.
+                    </div>
                     <div class="modal-err" id="signupErr"></div>
                     <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
                 </div>
@@ -647,6 +693,31 @@
         const SEGMENTS_PREVIEW_LIMIT = 200;
         const ICON_THUMBS_UP = {{ icons.thumbs_up(14)|tojson }};
         const ICON_THUMBS_DOWN = {{ icons.thumbs_down(14)|tojson }};
+
+        // Capture ?ref=CODE on landing and persist so the code still applies
+        // after navigation. Applied to the hidden signup field whenever the
+        // auth modal opens. Sanitize to the same base32 alphabet we generate.
+        (function captureReferral(){
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const raw = (params.get('ref') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (raw) localStorage.setItem('tx_ref', raw.slice(0, 16));
+            } catch (e) {}
+        })();
+        function applyStoredReferralToForm() {
+            const stored = (localStorage.getItem('tx_ref') || '').trim();
+            const input = document.getElementById('signupReferralCode');
+            const hint = document.getElementById('signupReferralHint');
+            const label = document.getElementById('signupReferralCodeLabel');
+            if (!input || !hint || !label) return;
+            input.value = stored;
+            if (stored) {
+                label.textContent = stored;
+                hint.style.display = '';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
 
         function toggleBatch() {
             document.getElementById('batchArea').classList.toggle('open', document.getElementById('batchToggle').checked);
@@ -758,7 +829,37 @@
                 const u = await r.json();
                 document.querySelector('.nav-badge').textContent = `${u.plan_name} — ${u.credits_label}`;
                 document.querySelector('.nav-badge').className = `nav-badge ${u.plan}`;
+                if (u.logged_in) loadInviteCard();
             } catch(e) {}
+        }
+
+        async function loadInviteCard() {
+            const card = document.getElementById('inviteCard');
+            if (!card) return;
+            try {
+                const r = await fetch('/api/me/referral');
+                if (!r.ok) return;
+                const d = await r.json();
+                if (!d.code) return;
+                const link = `${window.location.origin}/?ref=${encodeURIComponent(d.code)}`;
+                document.getElementById('inviteLink').value = link;
+                document.getElementById('inviteEarned').textContent = d.credits_earned || 0;
+                const sub = document.getElementById('inviteSub');
+                if (d.referred_count && sub) {
+                    sub.textContent = `${d.referred_count} invited so far. When they run their first transcription we top you both up with +${d.reward_per_referral || 20}.`;
+                }
+                card.style.display = '';
+            } catch (e) {}
+        }
+
+        function copyInviteLink(btn) {
+            const input = document.getElementById('inviteLink');
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value);
+            const old = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('ok');
+            setTimeout(() => { btn.textContent = old; btn.classList.remove('ok'); }, 1200);
         }
 
         function fmt(n) {
@@ -925,6 +1026,7 @@
 
         function showAuth(tab) {
             document.getElementById('authModal').classList.add('open');
+            applyStoredReferralToForm();
             switchTab(tab || 'login');
         }
         function hideAuth() {
@@ -962,14 +1064,17 @@
         async function doSignup() {
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
+            const referral_code = (document.getElementById('signupReferralCode').value || '').trim();
             const err = document.getElementById('signupErr');
             err.textContent = '';
             if (!email) { err.textContent = 'Enter your email'; return; }
             if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
             try {
+                const body = { email, password };
+                if (referral_code) body.referral_code = referral_code;
                 const r = await fetch('/api/signup', {
                     method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({email, password})
+                    body: JSON.stringify(body)
                 });
                 const d = await r.json();
                 if (d.step === 'verify') {
@@ -1089,6 +1194,9 @@
             location.reload();
         }
 
+        {% if user.logged_in %}
+        loadInviteCard();
+        {% endif %}
     </script>
 </body>
 </html>
