@@ -52,6 +52,7 @@ from database import (
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email, verify_code_for_user, set_user_password,
     log_transcript_attempt, set_transcript_rating,
+    maybe_claim_dunning_stage, clear_dunning_stage,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -75,6 +76,10 @@ POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
+# Win-back checkout URLs (with a one-time discount code baked in) emailed to
+# users whose subscription was revoked. Fall back to standard checkout when unset.
+POLAR_CHECKOUT_WINBACK_STARTER = os.environ.get("POLAR_CHECKOUT_WINBACK_STARTER", "").strip() or POLAR_CHECKOUT_STARTER
+POLAR_CHECKOUT_WINBACK_PRO = os.environ.get("POLAR_CHECKOUT_WINBACK_PRO", "").strip() or POLAR_CHECKOUT_PRO
 FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
 FEATUREBASE_JWT_SECRET = os.environ.get("FEATUREBASE_JWT_SECRET", "").strip()
 
@@ -200,12 +205,15 @@ def _generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def _send_otp_email(email, code, purpose="verification"):
-    """Send OTP via Resend API. Returns True on success."""
-    noun = "password reset" if purpose == "password_reset" else "verification"
+def _send_email(to, subject, html):
+    """Send a single transactional email via Resend. Returns True on success.
+
+    In dev (no RESEND_API_KEY) this logs the subject to stdout and returns True
+    so flows that depend on a successful send keep working locally.
+    """
     if not RESEND_API_KEY:
-        print(f"⚠️  RESEND_API_KEY not set. {noun} OTP for {email}: {code}")
-        return True  # Dev mode — just print
+        print(f"⚠️  RESEND_API_KEY not set. Would send to {to}: {subject}")
+        return True
 
     try:
         resp = http_requests.post(
@@ -216,16 +224,9 @@ def _send_otp_email(email, code, purpose="verification"):
             },
             json={
                 "from": RESEND_FROM_EMAIL,
-                "to": [email],
-                "subject": f"TranscriptX — Your {noun} code is {code}",
-                "html": f"""
-                    <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
-                        <h2 style="margin:0 0 1rem;">TranscriptX</h2>
-                        <p>Your {noun} code:</p>
-                        <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
-                        <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
-                    </div>
-                """,
+                "to": [to],
+                "subject": subject,
+                "html": html,
             },
             timeout=10,
         )
@@ -233,6 +234,84 @@ def _send_otp_email(email, code, purpose="verification"):
     except Exception as e:
         print(f"❌ Resend error: {e}")
         return False
+
+
+def _send_otp_email(email, code, purpose="verification"):
+    """Send OTP via Resend API. Returns True on success."""
+    noun = "password reset" if purpose == "password_reset" else "verification"
+    html = f"""
+        <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
+            <h2 style="margin:0 0 1rem;">TranscriptX</h2>
+            <p>Your {noun} code:</p>
+            <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
+            <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
+        </div>
+    """
+    return _send_email(email, f"TranscriptX — Your {noun} code is {code}", html)
+
+
+def _dunning_html(stage, plan, portal_url, checkout_url):
+    """Return (subject, html) for a given dunning stage. Pure — easy to test."""
+    if stage == "past_due":
+        subject = "TranscriptX — we couldn't charge your card"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Your payment didn't go through</h2>
+                <p>We tried to renew your {plan.title()} subscription but your card was declined. You still have access for a few days while we retry — update your payment method to keep things running.</p>
+                <p><a href="{portal_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#0a0a0a;color:#F0A860;text-decoration:none;border-radius:6px;font-weight:700;">Update payment method</a></p>
+                <p style="opacity:0.6;font-size:0.8rem;margin-top:1.5rem;">If you meant to cancel, you can ignore this email — your plan will end on its own.</p>
+            </div>
+        """
+        return subject, body
+
+    if stage == "canceled":
+        subject = "TranscriptX — you'll be missed"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Sorry to see you go</h2>
+                <p>Your {plan.title()} subscription is set to end at the close of your current billing period — you'll keep full access until then.</p>
+                <p>If something was missing or didn't work as expected, I'd genuinely like to know. Just hit reply.</p>
+                <p><a href="{portal_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#0a0a0a;color:#F0A860;text-decoration:none;border-radius:6px;font-weight:700;">Manage subscription</a></p>
+            </div>
+        """
+        return subject, body
+
+    if stage == "revoked":
+        subject = "TranscriptX — come back for 50% off"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Want to give it another shot?</h2>
+                <p>Your TranscriptX subscription has ended. If you change your mind, here's a 50% discount on your first month back.</p>
+                <p><a href="{checkout_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#709472;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;">Resubscribe at 50% off</a></p>
+                <p style="opacity:0.6;font-size:0.8rem;margin-top:1.5rem;">This offer is one-time — we won't follow up again.</p>
+            </div>
+        """
+        return subject, body
+
+    return None, None
+
+
+def _maybe_send_dunning_email(user, stage):
+    """Claim a dunning stage and send the matching email if this is a new stage.
+
+    ``user`` is the dict returned by get_user / get_user_by_id. ``stage`` is one of
+    'past_due' / 'canceled' / 'revoked'. Safe to call multiple times — guarded by
+    maybe_claim_dunning_stage so repeated webhooks only email once.
+    """
+    if not user or not user.get("email"):
+        return False
+
+    user_id = user.get("id")
+    if not maybe_claim_dunning_stage(user_id, stage):
+        return False
+
+    plan = (user.get("plan") or "starter").lower()
+    checkout_url = POLAR_CHECKOUT_WINBACK_PRO if plan == "pro" else POLAR_CHECKOUT_WINBACK_STARTER
+    subject, html = _dunning_html(stage, plan, POLAR_CUSTOMER_PORTAL, checkout_url)
+    if not subject:
+        return False
+
+    return _send_email(user["email"], subject, html)
 
 
 def _b64url_json(obj):
@@ -968,6 +1047,24 @@ def polar_webhook():
         if event_type in subscription_events:
             sync_polar_subscription_webhook(event_type, event_data, plan)
             logging.info("Polar webhook %s synced (plan=%s)", event_type, plan)
+
+            # Dunning: fire recovery emails on state transitions. Idempotent —
+            # maybe_claim_dunning_stage ensures we only email once per stage.
+            # Note: if Polar delivers a canceled/revoked event for a polar_id
+            # we've never seen (no prior active/past_due), get_user returns
+            # None and no email fires. That's the lesser of two evils —
+            # better than creating empty users or double-sending.
+            synced_user = get_user(polar_id) if polar_id else None
+            if synced_user:
+                if event_type == "subscription.past_due":
+                    _maybe_send_dunning_email(synced_user, "past_due")
+                elif event_type == "subscription.canceled":
+                    _maybe_send_dunning_email(synced_user, "canceled")
+                elif event_type == "subscription.revoked":
+                    _maybe_send_dunning_email(synced_user, "revoked")
+                elif event_type in ("subscription.active", "subscription.uncanceled"):
+                    # Back to healthy — reset so the next bad event can email.
+                    clear_dunning_stage(synced_user.get("id"))
 
         return jsonify({"status": "ok"}), 200
     except Exception:

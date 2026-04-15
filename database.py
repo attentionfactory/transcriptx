@@ -117,6 +117,8 @@ def _migrate_columns(db):
         ("cancel_at_period_end", "INTEGER DEFAULT 0"),
         ("current_period_end", "TEXT"),
         ("last_billing_event_at", "TEXT"),
+        ("dunning_stage", "TEXT"),
+        ("dunning_sent_at", "TEXT"),
     ]
     for col, col_type in migrations:
         if col not in existing:
@@ -727,6 +729,41 @@ def grant_credits(user_id, amount):
         db.execute(
             "UPDATE users SET credits_used = MAX(0, credits_used - ?) WHERE id = ?",
             (amount, user_id),
+        )
+
+
+def maybe_claim_dunning_stage(user_id, stage):
+    """Atomically claim a dunning stage for a user so we only email once per stage.
+
+    Returns True if this call is the first to set ``stage`` on this user
+    (and the row was updated), False if the same stage was already set.
+
+    Stages:
+      'past_due'  — card declined, subscription is in grace
+      'canceled'  — user chose cancel_at_period_end; still has access for now
+      'revoked'   — access fully ended (expired grace, or explicit revocation)
+    """
+    if not user_id or not stage:
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            """UPDATE users
+                  SET dunning_stage = ?, dunning_sent_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND (dunning_stage IS NULL OR dunning_stage != ?)""",
+            (stage, user_id, stage),
+        )
+        return cur.rowcount > 0
+
+
+def clear_dunning_stage(user_id):
+    """Clear dunning marker (e.g. after subscription returns to active)."""
+    if not user_id:
+        return
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET dunning_stage = NULL, dunning_sent_at = NULL WHERE id = ?",
+            (user_id,),
         )
 
 
