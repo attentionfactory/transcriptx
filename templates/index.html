@@ -828,10 +828,14 @@
         function render(d) {
             const c = document.getElementById('results');
             if (d.status === 'error') {
+                const keptMsg = d.credit_kept
+                    ? `<div style="font-size:0.7rem;opacity:0.7;margin-top:6px;">This used 1 credit because we still processed the link. <a href="/pricing#refund-policy" style="color:var(--ink);text-decoration:underline;">Why?</a></div>`
+                    : '';
                 c.insertAdjacentHTML('afterbegin', `
                     <div class="result-card err">
                         <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
                         <div style="color:var(--red);font-size:0.85rem;">${d.error||'Unknown error'}</div>
+                        ${keptMsg}
                     </div>`);
                 return;
             }

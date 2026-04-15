@@ -470,8 +470,15 @@ def api_extract():
 
     result = process_url(url, model=model)
     if result.get("status") == "error":
-        refund_credit_for_user(user["user_id"])
-        log_transcript_attempt(user_id, email, url, "error", credits_used=0)
+        # Refund only when the failure is on us (network, Groq, anti-bot, etc.).
+        # If the user supplied a private/unsupported/missing video we still
+        # spent yt-dlp + Groq cycles on it, so we keep the credit and tell them.
+        if result.get("error_kind") == "user_input":
+            log_transcript_attempt(user_id, email, url, "error_user_input", credits_used=1)
+            result["credit_kept"] = True
+        else:
+            refund_credit_for_user(user["user_id"])
+            log_transcript_attempt(user_id, email, url, "error", credits_used=0)
     else:
         log_id = log_transcript_attempt(user_id, email, url, "success", credits_used=1)
         if log_id:

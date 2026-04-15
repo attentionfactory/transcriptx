@@ -30,6 +30,41 @@ _YT_ANTIBOT_MARKERS = (
     "unable to download webpage",
 )
 
+# Substrings (case-insensitive) that indicate the user's input is the problem
+# (private/unsupported/missing video) rather than a transient upstream issue.
+# We still did real work on these, so we don't refund the credit.
+_USER_INPUT_ERROR_MARKERS = (
+    "no video found",
+    "private video",
+    "is private",
+    "video unavailable",
+    "video is unavailable",
+    "this video is no longer available",
+    "removed by the uploader",
+    "members-only",
+    "unsupported url",
+    "audio too large",
+    "no audio file found",
+    "no mp4 file produced",
+)
+
+
+def classify_error(error_message):
+    """Classify a process_url error string into 'user_input' or 'upstream'.
+
+    user_input  → user supplied a bad URL / unsupported video; do NOT refund.
+    upstream    → our problem (network, Groq, anti-bot block, timeout); DO refund.
+
+    The default is 'upstream' so we err on the side of refunding when unsure.
+    """
+    msg = (error_message or "").lower()
+    if not msg:
+        return "upstream"
+    for marker in _USER_INPUT_ERROR_MARKERS:
+        if marker in msg:
+            return "user_input"
+    return "upstream"
+
 
 def _get_client():
     global _client
@@ -243,7 +278,12 @@ def process_url(url, model="whisper-large-v3-turbo"):
             meta = {}
         else:
             log.warning("[pipeline] metadata error: %s", metadata_error)
-            return {"url": url, "status": "error", "error": metadata_error}
+            return {
+                "url": url,
+                "status": "error",
+                "error": metadata_error,
+                "error_kind": classify_error(metadata_error),
+            }
 
     # Download
     filepath, err = download_audio(url)
@@ -252,6 +292,7 @@ def process_url(url, model="whisper-large-v3-turbo"):
             "url": url,
             "status": "error",
             "error": err,
+            "error_kind": classify_error(err),
             "metadata_error": metadata_error,
             **{k: meta.get(k, 0) for k in ["views", "likes", "comments", "duration"]},
         }
@@ -272,7 +313,7 @@ def process_url(url, model="whisper-large-v3-turbo"):
     status = "error" if "error" in result else "success"
     log.info("[pipeline] done url=%s status=%s total=%.1fs", url, status, time.time() - t_total)
 
-    return {
+    payload = {
         "url": url,
         "status": status,
         "title": meta.get("title", ""),
@@ -290,6 +331,11 @@ def process_url(url, model="whisper-large-v3-turbo"):
         "metadata_error": metadata_error,
         "error": result.get("error"),
     }
+    if status == "error":
+        # Transcription stage errors (Groq) are upstream by default — operator
+        # problem, not the user's. classify_error handles this conservatively.
+        payload["error_kind"] = classify_error(result.get("error"))
+    return payload
 
 
 def _sanitize_filename(value, fallback="video"):
