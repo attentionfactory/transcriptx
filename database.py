@@ -79,6 +79,8 @@ def init_db():
                 url TEXT,
                 status TEXT,
                 credits_used INTEGER DEFAULT 0,
+                rating INTEGER,
+                rated_at TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -87,6 +89,18 @@ def init_db():
 
         # Migrate existing users table — add new auth columns if missing
         _migrate_columns(db)
+        _migrate_transcript_logs(db)
+
+
+def _migrate_transcript_logs(db):
+    """Add rating columns to transcript_logs if missing."""
+    existing = {row[1] for row in db.execute("PRAGMA table_info(transcript_logs)").fetchall()}
+    for col, col_type in (("rating", "INTEGER"), ("rated_at", "TEXT")):
+        if col not in existing:
+            try:
+                db.execute(f"ALTER TABLE transcript_logs ADD COLUMN {col} {col_type}")
+            except sqlite3.OperationalError:
+                pass
 
 
 def _migrate_columns(db):
@@ -616,9 +630,9 @@ def set_user_password(user_id, password_hash):
 
 
 def log_transcript_attempt(user_id, email, url, status, credits_used=0):
-    """Write one transcript attempt row for audit/ops visibility."""
+    """Write one transcript attempt row for audit/ops visibility. Returns inserted row id."""
     with get_db() as db:
-        db.execute(
+        cur = db.execute(
             """INSERT INTO transcript_logs (user_id, email, url, status, credits_used)
                VALUES (?, ?, ?, ?, ?)""",
             (
@@ -629,6 +643,28 @@ def log_transcript_attempt(user_id, email, url, status, credits_used=0):
                 int(credits_used or 0),
             ),
         )
+        return cur.lastrowid
+
+
+def set_transcript_rating(log_id, user_id, rating):
+    """Record a user's rating for one of their own transcript_logs rows.
+
+    rating must be 1 (thumbs-up) or -1 (thumbs-down). Returns True on success,
+    False if the row doesn't exist or doesn't belong to the user.
+    """
+    if rating not in (1, -1):
+        return False
+    try:
+        log_id = int(log_id)
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            "UPDATE transcript_logs SET rating = ?, rated_at = ? WHERE id = ? AND user_id = ?",
+            (rating, datetime.utcnow().isoformat(), log_id, user_id),
+        )
+        return cur.rowcount > 0
 
 
 # ── Credits (unified — works by user id) ──────────────────

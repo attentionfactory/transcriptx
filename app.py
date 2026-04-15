@@ -51,7 +51,7 @@ from database import (
     get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email, verify_code_for_user, set_user_password,
-    log_transcript_attempt,
+    log_transcript_attempt, set_transcript_rating,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -473,8 +473,34 @@ def api_extract():
         refund_credit_for_user(user["user_id"])
         log_transcript_attempt(user_id, email, url, "error", credits_used=0)
     else:
-        log_transcript_attempt(user_id, email, url, "success", credits_used=1)
+        log_id = log_transcript_attempt(user_id, email, url, "success", credits_used=1)
+        if log_id:
+            result["log_id"] = log_id
     return jsonify(result)
+
+
+@app.route("/api/rate-transcript", methods=["POST"])
+def api_rate_transcript():
+    """Record a thumbs-up (1) / thumbs-down (-1) rating for a delivered transcript."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Not authenticated"}), 401
+
+    data = request.json or {}
+    log_id = data.get("log_id")
+    rating = data.get("rating")
+    try:
+        log_id = int(log_id)
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "error": "log_id and rating required"}), 400
+    if rating not in (1, -1):
+        return jsonify({"status": "error", "error": "rating must be 1 or -1"}), 400
+
+    ok = set_transcript_rating(log_id, user["user_id"], rating)
+    if not ok:
+        return jsonify({"status": "error", "error": "Not found"}), 403
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/extract-preview", methods=["POST"])
@@ -1132,7 +1158,7 @@ def admin_logs():
         rows = [
             dict(r)
             for r in db.execute(
-                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.created_at,
+                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.rating, l.created_at,
                            CASE WHEN COALESCE(u.plan, 'free') IN ('starter','pro') THEN COALESCE(u.plan, 'free') ELSE '' END AS plan_pill
                     {from_sql}
                     {where_sql}
@@ -1141,6 +1167,25 @@ def admin_logs():
                 params + [per_page, offset],
             ).fetchall()
         ]
+
+        rating_row = db.execute(
+            """SELECT
+                 SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS up,
+                 SUM(CASE WHEN rating = -1 THEN 1 ELSE 0 END) AS down,
+                 SUM(CASE WHEN rating IS NOT NULL THEN 1 ELSE 0 END) AS rated
+               FROM transcript_logs
+               WHERE status = 'success'"""
+        ).fetchone()
+        up_count = int(rating_row["up"] or 0) if rating_row else 0
+        down_count = int(rating_row["down"] or 0) if rating_row else 0
+        rated_total = int(rating_row["rated"] or 0) if rating_row else 0
+        up_pct = round((up_count / rated_total) * 100, 1) if rated_total else None
+        rating_summary = {
+            "up": up_count,
+            "down": down_count,
+            "rated": rated_total,
+            "up_pct": up_pct,
+        }
 
     def _platform_guess(url):
         u = (url or "").lower()
@@ -1186,6 +1231,7 @@ def admin_logs():
         prev_qs=prev_qs,
         next_qs=next_qs,
         filters=base_filters,
+        rating_summary=rating_summary,
     )
 
 

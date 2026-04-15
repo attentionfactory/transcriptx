@@ -301,6 +301,17 @@
         }
         .copy-btn:hover { background:var(--ink); color:var(--orange); }
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
+        .rate-btn {
+            background:none; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:3px 6px; cursor:pointer; transition:0.2s;
+            display:inline-flex; align-items:center; justify-content:center; line-height:0;
+        }
+        .rate-btn svg { display:block; }
+        .rate-btn:hover:not(:disabled) { background:var(--ink); color:var(--orange); }
+        .rate-btn:disabled { cursor:default; opacity:0.45; }
+        .rate-btn.up.on { background:var(--green); color:#fff; border-color:var(--green); opacity:1; }
+        .rate-btn.down.on { background:var(--red); color:#fff; border-color:var(--red); opacity:1; }
+        .rate-thanks { font-size:0.55rem; font-family:var(--f-tech); text-transform:uppercase; opacity:0.6; margin-left:4px; }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
         .transcript-text.hidden { display:none; }
         .view-btn {
@@ -630,9 +641,12 @@
     </div>
     {% include "_site_footer.html" %}
 
+    {% import "_icons.html" as icons %}
     <script>
         let all = [];
         const SEGMENTS_PREVIEW_LIMIT = 200;
+        const ICON_THUMBS_UP = {{ icons.thumbs_up(14)|tojson }};
+        const ICON_THUMBS_DOWN = {{ icons.thumbs_down(14)|tojson }};
 
         function toggleBatch() {
             document.getElementById('batchArea').classList.toggle('open', document.getElementById('batchToggle').checked);
@@ -847,6 +861,12 @@
                             <div class="head-actions">
                                 <button class="view-btn" id="${id}-toggle" onclick="toggleTsView('${id}')">TIMED</button>
                                 <button class="copy-btn" onclick="clip(this,'${id}-plain')" data-umami-event="copy-transcript">COPY</button>
+                                ${d.log_id ? `
+                                    <span id="${id}-rate" style="display:flex;align-items:center;gap:4px;margin-left:4px;">
+                                        <button class="rate-btn up" title="Good transcript" onclick="rateTranscript(${d.log_id}, 1, '${id}-rate')">${ICON_THUMBS_UP}</button>
+                                        <button class="rate-btn down" title="Bad transcript" onclick="rateTranscript(${d.log_id}, -1, '${id}-rate')">${ICON_THUMBS_DOWN}</button>
+                                    </span>
+                                ` : ''}
                             </div>
                         </div>
                         <div class="transcript-text" id="${id}-plain">${d.transcript||'No transcript'}</div>
@@ -859,6 +879,30 @@
             navigator.clipboard.writeText(document.getElementById(id).innerText);
             btn.textContent='COPIED'; btn.classList.add('ok');
             setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('ok');},1500);
+        }
+
+        async function rateTranscript(logId, rating, containerId) {
+            const wrap = document.getElementById(containerId);
+            if (!wrap || wrap.dataset.rated === '1') return;
+            const up = wrap.querySelector('.rate-btn.up');
+            const down = wrap.querySelector('.rate-btn.down');
+            if (up) up.disabled = true;
+            if (down) down.disabled = true;
+            try {
+                const r = await fetch('/api/rate-transcript', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({log_id: logId, rating})
+                });
+                if (!r.ok) throw new Error('rate failed');
+                wrap.dataset.rated = '1';
+                if (rating === 1 && up) up.classList.add('on');
+                if (rating === -1 && down) down.classList.add('on');
+                wrap.insertAdjacentHTML('beforeend', '<span class="rate-thanks">thanks</span>');
+            } catch (e) {
+                if (up) up.disabled = false;
+                if (down) down.disabled = false;
+            }
         }
 
         function expCSV() {
