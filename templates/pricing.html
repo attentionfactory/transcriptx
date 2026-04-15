@@ -118,6 +118,24 @@
         @media (max-width:800px) {
             .plans { grid-template-columns:1fr; }
         }
+
+        .billing-toggle {
+            display:inline-flex; background:var(--grey); border-radius:999px;
+            padding:4px; gap:4px; margin:0 auto 1rem; position:relative;
+        }
+        .billing-toggle button {
+            background:transparent; border:none; padding:.55rem 1.1rem;
+            font-family:var(--f-tech); font-size:.7rem; text-transform:uppercase;
+            letter-spacing:.04em; font-weight:700; color:var(--ink);
+            cursor:pointer; border-radius:999px; transition:.18s;
+        }
+        .billing-toggle button.active { background:var(--ink); color:var(--orange); }
+        .billing-toggle .save-tag {
+            position:absolute; top:-10px; right:-10px;
+            background:var(--green); color:#fff; font-size:.55rem; font-weight:700;
+            padding:.15rem .4rem; border-radius:.3rem; text-transform:uppercase;
+        }
+        .price-sub { display:block; font-size:.55rem; opacity:.55; margin-top:.3rem; letter-spacing:.04em; text-transform:uppercase; }
     </style>
 </head>
 <body>
@@ -133,6 +151,13 @@
         <div class="pricing-head">
             <h1>Simple Pricing</h1>
             <p>Instagram, TikTok, YouTube, X, and 1000+ more. Start free.</p>
+            <div style="display:flex;justify-content:center;margin-top:1.2rem;">
+                <div class="billing-toggle" role="tablist" aria-label="Billing interval">
+                    <button type="button" class="active" data-interval="monthly" onclick="setBilling('monthly')">Monthly</button>
+                    <button type="button" data-interval="annual" onclick="setBilling('annual')">Annual</button>
+                    <span class="save-tag">Save 17%</span>
+                </div>
+            </div>
         </div>
 
         <div class="plans">
@@ -152,14 +177,21 @@
             <div class="panel p-orange">
                 <span class="label">Most Popular</span>
                 <div class="plan-name">Starter</div>
-                <div class="plan-price">$2<span>/mo</span></div>
+                <div class="plan-price"
+                     data-monthly='$2<span>/mo</span>'
+                     data-annual='$20<span>/yr</span>'>$2<span>/mo</span></div>
+                <span class="price-sub" data-monthly="Billed monthly" data-annual="$1.67/mo — 2 months free">Billed monthly</span>
                 <ul class="plan-features">
                     <li>50 transcripts / month</li>
                     <li>All 1000+ platforms</li>
                     <li>Batch mode</li>
                     <li>CSV + JSON export</li>
                 </ul>
-                <a href="{{ config.checkout_starter }}" class="plan-btn dark" style="margin-top:auto;" data-umami-event="checkout-starter">GET STARTER ➔</a>
+                <a href="{{ config.checkout_starter }}"
+                   data-href-monthly="{{ config.checkout_starter }}"
+                   data-href-annual="{{ config.checkout_starter_annual }}"
+                   class="plan-btn dark plan-cta" style="margin-top:auto;"
+                   data-umami-event="checkout-starter">GET STARTER ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Cost Per</span><div>$0.04</div></div>
                     <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
@@ -169,14 +201,21 @@
             <div class="panel p-green">
                 <span class="label">Unlimited</span>
                 <div class="plan-name">Pro</div>
-                <div class="plan-price">$4<span>/mo</span></div>
+                <div class="plan-price"
+                     data-monthly='$4<span>/mo</span>'
+                     data-annual='$40<span>/yr</span>'>$4<span>/mo</span></div>
+                <span class="price-sub" data-monthly="Billed monthly" data-annual="$3.33/mo — 2 months free">Billed monthly</span>
                 <ul class="plan-features">
                     <li>Unlimited transcripts</li>
                     <li>All 1000+ platforms</li>
                     <li>Batch mode</li>
                     <li>CSV + JSON export</li>
                 </ul>
-                <a href="{{ config.checkout_pro }}" class="plan-btn green" style="margin-top:auto;" data-umami-event="checkout-pro">GET PRO ➔</a>
+                <a href="{{ config.checkout_pro }}"
+                   data-href-monthly="{{ config.checkout_pro }}"
+                   data-href-annual="{{ config.checkout_pro_annual }}"
+                   class="plan-btn green plan-cta" style="margin-top:auto;"
+                   data-umami-event="checkout-pro">GET PRO ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
                     <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
@@ -197,6 +236,23 @@
         </div>
 
     </div>
+    <script>
+        (function(){
+            function setBilling(interval) {
+                document.querySelectorAll('.billing-toggle button').forEach(function(b){
+                    b.classList.toggle('active', b.dataset.interval === interval);
+                });
+                document.querySelectorAll('[data-monthly][data-annual]').forEach(function(el){
+                    el.innerHTML = el.getAttribute('data-' + interval);
+                });
+                document.querySelectorAll('.plan-cta').forEach(function(a){
+                    var href = a.getAttribute('data-href-' + interval);
+                    if (href) a.setAttribute('href', href);
+                });
+            }
+            window.setBilling = setBilling;
+        })();
+    </script>
     {% include "_site_footer.html" %}
 </body>
 </html>

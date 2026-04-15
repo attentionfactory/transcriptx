@@ -53,6 +53,7 @@ from database import (
     set_verify_code, verify_email, verify_code_for_user, set_user_password,
     log_transcript_attempt, set_transcript_rating,
     maybe_claim_dunning_stage, clear_dunning_stage,
+    set_billing_interval,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -73,8 +74,12 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.
 POLAR_WEBHOOK_SECRET = os.environ.get("POLAR_WEBHOOK_SECRET", "")
 POLAR_STARTER_PRODUCT_ID = os.environ.get("POLAR_STARTER_PRODUCT_ID", "")
 POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
+POLAR_STARTER_ANNUAL_PRODUCT_ID = os.environ.get("POLAR_STARTER_ANNUAL_PRODUCT_ID", "")
+POLAR_PRO_ANNUAL_PRODUCT_ID = os.environ.get("POLAR_PRO_ANNUAL_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
+POLAR_CHECKOUT_STARTER_ANNUAL = os.environ.get("POLAR_CHECKOUT_STARTER_ANNUAL", "").strip() or POLAR_CHECKOUT_STARTER
+POLAR_CHECKOUT_PRO_ANNUAL = os.environ.get("POLAR_CHECKOUT_PRO_ANNUAL", "").strip() or POLAR_CHECKOUT_PRO
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
 # Win-back checkout URLs (with a one-time discount code baked in) emailed to
 # users whose subscription was revoked. Fall back to standard checkout when unset.
@@ -1002,10 +1007,15 @@ def polar_webhook():
         polar_id = customer.get("id") or event_data.get("customer_id") or ""
 
         plan = None
+        billing_interval = None
         if POLAR_PRO_PRODUCT_ID and product_id == POLAR_PRO_PRODUCT_ID:
-            plan = "pro"
+            plan, billing_interval = "pro", "monthly"
         elif POLAR_STARTER_PRODUCT_ID and product_id == POLAR_STARTER_PRODUCT_ID:
-            plan = "starter"
+            plan, billing_interval = "starter", "monthly"
+        elif POLAR_PRO_ANNUAL_PRODUCT_ID and product_id == POLAR_PRO_ANNUAL_PRODUCT_ID:
+            plan, billing_interval = "pro", "annual"
+        elif POLAR_STARTER_ANNUAL_PRODUCT_ID and product_id == POLAR_STARTER_ANNUAL_PRODUCT_ID:
+            plan, billing_interval = "starter", "annual"
 
         if plan is None:
             strict_types = (
@@ -1046,7 +1056,14 @@ def polar_webhook():
         )
         if event_type in subscription_events:
             sync_polar_subscription_webhook(event_type, event_data, plan)
-            logging.info("Polar webhook %s synced (plan=%s)", event_type, plan)
+            if billing_interval and polar_id:
+                set_billing_interval(polar_id, billing_interval)
+            logging.info(
+                "Polar webhook %s synced (plan=%s, interval=%s)",
+                event_type,
+                plan,
+                billing_interval or "unknown",
+            )
 
             # Dunning: fire recovery emails on state transitions. Idempotent —
             # maybe_claim_dunning_stage ensures we only email once per stage.
@@ -2600,6 +2617,8 @@ register_page_routes(
     get_banner=get_banner,
     checkout_starter=POLAR_CHECKOUT_STARTER,
     checkout_pro=POLAR_CHECKOUT_PRO,
+    checkout_starter_annual=POLAR_CHECKOUT_STARTER_ANNUAL,
+    checkout_pro_annual=POLAR_CHECKOUT_PRO_ANNUAL,
     customer_portal=POLAR_CUSTOMER_PORTAL,
     featurebase_app_id=FEATUREBASE_APP_ID,
     guides_content=GUIDES_CONTENT,

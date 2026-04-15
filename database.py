@@ -119,6 +119,7 @@ def _migrate_columns(db):
         ("last_billing_event_at", "TEXT"),
         ("dunning_stage", "TEXT"),
         ("dunning_sent_at", "TEXT"),
+        ("billing_interval", "TEXT"),
     ]
     for col, col_type in migrations:
         if col not in existing:
@@ -754,6 +755,17 @@ def maybe_claim_dunning_stage(user_id, stage):
             (stage, user_id, stage),
         )
         return cur.rowcount > 0
+
+
+def set_billing_interval(polar_customer_id, interval):
+    """Record whether the active subscription is monthly or annual. Analytics only."""
+    if not polar_customer_id or interval not in ("monthly", "annual"):
+        return
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET billing_interval = ? WHERE polar_customer_id = ?",
+            (interval, polar_customer_id),
+        )
 
 
 def clear_dunning_stage(user_id):
