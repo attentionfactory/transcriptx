@@ -1973,7 +1973,7 @@ ADMIN_TEMPLATE = """
                         <td class="mono">{{ r.referral_code or '—' }}</td>
                         <td class="mono">{{ r.referred }}</td>
                         <td class="mono">{{ r.paid }}</td>
-                        <td class="mono">{{ (r.paid or 0) * 20 }}</td>
+                        <td class="mono">{{ (r.paid or 0) * 10 }}</td>
                     </tr>
                     {% endfor %}
                     {% if not top_referrers %}<tr><td colspan="5" class="empty-row">No referrals yet</td></tr>{% endif %}

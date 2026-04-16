@@ -332,6 +332,26 @@
         }
         .invite-btn:hover { background:#333; }
         .invite-btn.ok { background:var(--green); color:#fff; }
+
+        /* ── Referral welcome bar ── */
+        .ref-bar {
+            background:var(--orange); border-radius:100px; padding:.6rem 1.2rem .6rem 1.4rem;
+            display:flex; align-items:center; gap:.8rem; justify-content:center;
+            animation:cardUp 0.4s ease;
+        }
+        .ref-bar-text { font-size:.72rem; font-weight:700; }
+        .ref-bar-text strong { font-weight:900; }
+        .ref-bar-btn {
+            background:var(--ink); color:var(--orange); border:none; cursor:pointer;
+            padding:.4rem .9rem; font-family:var(--f-wide); font-size:.55rem;
+            text-transform:uppercase; letter-spacing:.04em; border-radius:4px; transition:.18s;
+        }
+        .ref-bar-btn:hover { background:#333; }
+        .ref-bar-close {
+            background:none; border:none; font-size:1.1rem; cursor:pointer;
+            opacity:.5; line-height:1; padding:0 .3rem; color:var(--ink);
+        }
+        .ref-bar-close:hover { opacity:1; }
         .rate-btn:hover:not(:disabled) { background:var(--ink); color:var(--orange); }
         .rate-btn:disabled { cursor:default; opacity:0.45; }
         .rate-btn.up.on { background:var(--green); color:#fff; border-color:var(--green); opacity:1; }
@@ -461,6 +481,15 @@
         {% set nav_mode = "app" %}
         {% include "_site_nav.html" %}
 
+        <!-- Referral welcome bar (shown only to non-logged-in visitors with ?ref= or stored code) -->
+        {% if not user.logged_in %}
+        <div id="refBar" class="ref-bar" style="display:none;">
+            <span class="ref-bar-text">You've been invited — sign up to get <strong>10 free credits</strong></span>
+            <button class="ref-bar-btn" onclick="showAuth('signup')">Sign up free</button>
+            <button class="ref-bar-close" onclick="dismissRefBar()" title="Close">&times;</button>
+        </div>
+        {% endif %}
+
         <!-- Hero -->
         <div class="hero">
             <div class="panel p-orange hero-main">
@@ -573,7 +602,7 @@
         <div id="inviteCard" class="invite-card" style="display:none;">
             <div class="invite-head">
                 <div>
-                    <div class="invite-title">Invite friends, get +20 credits each</div>
+                    <div class="invite-title">Invite friends, get +10 credits each</div>
                     <div class="invite-sub" id="inviteSub">Share your link. When they run their first transcription, we top you both up.</div>
                 </div>
                 <div class="invite-stats">
@@ -642,7 +671,7 @@
                     <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
                     <input type="hidden" id="signupReferralCode" value="">
                     <div id="signupReferralHint" style="display:none;font-size:0.7rem;opacity:0.75;margin-top:0.5rem;text-align:center;">
-                        Referral code <span id="signupReferralCodeLabel" style="font-weight:700;"></span> applied — you'll get +20 credits.
+                        Referral code <span id="signupReferralCodeLabel" style="font-weight:700;"></span> applied — you'll get +10 credits.
                     </div>
                     <div class="modal-err" id="signupErr"></div>
                     <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
@@ -704,6 +733,22 @@
                 if (raw) localStorage.setItem('tx_ref', raw.slice(0, 16));
             } catch (e) {}
         })();
+        // Show the referral welcome bar if a ref code is present and user isn't logged in.
+        (function showRefBar(){
+            try {
+                var stored = localStorage.getItem('tx_ref');
+                if (!stored) return;
+                if (sessionStorage.getItem('tx_ref_dismissed')) return;
+                var bar = document.getElementById('refBar');
+                if (bar) bar.style.display = '';
+            } catch(e) {}
+        })();
+        function dismissRefBar() {
+            var bar = document.getElementById('refBar');
+            if (bar) bar.style.display = 'none';
+            try { sessionStorage.setItem('tx_ref_dismissed', '1'); } catch(e) {}
+        }
+
         function applyStoredReferralToForm() {
             const stored = (localStorage.getItem('tx_ref') || '').trim();
             const input = document.getElementById('signupReferralCode');

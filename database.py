@@ -16,7 +16,7 @@ REFERRAL_CODE_LENGTH = 8
 REFERRAL_MAX_CREDITS_PER_REFERRER = 200
 # Credits awarded to both referee (at signup) and referrer (on referee's first
 # successful transcription).
-REFERRAL_REWARD_CREDITS = 20
+REFERRAL_REWARD_CREDITS = 10
 
 DB_PATH = os.environ.get("DB_PATH", "transcriptx.db")
 

@@ -81,7 +81,7 @@ class ReferralCodeTests(unittest.TestCase):
         self.assertTrue(d["code"])
         self.assertEqual(d["referred_count"], 0)
         self.assertEqual(d["credits_earned"], 0)
-        self.assertEqual(d["reward_per_referral"], 20)
+        self.assertEqual(d["reward_per_referral"], 10)
 
 
 class ReferralSignupTests(unittest.TestCase):
@@ -127,7 +127,7 @@ class ReferralSignupTests(unittest.TestCase):
 
         # Referee got +20 — credits_used goes negative (the ledger's "bank").
         new_user = self.database.get_user_by_email("new@example.com")
-        self.assertEqual(self._credits_used(new_user["id"]), -20)
+        self.assertEqual(self._credits_used(new_user["id"]), -10)
 
     def test_signup_with_invalid_code_is_silently_ignored(self):
         resp = self._signup("nobody@example.com", code="BOGUS123")
@@ -204,7 +204,7 @@ class ReferralPayoutTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
         after = self._credits_used(self.referrer_id)
-        self.assertEqual(after, before - 20, "referrer should get +20 (credits_used -= 20)")
+        self.assertEqual(after, before - 10, "referrer should get +10 (credits_used -= 10)")
 
         with self.database.get_db() as db:
             row = db.execute(
