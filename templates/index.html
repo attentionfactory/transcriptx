@@ -321,9 +321,10 @@
 
         /* ── Stats bar ── */
         .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--bw); margin-top:0; }
-        .stats-cell { padding:1.4rem 1rem; text-align:center; background:transparent; }
-        .stats-val { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:-.02em; }
-        .stats-lbl { font-family:'Inter',sans-serif; font-size:.65rem; font-weight:400; text-transform:uppercase; letter-spacing:1px; opacity:.5; margin-top:6px; }
+        .stats-bar { background:#fff; border-radius:var(--radius); }
+        .stats-cell { padding:1.4rem 1rem; text-align:center; }
+        .stats-val { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:-.02em; color:var(--ink); }
+        .stats-lbl { font-family:'Inter',sans-serif; font-size:.65rem; font-weight:400; text-transform:uppercase; letter-spacing:1px; opacity:.5; margin-top:6px; color:var(--ink); }
         @media (max-width:800px) { .stats-bar { grid-template-columns:repeat(2,1fr); } }
         .invite-stats { font-size:.7rem; font-family:var(--f-tech); opacity:.75; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
         .invite-stats span { font-weight:700; font-size:.95rem; opacity:1; }
