@@ -28,6 +28,7 @@ from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
 
 EXTRA_DISPOSABLE_DOMAINS = {
+    # Manual additions (general)
     "tempmail.com", "tempmail.io", "tempmail.net",
     "throwaway.email", "burnermail.io", "trashmailr.com",
     "temp-mail.io", "tempemail.cc", "tempemailco.com",
@@ -37,8 +38,91 @@ EXTRA_DISPOSABLE_DOMAINS = {
     "anonibox.com", "luxusmail.org", "mail7.app",
     "dmailpro.net", "adresseemailtemporaire.com",
     "emailtemporalgratis.com", "emailtemporanea.org",
+    # temp-mail.org network (all resolve to 167.172.0.78)
+    "wetuns.com",
+    "1800banks.com", "93re.com", "a2qp.com", "abybuy.com", "adeany.com",
+    "adventurcraftmx.mx", "affekopf.ch", "aituvip.com", "aixne.com", "akdip.com",
+    "allrealfinanz.com", "alysz.com", "american-tall.com", "amozix.com",
+    "amzreports.online", "anidaw.com", "anypsd.com", "apostv.com", "arktico.com",
+    "auxille.com", "ayfoto.com", "azqas.com", "bachnam.net", "barneu.com",
+    "bettereve.com", "bhamweekly.com", "bmoar.com", "boftm.com", "boixi.com",
+    "boxnavi.com", "ceberium.com", "cevipsa.com", "chonxi.com", "ckqtlcsvqw.shop",
+    "claudecollection.shop", "cnanb.com", "cohdi.com", "coinxt.net", "cosxo.com",
+    "cpav3.com", "crowfiles.shop", "daddygo.site", "dbkmail.de", "dietna.com",
+    "dotzq.com", "dropcourse.net", "duclongshop.com", "dwseal.com", "e-bazar.org",
+    "e052.com", "educart.shop", "effexts.com", "encode-inc.com", "enmaila.com",
+    "eosatx.com", "ermael.com", "estateapp.ng", "estebanmx.com", "eveist.com",
+    "exuge.com", "fabtivia.com", "fdigimail.web.id", "finloe.com", "flyrine.com",
+    "fp-sys.com", "freans.com", "fuddydaddy.com", "gamerx1.linkpc.net",
+    "ghostmailz.xyz", "gonaute.com", "govfederal.ca", "haja.me", "hdala.com",
+    "heixs.com", "hisila.com", "hkirsan.com", "horsesontour.com", "hotrod.top",
+    "hsfm.co.uk", "hunterscafe.com", "idawah.com", "imalias.com", "inmail7.com",
+    "inphuocthuy.vn", "internacionalmex.com", "ioea.net", "iphonaticos.com.br",
+    "iswire.com", "itcess.com", "jetsay.com", "jmvoice.com", "jokerstash.cc",
+    "jqmails.com", "kaedar.com", "kalivo.com.tr", "keokeg.com", "keshavvortex.com",
+    "klav6.com", "liaphoto.com", "lifezg.com", "linkrer.com", "lutfyy.shop",
+    "lwide.com", "lyunsa.com", "m.e-v.cc", "macosten.com", "magos.dev",
+    "mail-data.net", "mail.aarondean.net", "mailfm.net", "mailsd.net", "mailvq.net",
+    "mailvs.net", "makemoney15.com", "makemybiz.com", "maltabitcoinmining.com",
+    "markoai.my.id", "maxric.com", "maylx.com", "megacode.to", "menitao.com",
+    "midimaster.co.kr", "mijn-bedrijf.info", "mitrajagoan.store", "mocvn.com",
+    "mofpay.com", "mypethealh.com", "natiret.com", "ncsar.com", "netinta.com",
+    "ngem.net", "nhatu.com", "nicloo.com", "novatiz.com", "nuclene.com",
+    "numenor.cc", "oazv.net", "octbit.com", "ofirit.com", "onepvp.com",
+    "onoranzefunebridegiovine.com", "onymi.com", "outlookua.online",
+    "oxbridgecertified.info", "oxtenda.com", "papl-help.store", "parclan.com",
+    "pekoi.com", "pmdeal.com", "professorpk.com", "qmailv.com", "rambara.com",
+    "reeee.online", "renno.email", "revoadastore.shop", "rhconseiltn.com",
+    "roalx.com", "rosebird.org", "roudar.com", "royalvx.com", "saierw.com",
+    "saigh5.com.br", "sanzv.com", "scatinc.com", "sdlat.com", "siiii.mywire.org",
+    "sixoplus.com", "sixze.com", "soool.online", "spotale.com", "spotshops.com",
+    "sskaid.com", "steveix.com", "stoptheyap.com", "student.io.vn", "sunstones.biz",
+    "supenc.com", "svmail.publicvm.com", "sweemri.com", "tatefarm.com",
+    "tdekeg.online", "techtary.com", "temp.meshari.dev", "tempmail.j78.org",
+    "tenvil.com", "tgvis.com", "theamzrfnd.org", "theaumos.com", "thesunand.com",
+    "tirillo.com", "tlook.online", "toolve.com", "toymarques.shop", "travile.com",
+    "trynta.com", "tunelux.com", "uaxpress.com", "udo8.com", "uncle-jordan.pro",
+    "unite5.com", "uptodate.company", "uswaid.com", "venaten.com", "welman.online",
+    "whyknapp.com", "wifwise.com", "wikizs.com", "woweix.com", "wyla13.com",
+    "xadoll.com", "xlcool.com", "xredb.com", "yakelu.com", "ymhis.com",
+    "ypolf.com", "yusolar.com", "zarhq.com", "zealian.com", "zizvy.com",
+    "zonnenpanelen.top", "zosce.com",
 }
 disposable_domains = _disposable_pkg | EXTRA_DISPOSABLE_DOMAINS
+
+# Known IPs of disposable-email mail servers (temp-mail.org network, etc.).
+# If a domain's MX record resolves to one of these IPs, it's disposable —
+# even if the domain name isn't in any blocklist yet.
+_DISPOSABLE_MX_IPS = {
+    "167.172.0.78",   # temp-mail.org primary (DigitalOcean, North Bergen NJ)
+}
+
+
+def _is_disposable_mx(domain):
+    """Check if a domain's MX record points to a known disposable-mail IP.
+
+    Returns True if disposable, False if clean or if DNS lookup fails
+    (we err on the side of allowing the signup rather than blocking on
+    transient DNS errors).
+    """
+    import socket
+    try:
+        import dns.resolver
+        answers = dns.resolver.resolve(domain, "MX")
+        for rdata in answers:
+            mx_host = str(rdata.exchange).rstrip(".")
+            try:
+                mx_ip = socket.gethostbyname(mx_host)
+                if mx_ip in _DISPOSABLE_MX_IPS:
+                    return True
+            except socket.gaierror:
+                continue
+        return False
+    except ImportError:
+        # dnspython not installed — fall back to just the static list.
+        return False
+    except Exception:
+        return False
 
 load_dotenv()  # Load .env file automatically
 
@@ -886,7 +970,8 @@ def api_signup():
 
     if not email or not EMAIL_RE.match(email):
         return jsonify({"status": "error", "error": "Valid email required"}), 400
-    if email.split("@")[1] in disposable_domains:
+    email_domain = email.split("@")[1]
+    if email_domain in disposable_domains or _is_disposable_mx(email_domain):
         return jsonify({"status": "error", "error": "Disposable email addresses are not allowed"}), 400
     if len(password) < 6:
         return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
@@ -1217,11 +1302,22 @@ def admin():
     from database import get_db
     with get_db() as db:
         users = [dict(r) for r in db.execute(
-            "SELECT id, polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
+            """SELECT u.id, u.polar_customer_id, u.email, u.plan, u.credits_used,
+                      u.credits_reset_at, u.created_at,
+                      ref.email AS referred_by_email
+               FROM users u
+               LEFT JOIN users ref ON u.referred_by = ref.id
+               WHERE u.plan != 'free'
+               ORDER BY u.created_at DESC"""
         ).fetchall()]
 
         free_users = [dict(r) for r in db.execute(
-            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC"
+            """SELECT u.id, u.email, u.credits_used, u.credits_reset_at, u.created_at,
+                      ref.email AS referred_by_email
+               FROM users u
+               LEFT JOIN users ref ON u.referred_by = ref.id
+               WHERE u.plan = 'free' AND u.email_verified = 1
+               ORDER BY u.created_at DESC"""
         ).fetchall()]
 
         stats = {
@@ -1232,10 +1328,30 @@ def admin():
             "free_users": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'free' AND email_verified = 1").fetchone()[0],
             "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan = 'free'").fetchone()[0],
             "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
+            "referred_total": db.execute("SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL").fetchone()[0],
+            "referral_paid": db.execute("SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL AND referral_credit_paid = 1").fetchone()[0],
         }
 
+        top_referrers = [dict(r) for r in db.execute(
+            """SELECT u.id, u.email, u.referral_code,
+                      COUNT(r.id) AS referred,
+                      SUM(CASE WHEN r.referral_credit_paid = 1 THEN 1 ELSE 0 END) AS paid
+               FROM users u
+               JOIN users r ON r.referred_by = u.id
+               GROUP BY u.id
+               ORDER BY referred DESC
+               LIMIT 20"""
+        ).fetchall()]
+
     banner = get_banner()
-    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats, banner=banner)
+    return render_template_string(
+        ADMIN_TEMPLATE,
+        users=users,
+        free_users=free_users,
+        stats=stats,
+        banner=banner,
+        top_referrers=top_referrers,
+    )
 
 
 @app.route("/admin/credit", methods=["POST"])
@@ -1709,6 +1825,14 @@ ADMIN_TEMPLATE = """
                 <div class="stat-num" data-count="{{ stats.total_free_transcripts }}">0</div>
                 <div class="stat-lbl">Free Transcripts</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.referred_total }}">0</div>
+                <div class="stat-lbl">Referred Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.referral_paid }}">0</div>
+                <div class="stat-lbl">Referral Payouts</div>
+            </div>
         </div>
 
         <!-- Charts -->
@@ -1753,13 +1877,14 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Email</th><th>Plan</th><th>Usage</th><th>Since</th><th></th></tr>
+                    <tr><th>Email</th><th>Plan</th><th>Referred By</th><th>Usage</th><th>Since</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for u in users %}
                     <tr>
                         <td class="email-cell">{{ u.email or '—' }}</td>
                         <td><span class="badge {{ u.plan }}">{{ u.plan }}</span></td>
+                        <td class="mono">{{ u.referred_by_email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
                                 <span class="mono">{{ u.credits_used }}</span>
@@ -1786,7 +1911,7 @@ ADMIN_TEMPLATE = """
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not users %}<tr><td colspan="5" class="empty-row">No users yet</td></tr>{% endif %}
+                    {% if not users %}<tr><td colspan="6" class="empty-row">No users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -1799,12 +1924,13 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table id="freeTable">
                 <thead>
-                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
+                    <tr><th>Email</th><th>Referred By</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
                 </thead>
                 <tbody id="freeBody">
                     {% for u in free_users %}
                     <tr>
                         <td class="email-cell">{{ u.email or '—' }}</td>
+                        <td class="mono">{{ u.referred_by_email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
                                 <span class="mono">{{ u.credits_used }}</span>
@@ -1824,11 +1950,36 @@ ADMIN_TEMPLATE = """
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not free_users %}<tr><td colspan="5" class="empty-row">No free users yet</td></tr>{% endif %}
+                    {% if not free_users %}<tr><td colspan="6" class="empty-row">No free users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
         <div class="pagination" id="freePagination"></div>
+
+        <!-- Top Referrers -->
+        <div class="section-head">
+            <div class="section-title">Top Referrers</div>
+            <div class="section-count">{{ top_referrers | length }}</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Email</th><th>Code</th><th>Referred</th><th>Paid Out</th><th>Credits Earned</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in top_referrers %}
+                    <tr>
+                        <td class="email-cell">{{ r.email or '—' }}</td>
+                        <td class="mono">{{ r.referral_code or '—' }}</td>
+                        <td class="mono">{{ r.referred }}</td>
+                        <td class="mono">{{ r.paid }}</td>
+                        <td class="mono">{{ (r.paid or 0) * 20 }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_referrers %}<tr><td colspan="5" class="empty-row">No referrals yet</td></tr>{% endif %}
+                </tbody>
+            </table>
+        </div>
 
         <!-- Banner Control -->
         <div class="section-head">
