@@ -5,23 +5,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Pricing</title>
-    <meta name="description" content="Simple pricing for TranscriptX. Starter plan at $2/mo for 50 transcripts, or Pro at $4/mo for unlimited. All 1000+ platforms included.">
+    <meta name="description" content="Simple pricing for TranscriptX. Starter plan at $1.99/mo for 50 transcripts, or Pro at $3.99/mo for unlimited. All 1000+ platforms included.">
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#111111">
     <link rel="canonical" href="https://transcriptx.xyz/pricing">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://transcriptx.xyz/pricing">
     <meta property="og:title" content="TranscriptX — Pricing">
-    <meta property="og:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited. All 1000+ platforms included.">
+    <meta property="og:description" content="Starter $1.99/mo for 50 transcripts. Pro $3.99/mo for unlimited. All 1000+ platforms included.">
     <meta property="og:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="TranscriptX — Pricing">
-    <meta name="twitter:description" content="Starter $2/mo for 50 transcripts. Pro $4/mo for unlimited.">
+    <meta name="twitter:description" content="Starter $1.99/mo for 50 transcripts. Pro $3.99/mo for unlimited.">
     <meta name="twitter:image" content="https://transcriptx.xyz/android-chrome-512x512.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "What is TranscriptX?", "acceptedAnswer": {"@type": "Answer", "text": "TranscriptX is a web-based transcription tool that converts video and audio from any public URL into text. It uses AI transcription models and supports 1000+ platforms including YouTube, TikTok, Instagram, X, Facebook, Reddit, Vimeo, and more."}},
+        {"@type": "Question", "name": "How does TranscriptX work?", "acceptedAnswer": {"@type": "Answer", "text": "Paste a public video or audio URL into the input field. TranscriptX extracts the audio, runs it through TranscriptX, and returns structured text with segment-level and word-level timestamps. The entire process takes seconds for most videos."}},
+        {"@type": "Question", "name": "What platforms are supported?", "acceptedAnswer": {"@type": "Answer", "text": "Over 1000 platforms are supported. Major ones include YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, Twitch, SoundCloud, LinkedIn, Rumble, Bilibili, Snapchat, Threads, and Pinterest."}},
+        {"@type": "Question", "name": "Is TranscriptX free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The free tier includes 3 transcripts per month on any platform. Starter ($1.99/mo) gives you 50 transcripts with batch mode and export. Pro ($3.99/mo) is unlimited."}},
+        {"@type": "Question", "name": "How fast is transcription?", "acceptedAnswer": {"@type": "Answer", "text": "Most transcriptions complete in under 30 seconds. Speed depends on video length and the model you select — Turbo is fastest, Large-V3 is highest accuracy."}},
+        {"@type": "Question", "name": "What formats can I export?", "acceptedAnswer": {"@type": "Answer", "text": "You can copy transcript text to clipboard, or export as CSV or JSON. Exports include timestamps, segment text, and metadata. Batch results can be exported as a single file."}},
+        {"@type": "Question", "name": "Do I need an account?", "acceptedAnswer": {"@type": "Answer", "text": "No account is required for free transcriptions. Creating an account lets you track usage, access paid plans, and earn referral credits. Sign-up requires only an email and password."}},
+        {"@type": "Question", "name": "What is the difference between Starter and Pro?", "acceptedAnswer": {"@type": "Answer", "text": "Starter includes 50 transcripts per month, batch mode, and CSV/JSON export. Pro is unlimited transcripts with the same features. Both support all 1000+ platforms and both transcription models."}},
+        {"@type": "Question", "name": "Can I cancel anytime?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Both Starter and Pro are month-to-month or annual subscriptions with no lock-in. Cancel through the customer portal and your plan stays active until the end of the billing period."}},
+        {"@type": "Question", "name": "Is my data secure?", "acceptedAnswer": {"@type": "Answer", "text": "TranscriptX does not store your video files. Audio is extracted, transcribed, and deleted. Transcript text is returned directly to your browser. We do not sell or share your data."}},
+        {"@type": "Question", "name": "What happens when I run out of credits?", "acceptedAnswer": {"@type": "Answer", "text": "Free users wait until the next month for 3 new transcripts. Starter users can upgrade to Pro for unlimited, or wait for their monthly reset. Failed transcriptions caused by our system are refunded automatically."}},
+        {"@type": "Question", "name": "Do you support languages other than English?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. TranscriptX supports automatic language detection and can transcribe audio in 90+ languages. You do not need to specify the language — it is detected from the audio."}}
+      ]
+    }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -136,6 +156,26 @@
             padding:.15rem .4rem; border-radius:.3rem; text-transform:uppercase;
         }
         .price-sub { display:block; font-size:.55rem; opacity:.55; margin-top:.3rem; letter-spacing:.04em; text-transform:uppercase; }
+
+        .faq-section { background:var(--grey); border-radius:var(--radius); padding:2rem; margin-top:1.5rem; }
+        .faq-section h2 { font-family:var(--f-wide); font-size:.95rem; text-transform:uppercase; margin-bottom:.5rem; }
+        .faq-section .faq-sub { font-size:.75rem; opacity:.6; margin-bottom:1.2rem; }
+        .faq-list { display:grid; gap:10px; }
+        .faq-item {
+            border:var(--bw) solid rgba(10,10,10,.26); border-radius:10px;
+            background:rgba(255,255,255,.28); overflow:hidden;
+        }
+        .faq-item summary {
+            list-style:none; cursor:pointer; font-size:.74rem; text-transform:uppercase;
+            letter-spacing:.03em; font-weight:700; padding:.8rem .9rem; position:relative;
+        }
+        .faq-item summary::-webkit-details-marker { display:none; }
+        .faq-item summary::after {
+            content:"+"; position:absolute; right:.9rem; top:50%;
+            transform:translateY(-50%); font-size:1rem; line-height:1;
+        }
+        .faq-item[open] summary::after { content:"-"; }
+        .faq-answer { font-size:.78rem; opacity:.88; line-height:1.55; padding:0 .9rem .9rem; }
     </style>
 </head>
 <body>
@@ -155,7 +195,7 @@
                 <div class="billing-toggle" role="tablist" aria-label="Billing interval">
                     <button type="button" class="active" data-interval="monthly" onclick="setBilling('monthly')">Monthly</button>
                     <button type="button" data-interval="annual" onclick="setBilling('annual')">Annual</button>
-                    <span class="save-tag">Save 17%</span>
+                    <span class="save-tag">Save 37%</span>
                 </div>
             </div>
         </div>
@@ -174,13 +214,11 @@
                 <div class="plan-btn outline" style="cursor:default; margin-top:auto;">Current</div>
             </div>
 
-            <div class="panel p-orange">
+            <div class="panel p-orange" data-billing="monthly">
                 <span class="label">Most Popular</span>
                 <div class="plan-name">Starter</div>
-                <div class="plan-price"
-                     data-monthly='$2<span>/mo</span>'
-                     data-annual='$20<span>/yr</span>'>$2<span>/mo</span></div>
-                <span class="price-sub" data-monthly="Billed monthly" data-annual="$1.67/mo — 2 months free">Billed monthly</span>
+                <div class="plan-price">$1.99<span>/mo</span></div>
+                <span class="price-sub">Billed monthly</span>
                 <ul class="plan-features">
                     <li>50 transcripts / month</li>
                     <li>All 1000+ platforms</li>
@@ -188,9 +226,7 @@
                     <li>CSV + JSON export</li>
                 </ul>
                 <a href="{{ config.checkout_starter }}"
-                   data-href-monthly="{{ config.checkout_starter }}"
-                   data-href-annual="{{ config.checkout_starter_annual }}"
-                   class="plan-btn dark plan-cta" style="margin-top:auto;"
+                   class="plan-btn dark" style="margin-top:auto;"
                    data-umami-event="checkout-starter">GET STARTER ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Cost Per</span><div>$0.04</div></div>
@@ -198,13 +234,11 @@
                 </div>
             </div>
 
-            <div class="panel p-green">
+            <div class="panel p-green" data-billing="monthly">
                 <span class="label">Unlimited</span>
                 <div class="plan-name">Pro</div>
-                <div class="plan-price"
-                     data-monthly='$4<span>/mo</span>'
-                     data-annual='$40<span>/yr</span>'>$4<span>/mo</span></div>
-                <span class="price-sub" data-monthly="Billed monthly" data-annual="$3.33/mo — 2 months free">Billed monthly</span>
+                <div class="plan-price">$3.99<span>/mo</span></div>
+                <span class="price-sub">Billed monthly</span>
                 <ul class="plan-features">
                     <li>Unlimited transcripts</li>
                     <li>All 1000+ platforms</li>
@@ -212,13 +246,32 @@
                     <li>CSV + JSON export</li>
                 </ul>
                 <a href="{{ config.checkout_pro }}"
-                   data-href-monthly="{{ config.checkout_pro }}"
-                   data-href-annual="{{ config.checkout_pro_annual }}"
-                   class="plan-btn green plan-cta" style="margin-top:auto;"
+                   class="plan-btn green" style="margin-top:auto;"
                    data-umami-event="checkout-pro">GET PRO ➔</a>
                 <div class="spec-grid cols-2">
                     <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
                     <div class="spec-cell"><span class="label">Speed</span><div>Instant</div></div>
+                </div>
+            </div>
+
+            <div class="panel p-green" data-billing="annual" style="display:none;">
+                <span class="label">Best Value</span>
+                <div class="plan-name">Pro Annual</div>
+                <div class="plan-price">$29.99<span>/yr</span></div>
+                <span class="price-sub">$2.50/mo — save 37% vs monthly</span>
+                <ul class="plan-features">
+                    <li>Unlimited transcripts</li>
+                    <li>All 1000+ platforms</li>
+                    <li>Batch mode</li>
+                    <li>CSV + JSON export</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="{{ config.checkout_pro_annual }}"
+                   class="plan-btn green" style="margin-top:auto;"
+                   data-umami-event="checkout-pro-annual">GET PRO ANNUAL ➔</a>
+                <div class="spec-grid cols-2">
+                    <div class="spec-cell"><span class="label">You save</span><div>$17.89</div></div>
+                    <div class="spec-cell"><span class="label">Limit</span><div>∞</div></div>
                 </div>
             </div>
         </div>
@@ -235,6 +288,61 @@
             </p>
         </div>
 
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <p class="faq-sub">Everything you need to know before subscribing.</p>
+            <div class="faq-list">
+                <details class="faq-item">
+                    <summary>What is TranscriptX?</summary>
+                    <div class="faq-answer">TranscriptX is a web-based transcription tool that converts video and audio from any public URL into text. It uses AI transcription models and supports 1000+ platforms including YouTube, TikTok, Instagram, X, Facebook, Reddit, Vimeo, and more.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>How does TranscriptX work?</summary>
+                    <div class="faq-answer">Paste a public video or audio URL into the input field. TranscriptX extracts the audio, runs it through TranscriptX, and returns structured text with segment-level and word-level timestamps. The entire process takes seconds for most videos.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>What platforms are supported?</summary>
+                    <div class="faq-answer">Over 1000 platforms are supported. Major ones include YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, Twitch, SoundCloud, LinkedIn, Rumble, Bilibili, Snapchat, Threads, and Pinterest.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>Is TranscriptX free?</summary>
+                    <div class="faq-answer">Yes. The free tier includes 3 transcripts per month on any platform. Starter ($1.99/mo) gives you 50 transcripts with batch mode and CSV/JSON export. Pro ($3.99/mo) is unlimited.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>How fast is transcription?</summary>
+                    <div class="faq-answer">Most transcriptions complete in under 30 seconds. Speed depends on video length and the model you select &mdash; Turbo is fastest, Large-V3 is highest accuracy.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>What formats can I export?</summary>
+                    <div class="faq-answer">You can copy transcript text to clipboard, or export as CSV or JSON. Exports include timestamps, segment text, and metadata. Batch results can be exported as a single file.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>Do I need an account?</summary>
+                    <div class="faq-answer">No account is required for free transcriptions. Creating an account lets you track usage, access paid plans, and earn referral credits. Sign-up requires only an email and password.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>What is the difference between Starter and Pro?</summary>
+                    <div class="faq-answer">Starter includes 50 transcripts per month, batch mode, and CSV/JSON export at $0.04 per transcript. Pro is unlimited transcripts with the same features. Both support all 1000+ platforms and both transcription models.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>Can I cancel anytime?</summary>
+                    <div class="faq-answer">Yes. Both Starter and Pro are month-to-month or annual subscriptions with no lock-in. Cancel through the customer portal and your plan stays active until the end of the billing period.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>Is my data secure?</summary>
+                    <div class="faq-answer">TranscriptX does not store your video files. Audio is extracted, transcribed, and deleted. Transcript text is returned directly to your browser. We do not sell or share your data.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>What happens when I run out of credits?</summary>
+                    <div class="faq-answer">Free users wait until the next month for 3 new transcripts. Starter users can upgrade to Pro for unlimited, or wait for their monthly reset. Failed transcriptions caused by our system are refunded automatically.</div>
+                </details>
+                <details class="faq-item">
+                    <summary>Do you support languages other than English?</summary>
+                    <div class="faq-answer">Yes. TranscriptX supports automatic language detection and can transcribe audio in 90+ languages. You do not need to specify the language &mdash; it is detected from the audio.</div>
+                </details>
+            </div>
+        </section>
+
     </div>
     <script>
         (function(){
@@ -242,12 +350,9 @@
                 document.querySelectorAll('.billing-toggle button').forEach(function(b){
                     b.classList.toggle('active', b.dataset.interval === interval);
                 });
-                document.querySelectorAll('[data-monthly][data-annual]').forEach(function(el){
-                    el.innerHTML = el.getAttribute('data-' + interval);
-                });
-                document.querySelectorAll('.plan-cta').forEach(function(a){
-                    var href = a.getAttribute('data-href-' + interval);
-                    if (href) a.setAttribute('href', href);
+                document.querySelectorAll('[data-billing]').forEach(function(el){
+                    var show = el.dataset.billing === interval;
+                    el.style.display = show ? '' : 'none';
                 });
             }
             window.setBilling = setBilling;

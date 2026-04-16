@@ -134,11 +134,13 @@ def register_page_routes(
 
     @app.route("/")
     def index():
+        from database import get_total_transcript_count
         user = get_current_user()
         return render_template(
             "index.html",
             user=user,
             banner=get_banner(),
+            total_transcripts=get_total_transcript_count(),
             config={
                 "checkout_starter": checkout_starter,
                 "checkout_pro": checkout_pro,

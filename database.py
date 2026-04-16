@@ -926,6 +926,15 @@ def get_referral_stats(user_id):
     }
 
 
+def get_total_transcript_count():
+    """Total successful transcriptions across all users (for social proof)."""
+    with get_db() as db:
+        row = db.execute(
+            "SELECT COUNT(*) AS c FROM transcript_logs WHERE status = 'success'"
+        ).fetchone()
+        return row["c"] if row else 0
+
+
 def set_billing_interval(polar_customer_id, interval):
     """Record whether the active subscription is monthly or annual. Analytics only."""
     if not polar_customer_id or interval not in ("monthly", "annual"):

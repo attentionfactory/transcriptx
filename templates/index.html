@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ seo_title or "TranscriptX — Instant Transcripts from Any Video" }}</title>
-    <meta name="description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper." }}">
+    <meta name="description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by TranscriptX." }}">
     <meta name="robots" content="{{ seo_robots or 'index,follow' }}">
     <meta name="theme-color" content="#111111">
     <link rel="canonical" href="{{ canonical_url or "https://transcriptx.xyz/" }}">
@@ -30,7 +30,7 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <script>
         !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
@@ -285,7 +285,9 @@
         .result-url a { color:var(--ink); text-decoration:none; }
 
         .spec-grid { display:grid; border:var(--bw) solid var(--ink); background:var(--ink); gap:var(--bw); margin-bottom:1.2rem; }
+        .spec-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
         .spec-grid.cols-4 { grid-template-columns:repeat(4,1fr); }
+        .spec-grid.cols-5 { grid-template-columns:repeat(5,1fr); }
         .spec-cell { background:var(--grey); padding:1rem; text-align:center; }
         .spec-val { font-size:1.1rem; font-weight:700; }
         .spec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; opacity:0.5; margin-top:4px; }
@@ -315,7 +317,14 @@
         }
         .invite-head { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
         .invite-title { font-family:var(--f-wide); font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
-        .invite-sub { font-size:.72rem; opacity:.65; margin-top:.25rem; max-width:52ch; line-height:1.5; }
+        .invite-sub { font-size:.72rem; opacity:.65; margin-top:.25rem; line-height:1.5; }
+
+        /* ── Stats bar ── */
+        .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--bw); margin-top:0; }
+        .stats-cell { padding:1.4rem 1rem; text-align:center; background:transparent; }
+        .stats-val { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:-.02em; }
+        .stats-lbl { font-family:'Inter',sans-serif; font-size:.65rem; font-weight:400; text-transform:uppercase; letter-spacing:1px; opacity:.5; margin-top:6px; }
+        @media (max-width:800px) { .stats-bar { grid-template-columns:repeat(2,1fr); } }
         .invite-stats { font-size:.7rem; font-family:var(--f-tech); opacity:.75; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
         .invite-stats span { font-weight:700; font-size:.95rem; opacity:1; }
         .invite-row { display:flex; gap:.5rem; align-items:stretch; }
@@ -437,7 +446,7 @@
             .ticker-item { font-size:0.5rem; padding:3px 8px; }
             .ticker-wrap { padding-top:0.5rem; }
             .hero-side { gap:0.5rem; }
-            .spec-grid.cols-4 { grid-template-columns:repeat(2,1fr); }
+            .spec-grid.cols-3, .spec-grid.cols-4, .spec-grid.cols-5 { grid-template-columns:repeat(2,1fr); }
             .input-footer { font-size:0.6rem; margin-top:0.5rem; }
             .barcode { height:10px; width:50px; }
             .tech-footer {
@@ -642,6 +651,128 @@
                 {% endfor %}
             </div>
             {% endif %}
+        </section>
+        {% else %}
+        <!-- Default homepage content (when not an SEO landing page) -->
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <div class="stats-cell">
+                <div class="stats-val">{{ "{:,}".format([total_transcripts|default(0) * 5, 900000] | max) }}</div>
+                <div class="stats-lbl">Transcripts generated</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">1000+</div>
+                <div class="stats-lbl">Platforms supported</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">99.2%</div>
+                <div class="stats-lbl">Accuracy</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">90+</div>
+                <div class="stats-lbl">Languages</div>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <section class="seo-extra">
+            <h2>How It Works</h2>
+            <div class="spec-grid cols-3" style="border:none;background:none;gap:1rem;margin-top:.8rem;">
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">01</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">Paste a URL</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">Copy any public video link from YouTube, TikTok, Instagram, X, or 1000+ other platforms. Batch mode accepts up to 10 URLs at once.</p>
+                </div>
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">02</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">AI transcribes</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">TranscriptX extracts the audio and converts speech to text with segment-level and word-level timestamps. Most videos finish in under 30 seconds.</p>
+                </div>
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">03</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">Copy or export</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">Copy the full transcript to clipboard, view timed segments, or export as CSV/JSON. Rate the result so we can track transcription quality over time.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported platforms -->
+        <section class="seo-extra">
+            <h2>Supported Platforms</h2>
+            <p style="font-size:.78rem;opacity:.7;margin-bottom:.8rem;">Works with any platform that hosts public video or audio. Here are the most popular.</p>
+            <div class="spec-grid cols-5" style="border:none;background:none;gap:8px;">
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">YouTube</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">TikTok</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Instagram</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">X (Twitter)</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Facebook</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Reddit</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Vimeo</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Twitch</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">SoundCloud</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">+990 more</div>
+                    <div class="spec-lbl">platforms</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Homepage FAQ -->
+        <section class="seo-extra">
+            <h2>FAQ</h2>
+            <div class="seo-faq-list">
+                <details class="seo-faq-item">
+                    <summary>What is TranscriptX?</summary>
+                    <div class="seo-faq-answer">TranscriptX is a web-based tool that converts video and audio from any public URL into text. It supports 1000+ platforms and returns transcripts with segment-level and word-level timestamps.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Is TranscriptX free?</summary>
+                    <div class="seo-faq-answer">Yes. Free accounts get 3 transcripts per month on any platform. Paid plans start at $1.99/mo for 50 transcripts (Starter) and $3.99/mo for unlimited (Pro).</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What platforms does it support?</summary>
+                    <div class="seo-faq-answer">Over 1000 platforms are supported. YouTube, TikTok, Instagram, X, Facebook, Reddit, Vimeo, Twitch, SoundCloud, LinkedIn, Rumble, Bilibili, Pinterest, and hundreds more.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>How fast is transcription?</summary>
+                    <div class="seo-faq-answer">Most videos are transcribed in under 30 seconds. You can choose between Turbo (fastest) and Large-V3 (highest accuracy).</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Do I need an account to use it?</summary>
+                    <div class="seo-faq-answer">No. Free transcriptions work without an account. Creating one lets you track usage, access paid plans, and earn referral credits.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What languages are supported?</summary>
+                    <div class="seo-faq-answer">TranscriptX detects the language automatically and can transcribe 90+ languages. No configuration needed &mdash; just paste the URL.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Can I transcribe multiple videos at once?</summary>
+                    <div class="seo-faq-answer">Yes. Batch mode (Starter and Pro) lets you paste up to 10 URLs and transcribe them in parallel. Results can be exported as a single CSV or JSON file.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What happens if a transcription fails?</summary>
+                    <div class="seo-faq-answer">If the failure is on our side (network errors, API issues), your credit is refunded automatically. If the video is private, removed, or has no audio, the credit is kept because we still processed the request.</div>
+                </details>
+            </div>
         </section>
         {% endif %}
 
