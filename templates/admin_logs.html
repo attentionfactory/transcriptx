@@ -73,8 +73,17 @@
         th { font-size: .58rem; text-transform: uppercase; letter-spacing: .06em; opacity: .62; background: rgba(0,0,0,.06); }
         td { font-size: .72rem; vertical-align: top; }
         .mono { font-family: var(--f-tech); font-size: .66rem; opacity: .75; }
-        .url-cell { max-width: 520px; word-break: break-word; }
-        .url-cell a { color: var(--ink); text-decoration: none; }
+        .url-cell { max-width: 520px; }
+        .url-cell a {
+            color: var(--ink);
+            text-decoration: none;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: bottom;
+        }
         .url-cell a:visited, .url-cell a:hover, .url-cell a:active { color: var(--ink); text-decoration: none; }
         .badge { display: inline-block; padding: .2rem .45rem; border-radius: .35rem; border: var(--bw) solid rgba(0,0,0,.24); font-size: .58rem; text-transform: uppercase; font-weight: 700; }
         .ok { background: rgba(112,148,114,.28); }
@@ -102,6 +111,7 @@
     </style>
 </head>
 <body>
+    {% import "_icons.html" as icons %}
     <div class="layout">
         {% set nav_mode = "admin" %}
         {% include "_site_nav.html" %}
@@ -155,13 +165,14 @@
                             <th>User ID</th>
                             <th>Platform</th>
                             <th>Status</th>
+                            <th>Rating</th>
                             <th>Credits</th>
                             <th>URL</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if not rows %}
-                        <tr><td colspan="8" style="text-align:center;opacity:.55;padding:1rem;">No logs for current filters.</td></tr>
+                        <tr><td colspan="9" style="text-align:center;opacity:.55;padding:1rem;">No logs for current filters.</td></tr>
                         {% endif %}
                         {% for row in rows %}
                         <tr>
@@ -179,6 +190,9 @@
                             <td><span class="badge">{{ row.platform_guess }}</span></td>
                             <td>
                                 <span class="badge {{ 'ok' if row.status == 'success' else 'bad' }}">{{ row.status }}</span>
+                            </td>
+                            <td class="mono">
+                                {% if row.rating == 1 %}{{ icons.thumbs_up(14) }}{% elif row.rating == -1 %}{{ icons.thumbs_down(14) }}{% else %}—{% endif %}
                             </td>
                             <td class="mono">{{ row.credits_used }}</td>
                             <td class="url-cell">

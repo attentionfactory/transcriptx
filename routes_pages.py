@@ -20,7 +20,14 @@ def register_page_routes(
     customer_portal,
     featurebase_app_id,
     guides_content,
+    checkout_starter_annual=None,
+    checkout_pro_annual=None,
 ):
+    # Annual checkout URLs fall back to monthly until the annual products are
+    # configured in Polar. Pricing toggle shows the same CTA for both states
+    # until annual URLs are distinct.
+    checkout_starter_annual = checkout_starter_annual or checkout_starter
+    checkout_pro_annual = checkout_pro_annual or checkout_pro
     def _tool_schema(page, canonical_url):
         return {
             "@context": "https://schema.org",
@@ -127,11 +134,13 @@ def register_page_routes(
 
     @app.route("/")
     def index():
+        from database import get_total_transcript_count
         user = get_current_user()
         return render_template(
             "index.html",
             user=user,
             banner=get_banner(),
+            total_transcripts=get_total_transcript_count(),
             config={
                 "checkout_starter": checkout_starter,
                 "checkout_pro": checkout_pro,
@@ -149,6 +158,8 @@ def register_page_routes(
             config={
                 "checkout_starter": checkout_starter,
                 "checkout_pro": checkout_pro,
+                "checkout_starter_annual": checkout_starter_annual,
+                "checkout_pro_annual": checkout_pro_annual,
                 "customer_portal": customer_portal,
                 "featurebase_app_id": featurebase_app_id,
             },

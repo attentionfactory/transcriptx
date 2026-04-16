@@ -28,6 +28,7 @@ from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
 
 EXTRA_DISPOSABLE_DOMAINS = {
+    # Manual additions (general)
     "tempmail.com", "tempmail.io", "tempmail.net",
     "throwaway.email", "burnermail.io", "trashmailr.com",
     "temp-mail.io", "tempemail.cc", "tempemailco.com",
@@ -37,8 +38,91 @@ EXTRA_DISPOSABLE_DOMAINS = {
     "anonibox.com", "luxusmail.org", "mail7.app",
     "dmailpro.net", "adresseemailtemporaire.com",
     "emailtemporalgratis.com", "emailtemporanea.org",
+    # temp-mail.org network (all resolve to 167.172.0.78)
+    "wetuns.com",
+    "1800banks.com", "93re.com", "a2qp.com", "abybuy.com", "adeany.com",
+    "adventurcraftmx.mx", "affekopf.ch", "aituvip.com", "aixne.com", "akdip.com",
+    "allrealfinanz.com", "alysz.com", "american-tall.com", "amozix.com",
+    "amzreports.online", "anidaw.com", "anypsd.com", "apostv.com", "arktico.com",
+    "auxille.com", "ayfoto.com", "azqas.com", "bachnam.net", "barneu.com",
+    "bettereve.com", "bhamweekly.com", "bmoar.com", "boftm.com", "boixi.com",
+    "boxnavi.com", "ceberium.com", "cevipsa.com", "chonxi.com", "ckqtlcsvqw.shop",
+    "claudecollection.shop", "cnanb.com", "cohdi.com", "coinxt.net", "cosxo.com",
+    "cpav3.com", "crowfiles.shop", "daddygo.site", "dbkmail.de", "dietna.com",
+    "dotzq.com", "dropcourse.net", "duclongshop.com", "dwseal.com", "e-bazar.org",
+    "e052.com", "educart.shop", "effexts.com", "encode-inc.com", "enmaila.com",
+    "eosatx.com", "ermael.com", "estateapp.ng", "estebanmx.com", "eveist.com",
+    "exuge.com", "fabtivia.com", "fdigimail.web.id", "finloe.com", "flyrine.com",
+    "fp-sys.com", "freans.com", "fuddydaddy.com", "gamerx1.linkpc.net",
+    "ghostmailz.xyz", "gonaute.com", "govfederal.ca", "haja.me", "hdala.com",
+    "heixs.com", "hisila.com", "hkirsan.com", "horsesontour.com", "hotrod.top",
+    "hsfm.co.uk", "hunterscafe.com", "idawah.com", "imalias.com", "inmail7.com",
+    "inphuocthuy.vn", "internacionalmex.com", "ioea.net", "iphonaticos.com.br",
+    "iswire.com", "itcess.com", "jetsay.com", "jmvoice.com", "jokerstash.cc",
+    "jqmails.com", "kaedar.com", "kalivo.com.tr", "keokeg.com", "keshavvortex.com",
+    "klav6.com", "liaphoto.com", "lifezg.com", "linkrer.com", "lutfyy.shop",
+    "lwide.com", "lyunsa.com", "m.e-v.cc", "macosten.com", "magos.dev",
+    "mail-data.net", "mail.aarondean.net", "mailfm.net", "mailsd.net", "mailvq.net",
+    "mailvs.net", "makemoney15.com", "makemybiz.com", "maltabitcoinmining.com",
+    "markoai.my.id", "maxric.com", "maylx.com", "megacode.to", "menitao.com",
+    "midimaster.co.kr", "mijn-bedrijf.info", "mitrajagoan.store", "mocvn.com",
+    "mofpay.com", "mypethealh.com", "natiret.com", "ncsar.com", "netinta.com",
+    "ngem.net", "nhatu.com", "nicloo.com", "novatiz.com", "nuclene.com",
+    "numenor.cc", "oazv.net", "octbit.com", "ofirit.com", "onepvp.com",
+    "onoranzefunebridegiovine.com", "onymi.com", "outlookua.online",
+    "oxbridgecertified.info", "oxtenda.com", "papl-help.store", "parclan.com",
+    "pekoi.com", "pmdeal.com", "professorpk.com", "qmailv.com", "rambara.com",
+    "reeee.online", "renno.email", "revoadastore.shop", "rhconseiltn.com",
+    "roalx.com", "rosebird.org", "roudar.com", "royalvx.com", "saierw.com",
+    "saigh5.com.br", "sanzv.com", "scatinc.com", "sdlat.com", "siiii.mywire.org",
+    "sixoplus.com", "sixze.com", "soool.online", "spotale.com", "spotshops.com",
+    "sskaid.com", "steveix.com", "stoptheyap.com", "student.io.vn", "sunstones.biz",
+    "supenc.com", "svmail.publicvm.com", "sweemri.com", "tatefarm.com",
+    "tdekeg.online", "techtary.com", "temp.meshari.dev", "tempmail.j78.org",
+    "tenvil.com", "tgvis.com", "theamzrfnd.org", "theaumos.com", "thesunand.com",
+    "tirillo.com", "tlook.online", "toolve.com", "toymarques.shop", "travile.com",
+    "trynta.com", "tunelux.com", "uaxpress.com", "udo8.com", "uncle-jordan.pro",
+    "unite5.com", "uptodate.company", "uswaid.com", "venaten.com", "welman.online",
+    "whyknapp.com", "wifwise.com", "wikizs.com", "woweix.com", "wyla13.com",
+    "xadoll.com", "xlcool.com", "xredb.com", "yakelu.com", "ymhis.com",
+    "ypolf.com", "yusolar.com", "zarhq.com", "zealian.com", "zizvy.com",
+    "zonnenpanelen.top", "zosce.com",
 }
 disposable_domains = _disposable_pkg | EXTRA_DISPOSABLE_DOMAINS
+
+# Known IPs of disposable-email mail servers (temp-mail.org network, etc.).
+# If a domain's MX record resolves to one of these IPs, it's disposable —
+# even if the domain name isn't in any blocklist yet.
+_DISPOSABLE_MX_IPS = {
+    "167.172.0.78",   # temp-mail.org primary (DigitalOcean, North Bergen NJ)
+}
+
+
+def _is_disposable_mx(domain):
+    """Check if a domain's MX record points to a known disposable-mail IP.
+
+    Returns True if disposable, False if clean or if DNS lookup fails
+    (we err on the side of allowing the signup rather than blocking on
+    transient DNS errors).
+    """
+    import socket
+    try:
+        import dns.resolver
+        answers = dns.resolver.resolve(domain, "MX")
+        for rdata in answers:
+            mx_host = str(rdata.exchange).rstrip(".")
+            try:
+                mx_ip = socket.gethostbyname(mx_host)
+                if mx_ip in _DISPOSABLE_MX_IPS:
+                    return True
+            except socket.gaierror:
+                continue
+        return False
+    except ImportError:
+        # dnspython not installed — fall back to just the static list.
+        return False
+    except Exception:
+        return False
 
 load_dotenv()  # Load .env file automatically
 
@@ -51,7 +135,12 @@ from database import (
     get_user, get_user_credits, use_user_credit,
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email, verify_code_for_user, set_user_password,
-    log_transcript_attempt,
+    log_transcript_attempt, set_transcript_rating,
+    maybe_claim_dunning_stage, clear_dunning_stage,
+    set_billing_interval,
+    get_or_create_referral_code, get_user_by_referral_code,
+    set_referred_by, pay_referrer_if_due, get_referral_stats,
+    add_bonus_credits, REFERRAL_REWARD_CREDITS,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
     link_polar_to_user,
@@ -72,9 +161,17 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.
 POLAR_WEBHOOK_SECRET = os.environ.get("POLAR_WEBHOOK_SECRET", "")
 POLAR_STARTER_PRODUCT_ID = os.environ.get("POLAR_STARTER_PRODUCT_ID", "")
 POLAR_PRO_PRODUCT_ID = os.environ.get("POLAR_PRO_PRODUCT_ID", "")
+POLAR_STARTER_ANNUAL_PRODUCT_ID = os.environ.get("POLAR_STARTER_ANNUAL_PRODUCT_ID", "")
+POLAR_PRO_ANNUAL_PRODUCT_ID = os.environ.get("POLAR_PRO_ANNUAL_PRODUCT_ID", "")
 POLAR_CHECKOUT_STARTER = os.environ.get("POLAR_CHECKOUT_STARTER", "#")
 POLAR_CHECKOUT_PRO = os.environ.get("POLAR_CHECKOUT_PRO", "#")
+POLAR_CHECKOUT_STARTER_ANNUAL = os.environ.get("POLAR_CHECKOUT_STARTER_ANNUAL", "").strip() or POLAR_CHECKOUT_STARTER
+POLAR_CHECKOUT_PRO_ANNUAL = os.environ.get("POLAR_CHECKOUT_PRO_ANNUAL", "").strip() or POLAR_CHECKOUT_PRO
 POLAR_CUSTOMER_PORTAL = os.environ.get("POLAR_CUSTOMER_PORTAL", "#")
+# Win-back checkout URLs (with a one-time discount code baked in) emailed to
+# users whose subscription was revoked. Fall back to standard checkout when unset.
+POLAR_CHECKOUT_WINBACK_STARTER = os.environ.get("POLAR_CHECKOUT_WINBACK_STARTER", "").strip() or POLAR_CHECKOUT_STARTER
+POLAR_CHECKOUT_WINBACK_PRO = os.environ.get("POLAR_CHECKOUT_WINBACK_PRO", "").strip() or POLAR_CHECKOUT_PRO
 FEATUREBASE_APP_ID = os.environ.get("FEATUREBASE_APP_ID", "")
 FEATUREBASE_JWT_SECRET = os.environ.get("FEATUREBASE_JWT_SECRET", "").strip()
 
@@ -200,12 +297,15 @@ def _generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def _send_otp_email(email, code, purpose="verification"):
-    """Send OTP via Resend API. Returns True on success."""
-    noun = "password reset" if purpose == "password_reset" else "verification"
+def _send_email(to, subject, html):
+    """Send a single transactional email via Resend. Returns True on success.
+
+    In dev (no RESEND_API_KEY) this logs the subject to stdout and returns True
+    so flows that depend on a successful send keep working locally.
+    """
     if not RESEND_API_KEY:
-        print(f"⚠️  RESEND_API_KEY not set. {noun} OTP for {email}: {code}")
-        return True  # Dev mode — just print
+        print(f"⚠️  RESEND_API_KEY not set. Would send to {to}: {subject}")
+        return True
 
     try:
         resp = http_requests.post(
@@ -216,16 +316,9 @@ def _send_otp_email(email, code, purpose="verification"):
             },
             json={
                 "from": RESEND_FROM_EMAIL,
-                "to": [email],
-                "subject": f"TranscriptX — Your {noun} code is {code}",
-                "html": f"""
-                    <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
-                        <h2 style="margin:0 0 1rem;">TranscriptX</h2>
-                        <p>Your {noun} code:</p>
-                        <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
-                        <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
-                    </div>
-                """,
+                "to": [to],
+                "subject": subject,
+                "html": html,
             },
             timeout=10,
         )
@@ -233,6 +326,84 @@ def _send_otp_email(email, code, purpose="verification"):
     except Exception as e:
         print(f"❌ Resend error: {e}")
         return False
+
+
+def _send_otp_email(email, code, purpose="verification"):
+    """Send OTP via Resend API. Returns True on success."""
+    noun = "password reset" if purpose == "password_reset" else "verification"
+    html = f"""
+        <div style="font-family:monospace;max-width:400px;margin:0 auto;padding:2rem;">
+            <h2 style="margin:0 0 1rem;">TranscriptX</h2>
+            <p>Your {noun} code:</p>
+            <div style="font-size:2rem;font-weight:bold;letter-spacing:0.3em;padding:1rem;background:#f5f5f5;text-align:center;border-radius:8px;">{code}</div>
+            <p style="opacity:0.6;font-size:0.85rem;margin-top:1rem;">This code expires in 10 minutes.</p>
+        </div>
+    """
+    return _send_email(email, f"TranscriptX — Your {noun} code is {code}", html)
+
+
+def _dunning_html(stage, plan, portal_url, checkout_url):
+    """Return (subject, html) for a given dunning stage. Pure — easy to test."""
+    if stage == "past_due":
+        subject = "TranscriptX — we couldn't charge your card"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Your payment didn't go through</h2>
+                <p>We tried to renew your {plan.title()} subscription but your card was declined. You still have access for a few days while we retry — update your payment method to keep things running.</p>
+                <p><a href="{portal_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#0a0a0a;color:#F0A860;text-decoration:none;border-radius:6px;font-weight:700;">Update payment method</a></p>
+                <p style="opacity:0.6;font-size:0.8rem;margin-top:1.5rem;">If you meant to cancel, you can ignore this email — your plan will end on its own.</p>
+            </div>
+        """
+        return subject, body
+
+    if stage == "canceled":
+        subject = "TranscriptX — you'll be missed"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Sorry to see you go</h2>
+                <p>Your {plan.title()} subscription is set to end at the close of your current billing period — you'll keep full access until then.</p>
+                <p>If something was missing or didn't work as expected, I'd genuinely like to know. Just hit reply.</p>
+                <p><a href="{portal_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#0a0a0a;color:#F0A860;text-decoration:none;border-radius:6px;font-weight:700;">Manage subscription</a></p>
+            </div>
+        """
+        return subject, body
+
+    if stage == "revoked":
+        subject = "TranscriptX — come back for 50% off"
+        body = f"""
+            <div style="font-family:monospace;max-width:480px;margin:0 auto;padding:2rem;">
+                <h2 style="margin:0 0 1rem;">Want to give it another shot?</h2>
+                <p>Your TranscriptX subscription has ended. If you change your mind, here's a 50% discount on your first month back.</p>
+                <p><a href="{checkout_url}" style="display:inline-block;padding:.75rem 1.25rem;background:#709472;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;">Resubscribe at 50% off</a></p>
+                <p style="opacity:0.6;font-size:0.8rem;margin-top:1.5rem;">This offer is one-time — we won't follow up again.</p>
+            </div>
+        """
+        return subject, body
+
+    return None, None
+
+
+def _maybe_send_dunning_email(user, stage):
+    """Claim a dunning stage and send the matching email if this is a new stage.
+
+    ``user`` is the dict returned by get_user / get_user_by_id. ``stage`` is one of
+    'past_due' / 'canceled' / 'revoked'. Safe to call multiple times — guarded by
+    maybe_claim_dunning_stage so repeated webhooks only email once.
+    """
+    if not user or not user.get("email"):
+        return False
+
+    user_id = user.get("id")
+    if not maybe_claim_dunning_stage(user_id, stage):
+        return False
+
+    plan = (user.get("plan") or "starter").lower()
+    checkout_url = POLAR_CHECKOUT_WINBACK_PRO if plan == "pro" else POLAR_CHECKOUT_WINBACK_STARTER
+    subject, html = _dunning_html(stage, plan, POLAR_CUSTOMER_PORTAL, checkout_url)
+    if not subject:
+        return False
+
+    return _send_email(user["email"], subject, html)
 
 
 def _b64url_json(obj):
@@ -470,11 +641,50 @@ def api_extract():
 
     result = process_url(url, model=model)
     if result.get("status") == "error":
-        refund_credit_for_user(user["user_id"])
-        log_transcript_attempt(user_id, email, url, "error", credits_used=0)
+        # Refund only when the failure is on us (network, Groq, anti-bot, etc.).
+        # If the user supplied a private/unsupported/missing video we still
+        # spent yt-dlp + Groq cycles on it, so we keep the credit and tell them.
+        if result.get("error_kind") == "user_input":
+            log_transcript_attempt(user_id, email, url, "error_user_input", credits_used=1)
+            result["credit_kept"] = True
+        else:
+            refund_credit_for_user(user["user_id"])
+            log_transcript_attempt(user_id, email, url, "error", credits_used=0)
     else:
-        log_transcript_attempt(user_id, email, url, "success", credits_used=1)
+        log_id = log_transcript_attempt(user_id, email, url, "success", credits_used=1)
+        if log_id:
+            result["log_id"] = log_id
+        # If this user was referred, pay the referrer on their first success.
+        # pay_referrer_if_due is idempotent — safe to call on every success.
+        try:
+            pay_referrer_if_due(user_id)
+        except Exception:
+            logging.exception("referral payout failed (non-fatal)")
     return jsonify(result)
+
+
+@app.route("/api/rate-transcript", methods=["POST"])
+def api_rate_transcript():
+    """Record a thumbs-up (1) / thumbs-down (-1) rating for a delivered transcript."""
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Not authenticated"}), 401
+
+    data = request.json or {}
+    log_id = data.get("log_id")
+    rating = data.get("rating")
+    try:
+        log_id = int(log_id)
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "error": "log_id and rating required"}), 400
+    if rating not in (1, -1):
+        return jsonify({"status": "error", "error": "rating must be 1 or -1"}), 400
+
+    ok = set_transcript_rating(log_id, user["user_id"], rating)
+    if not ok:
+        return jsonify({"status": "error", "error": "Not found"}), 403
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/extract-preview", methods=["POST"])
@@ -693,6 +903,16 @@ def api_me():
     return jsonify(_get_current_user())
 
 
+@app.route("/api/me/referral")
+def api_me_referral():
+    """Current user's referral code + lifetime stats. Requires auth."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    stats = get_referral_stats(user["user_id"])
+    return jsonify({"status": "ok", **stats})
+
+
 @app.route("/api/featurebase-token")
 def api_featurebase_token():
     """Return secure Featurebase JWT for logged-in user."""
@@ -710,6 +930,35 @@ def api_featurebase_token():
 
 # ── Auth Routes ─────────────────────────────────────────────
 
+
+def _apply_referral_on_signup(new_user_id, new_email, code):
+    """Resolve a signup-time referral code. Grants +REFERRAL_REWARD_CREDITS
+    to the new user now; the referrer is paid later on the first successful
+    transcription (see /api/extract). Safely ignores invalid/self/match codes.
+    """
+    if not code:
+        return None
+    referrer = get_user_by_referral_code(code)
+    if not referrer:
+        return None
+    referrer_id = referrer.get("id")
+    referrer_email = (referrer.get("email") or "").strip().lower()
+    new_email_lc = (new_email or "").strip().lower()
+
+    # Self-referral guard: the new user cannot reuse their own code (not
+    # possible on pure signup, but also block email-match in case an
+    # unverified account is completing signup).
+    if not referrer_id or referrer_id == new_user_id:
+        return None
+    if new_email_lc and referrer_email and new_email_lc == referrer_email:
+        return None
+
+    if set_referred_by(new_user_id, referrer_id):
+        add_bonus_credits(new_user_id, REFERRAL_REWARD_CREDITS)
+        return referrer_id
+    return None
+
+
 @app.route("/api/signup", methods=["POST"])
 @rate_limit_auth(5, 60)
 def api_signup():
@@ -717,10 +966,12 @@ def api_signup():
     data = request.json or {}
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    referral_code = (data.get("referral_code") or "").strip().upper()
 
     if not email or not EMAIL_RE.match(email):
         return jsonify({"status": "error", "error": "Valid email required"}), 400
-    if email.split("@")[1] in disposable_domains:
+    email_domain = email.split("@")[1]
+    if email_domain in disposable_domains or _is_disposable_mx(email_domain):
         return jsonify({"status": "error", "error": "Disposable email addresses are not allowed"}), 400
     if len(password) < 6:
         return jsonify({"status": "error", "error": "Password must be at least 6 characters"}), 400
@@ -730,7 +981,9 @@ def api_signup():
     if existing and existing.get("email_verified"):
         return jsonify({"status": "error", "error": "Account already exists. Log in instead."}), 409
     if existing and not existing.get("email_verified"):
-        # Re-signup for unverified account — update password + resend code
+        # Re-signup for unverified account — update password + resend code.
+        # Also apply referral in case this is their second attempt and they
+        # provided a code now. set_referred_by is a no-op if already set.
         pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         from database import get_db
         with get_db() as db:
@@ -738,6 +991,7 @@ def api_signup():
                 "UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?",
                 (pw_hash, datetime.utcnow().isoformat(), existing["id"]),
             )
+        _apply_referral_on_signup(existing["id"], email, referral_code)
         code = _generate_otp()
         expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
         set_verify_code(email, code, expires)
@@ -749,6 +1003,8 @@ def api_signup():
 
     if not user_id:
         return jsonify({"status": "error", "error": "Account already exists."}), 409
+
+    _apply_referral_on_signup(user_id, email, referral_code)
 
     # Generate + send OTP
     code = _generate_otp()
@@ -890,10 +1146,15 @@ def polar_webhook():
         polar_id = customer.get("id") or event_data.get("customer_id") or ""
 
         plan = None
+        billing_interval = None
         if POLAR_PRO_PRODUCT_ID and product_id == POLAR_PRO_PRODUCT_ID:
-            plan = "pro"
+            plan, billing_interval = "pro", "monthly"
         elif POLAR_STARTER_PRODUCT_ID and product_id == POLAR_STARTER_PRODUCT_ID:
-            plan = "starter"
+            plan, billing_interval = "starter", "monthly"
+        elif POLAR_PRO_ANNUAL_PRODUCT_ID and product_id == POLAR_PRO_ANNUAL_PRODUCT_ID:
+            plan, billing_interval = "pro", "annual"
+        elif POLAR_STARTER_ANNUAL_PRODUCT_ID and product_id == POLAR_STARTER_ANNUAL_PRODUCT_ID:
+            plan, billing_interval = "starter", "annual"
 
         if plan is None:
             strict_types = (
@@ -934,7 +1195,32 @@ def polar_webhook():
         )
         if event_type in subscription_events:
             sync_polar_subscription_webhook(event_type, event_data, plan)
-            logging.info("Polar webhook %s synced (plan=%s)", event_type, plan)
+            if billing_interval and polar_id:
+                set_billing_interval(polar_id, billing_interval)
+            logging.info(
+                "Polar webhook %s synced (plan=%s, interval=%s)",
+                event_type,
+                plan,
+                billing_interval or "unknown",
+            )
+
+            # Dunning: fire recovery emails on state transitions. Idempotent —
+            # maybe_claim_dunning_stage ensures we only email once per stage.
+            # Note: if Polar delivers a canceled/revoked event for a polar_id
+            # we've never seen (no prior active/past_due), get_user returns
+            # None and no email fires. That's the lesser of two evils —
+            # better than creating empty users or double-sending.
+            synced_user = get_user(polar_id) if polar_id else None
+            if synced_user:
+                if event_type == "subscription.past_due":
+                    _maybe_send_dunning_email(synced_user, "past_due")
+                elif event_type == "subscription.canceled":
+                    _maybe_send_dunning_email(synced_user, "canceled")
+                elif event_type == "subscription.revoked":
+                    _maybe_send_dunning_email(synced_user, "revoked")
+                elif event_type in ("subscription.active", "subscription.uncanceled"):
+                    # Back to healthy — reset so the next bad event can email.
+                    clear_dunning_stage(synced_user.get("id"))
 
         return jsonify({"status": "ok"}), 200
     except Exception:
@@ -1016,11 +1302,22 @@ def admin():
     from database import get_db
     with get_db() as db:
         users = [dict(r) for r in db.execute(
-            "SELECT id, polar_customer_id, email, plan, credits_used, credits_reset_at, created_at FROM users WHERE plan != 'free' ORDER BY created_at DESC"
+            """SELECT u.id, u.polar_customer_id, u.email, u.plan, u.credits_used,
+                      u.credits_reset_at, u.created_at,
+                      ref.email AS referred_by_email
+               FROM users u
+               LEFT JOIN users ref ON u.referred_by = ref.id
+               WHERE u.plan != 'free'
+               ORDER BY u.created_at DESC"""
         ).fetchall()]
 
         free_users = [dict(r) for r in db.execute(
-            "SELECT id, email, credits_used, credits_reset_at, created_at FROM users WHERE plan = 'free' AND email_verified = 1 ORDER BY created_at DESC"
+            """SELECT u.id, u.email, u.credits_used, u.credits_reset_at, u.created_at,
+                      ref.email AS referred_by_email
+               FROM users u
+               LEFT JOIN users ref ON u.referred_by = ref.id
+               WHERE u.plan = 'free' AND u.email_verified = 1
+               ORDER BY u.created_at DESC"""
         ).fetchall()]
 
         stats = {
@@ -1031,10 +1328,30 @@ def admin():
             "free_users": db.execute("SELECT COUNT(*) FROM users WHERE plan = 'free' AND email_verified = 1").fetchone()[0],
             "total_free_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan = 'free'").fetchone()[0],
             "total_paid_transcripts": db.execute("SELECT COALESCE(SUM(credits_used),0) FROM users WHERE plan != 'free'").fetchone()[0],
+            "referred_total": db.execute("SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL").fetchone()[0],
+            "referral_paid": db.execute("SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL AND referral_credit_paid = 1").fetchone()[0],
         }
 
+        top_referrers = [dict(r) for r in db.execute(
+            """SELECT u.id, u.email, u.referral_code,
+                      COUNT(r.id) AS referred,
+                      SUM(CASE WHEN r.referral_credit_paid = 1 THEN 1 ELSE 0 END) AS paid
+               FROM users u
+               JOIN users r ON r.referred_by = u.id
+               GROUP BY u.id
+               ORDER BY referred DESC
+               LIMIT 20"""
+        ).fetchall()]
+
     banner = get_banner()
-    return render_template_string(ADMIN_TEMPLATE, users=users, free_users=free_users, stats=stats, banner=banner)
+    return render_template_string(
+        ADMIN_TEMPLATE,
+        users=users,
+        free_users=free_users,
+        stats=stats,
+        banner=banner,
+        top_referrers=top_referrers,
+    )
 
 
 @app.route("/admin/credit", methods=["POST"])
@@ -1132,7 +1449,7 @@ def admin_logs():
         rows = [
             dict(r)
             for r in db.execute(
-                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.created_at,
+                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.rating, l.created_at,
                            CASE WHEN COALESCE(u.plan, 'free') IN ('starter','pro') THEN COALESCE(u.plan, 'free') ELSE '' END AS plan_pill
                     {from_sql}
                     {where_sql}
@@ -1141,6 +1458,25 @@ def admin_logs():
                 params + [per_page, offset],
             ).fetchall()
         ]
+
+        rating_row = db.execute(
+            """SELECT
+                 SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS up,
+                 SUM(CASE WHEN rating = -1 THEN 1 ELSE 0 END) AS down,
+                 SUM(CASE WHEN rating IS NOT NULL THEN 1 ELSE 0 END) AS rated
+               FROM transcript_logs
+               WHERE status = 'success'"""
+        ).fetchone()
+        up_count = int(rating_row["up"] or 0) if rating_row else 0
+        down_count = int(rating_row["down"] or 0) if rating_row else 0
+        rated_total = int(rating_row["rated"] or 0) if rating_row else 0
+        up_pct = round((up_count / rated_total) * 100, 1) if rated_total else None
+        rating_summary = {
+            "up": up_count,
+            "down": down_count,
+            "rated": rated_total,
+            "up_pct": up_pct,
+        }
 
     def _platform_guess(url):
         u = (url or "").lower()
@@ -1186,6 +1522,7 @@ def admin_logs():
         prev_qs=prev_qs,
         next_qs=next_qs,
         filters=base_filters,
+        rating_summary=rating_summary,
     )
 
 
@@ -1488,6 +1825,14 @@ ADMIN_TEMPLATE = """
                 <div class="stat-num" data-count="{{ stats.total_free_transcripts }}">0</div>
                 <div class="stat-lbl">Free Transcripts</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.referred_total }}">0</div>
+                <div class="stat-lbl">Referred Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="{{ stats.referral_paid }}">0</div>
+                <div class="stat-lbl">Referral Payouts</div>
+            </div>
         </div>
 
         <!-- Charts -->
@@ -1532,13 +1877,14 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Email</th><th>Plan</th><th>Usage</th><th>Since</th><th></th></tr>
+                    <tr><th>Email</th><th>Plan</th><th>Referred By</th><th>Usage</th><th>Since</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for u in users %}
                     <tr>
                         <td class="email-cell">{{ u.email or '—' }}</td>
                         <td><span class="badge {{ u.plan }}">{{ u.plan }}</span></td>
+                        <td class="mono">{{ u.referred_by_email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
                                 <span class="mono">{{ u.credits_used }}</span>
@@ -1565,7 +1911,7 @@ ADMIN_TEMPLATE = """
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not users %}<tr><td colspan="5" class="empty-row">No users yet</td></tr>{% endif %}
+                    {% if not users %}<tr><td colspan="6" class="empty-row">No users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
@@ -1578,12 +1924,13 @@ ADMIN_TEMPLATE = """
         <div class="table-wrap">
             <table id="freeTable">
                 <thead>
-                    <tr><th>Email</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
+                    <tr><th>Email</th><th>Referred By</th><th>Usage</th><th>Resets</th><th>Joined</th><th></th></tr>
                 </thead>
                 <tbody id="freeBody">
                     {% for u in free_users %}
                     <tr>
                         <td class="email-cell">{{ u.email or '—' }}</td>
+                        <td class="mono">{{ u.referred_by_email or '—' }}</td>
                         <td>
                             <div class="usage-bar-wrap">
                                 <span class="mono">{{ u.credits_used }}</span>
@@ -1603,11 +1950,36 @@ ADMIN_TEMPLATE = """
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not free_users %}<tr><td colspan="5" class="empty-row">No free users yet</td></tr>{% endif %}
+                    {% if not free_users %}<tr><td colspan="6" class="empty-row">No free users yet</td></tr>{% endif %}
                 </tbody>
             </table>
         </div>
         <div class="pagination" id="freePagination"></div>
+
+        <!-- Top Referrers -->
+        <div class="section-head">
+            <div class="section-title">Top Referrers</div>
+            <div class="section-count">{{ top_referrers | length }}</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Email</th><th>Code</th><th>Referred</th><th>Paid Out</th><th>Credits Earned</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in top_referrers %}
+                    <tr>
+                        <td class="email-cell">{{ r.email or '—' }}</td>
+                        <td class="mono">{{ r.referral_code or '—' }}</td>
+                        <td class="mono">{{ r.referred }}</td>
+                        <td class="mono">{{ r.paid }}</td>
+                        <td class="mono">{{ (r.paid or 0) * 10 }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_referrers %}<tr><td colspan="5" class="empty-row">No referrals yet</td></tr>{% endif %}
+                </tbody>
+            </table>
+        </div>
 
         <!-- Banner Control -->
         <div class="section-head">
@@ -2450,6 +2822,8 @@ register_page_routes(
     get_banner=get_banner,
     checkout_starter=POLAR_CHECKOUT_STARTER,
     checkout_pro=POLAR_CHECKOUT_PRO,
+    checkout_starter_annual=POLAR_CHECKOUT_STARTER_ANNUAL,
+    checkout_pro_annual=POLAR_CHECKOUT_PRO_ANNUAL,
     customer_portal=POLAR_CUSTOMER_PORTAL,
     featurebase_app_id=FEATUREBASE_APP_ID,
     guides_content=GUIDES_CONTENT,

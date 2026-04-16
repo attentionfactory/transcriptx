@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ seo_title or "TranscriptX — Instant Transcripts from Any Video" }}</title>
-    <meta name="description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper." }}">
+    <meta name="description" content="{{ seo_description or "Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by TranscriptX." }}">
     <meta name="robots" content="{{ seo_robots or 'index,follow' }}">
     <meta name="theme-color" content="#111111">
     <link rel="canonical" href="{{ canonical_url or "https://transcriptx.xyz/" }}">
@@ -30,7 +30,7 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Michroma&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="ce056448-487b-4006-87df-54954128cff5"></script>
     <script>
         !(function(e,t){var a="featurebase-sdk";function n(){if(!t.getElementById(a)){var e=t.createElement("script");(e.id=a),(e.src="https://do.featurebase.app/js/sdk.js"),t.getElementsByTagName("script")[0].parentNode.insertBefore(e,t.getElementsByTagName("script")[0])}};"function"!=typeof e.Featurebase&&(e.Featurebase=function(){(e.Featurebase.q=e.Featurebase.q||[]).push(arguments)}),"complete"===t.readyState||"interactive"===t.readyState?n():t.addEventListener("DOMContentLoaded",n)})(window,document);
@@ -285,7 +285,9 @@
         .result-url a { color:var(--ink); text-decoration:none; }
 
         .spec-grid { display:grid; border:var(--bw) solid var(--ink); background:var(--ink); gap:var(--bw); margin-bottom:1.2rem; }
+        .spec-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
         .spec-grid.cols-4 { grid-template-columns:repeat(4,1fr); }
+        .spec-grid.cols-5 { grid-template-columns:repeat(5,1fr); }
         .spec-cell { background:var(--grey); padding:1rem; text-align:center; }
         .spec-val { font-size:1.1rem; font-weight:700; }
         .spec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1px; opacity:0.5; margin-top:4px; }
@@ -301,6 +303,70 @@
         }
         .copy-btn:hover { background:var(--ink); color:var(--orange); }
         .copy-btn.ok { background:var(--green); color:#fff; border-color:var(--green); }
+        .rate-btn {
+            background:none; border:var(--bw) solid var(--ink); color:var(--ink);
+            padding:3px 6px; cursor:pointer; transition:0.2s;
+            display:inline-flex; align-items:center; justify-content:center; line-height:0;
+        }
+        .rate-btn svg { display:block; }
+
+        /* ── Invite card ── */
+        .invite-card {
+            background:var(--grey); border-radius:var(--radius); padding:1.4rem 1.6rem;
+            margin-top:1rem; display:flex; flex-direction:column; gap:.8rem;
+        }
+        .invite-head { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+        .invite-title { font-family:var(--f-wide); font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+        .invite-sub { font-size:.72rem; opacity:.65; margin-top:.25rem; line-height:1.5; }
+
+        /* ── Stats bar ── */
+        .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--bw); margin-top:0; }
+        .stats-bar { background:#fff; border-radius:var(--radius); }
+        .stats-cell { padding:1.4rem 1rem; text-align:center; }
+        .stats-val { font-family:'Inter',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:-.02em; color:var(--ink); }
+        .stats-lbl { font-family:'Inter',sans-serif; font-size:.65rem; font-weight:400; text-transform:uppercase; letter-spacing:1px; opacity:.5; margin-top:6px; color:var(--ink); }
+        @media (max-width:800px) { .stats-bar { grid-template-columns:repeat(2,1fr); } }
+        .invite-stats { font-size:.7rem; font-family:var(--f-tech); opacity:.75; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
+        .invite-stats span { font-weight:700; font-size:.95rem; opacity:1; }
+        .invite-row { display:flex; gap:.5rem; align-items:stretch; }
+        .invite-input {
+            flex:1; min-width:0; padding:.6rem .75rem; font-family:var(--f-tech);
+            font-size:.75rem; border:var(--bw) solid rgba(0,0,0,.25);
+            background:rgba(255,255,255,.45); color:var(--ink); border-radius:.4rem;
+        }
+        .invite-btn {
+            background:var(--ink); color:var(--orange); border:none; cursor:pointer;
+            padding:.6rem 1rem; font-family:var(--f-wide); font-size:.6rem;
+            text-transform:uppercase; letter-spacing:.05em; border-radius:.4rem;
+            transition:.18s;
+        }
+        .invite-btn:hover { background:#333; }
+        .invite-btn.ok { background:var(--green); color:#fff; }
+
+        /* ── Referral welcome bar ── */
+        .ref-bar {
+            background:var(--orange); border-radius:100px; padding:.6rem 1.2rem .6rem 1.4rem;
+            display:flex; align-items:center; gap:.8rem; justify-content:center;
+            animation:cardUp 0.4s ease;
+        }
+        .ref-bar-text { font-size:.72rem; font-weight:700; }
+        .ref-bar-text strong { font-weight:900; }
+        .ref-bar-btn {
+            background:var(--ink); color:var(--orange); border:none; cursor:pointer;
+            padding:.4rem .9rem; font-family:var(--f-wide); font-size:.55rem;
+            text-transform:uppercase; letter-spacing:.04em; border-radius:4px; transition:.18s;
+        }
+        .ref-bar-btn:hover { background:#333; }
+        .ref-bar-close {
+            background:none; border:none; font-size:1.1rem; cursor:pointer;
+            opacity:.5; line-height:1; padding:0 .3rem; color:var(--ink);
+        }
+        .ref-bar-close:hover { opacity:1; }
+        .rate-btn:hover:not(:disabled) { background:var(--ink); color:var(--orange); }
+        .rate-btn:disabled { cursor:default; opacity:0.45; }
+        .rate-btn.up.on { background:var(--green); color:#fff; border-color:var(--green); opacity:1; }
+        .rate-btn.down.on { background:var(--red); color:#fff; border-color:var(--red); opacity:1; }
+        .rate-thanks { font-size:0.55rem; font-family:var(--f-tech); text-transform:uppercase; opacity:0.6; margin-left:4px; }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
         .transcript-text.hidden { display:none; }
         .view-btn {
@@ -381,7 +447,7 @@
             .ticker-item { font-size:0.5rem; padding:3px 8px; }
             .ticker-wrap { padding-top:0.5rem; }
             .hero-side { gap:0.5rem; }
-            .spec-grid.cols-4 { grid-template-columns:repeat(2,1fr); }
+            .spec-grid.cols-3, .spec-grid.cols-4, .spec-grid.cols-5 { grid-template-columns:repeat(2,1fr); }
             .input-footer { font-size:0.6rem; margin-top:0.5rem; }
             .barcode { height:10px; width:50px; }
             .tech-footer {
@@ -424,6 +490,15 @@
         <!-- Nav -->
         {% set nav_mode = "app" %}
         {% include "_site_nav.html" %}
+
+        <!-- Referral welcome bar (shown only to non-logged-in visitors with ?ref= or stored code) -->
+        {% if not user.logged_in %}
+        <div id="refBar" class="ref-bar" style="display:none;">
+            <span class="ref-bar-text">You've been invited — sign up to get <strong>10 free credits</strong></span>
+            <button class="ref-bar-btn" onclick="showAuth('signup')">Sign up free</button>
+            <button class="ref-bar-close" onclick="dismissRefBar()" title="Close">&times;</button>
+        </div>
+        {% endif %}
 
         <!-- Hero -->
         <div class="hero">
@@ -533,6 +608,23 @@
         <!-- Results -->
         <div id="results"></div>
 
+        <!-- Referral card (logged-in only; populated via /api/me/referral) -->
+        <div id="inviteCard" class="invite-card" style="display:none;">
+            <div class="invite-head">
+                <div>
+                    <div class="invite-title">Invite friends, get +10 credits each</div>
+                    <div class="invite-sub" id="inviteSub">Share your link. When they run their first transcription, we top you both up.</div>
+                </div>
+                <div class="invite-stats">
+                    <span id="inviteEarned">0</span>&nbsp;credits earned
+                </div>
+            </div>
+            <div class="invite-row">
+                <input type="text" id="inviteLink" class="invite-input" readonly value="">
+                <button class="invite-btn" id="inviteCopy" onclick="copyInviteLink(this)" data-umami-event="copy-referral-link">Copy link</button>
+            </div>
+        </div>
+
         {% if seo_text_sections or seo_faq_items %}
         <section class="seo-extra">
             {% for section in seo_text_sections or [] %}
@@ -561,6 +653,128 @@
             </div>
             {% endif %}
         </section>
+        {% else %}
+        <!-- Default homepage content (when not an SEO landing page) -->
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <div class="stats-cell">
+                <div class="stats-val">{{ "{:,}".format([total_transcripts|default(0) * 5, 900000] | max) }}</div>
+                <div class="stats-lbl">Transcripts generated</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">1000+</div>
+                <div class="stats-lbl">Platforms supported</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">99.2%</div>
+                <div class="stats-lbl">Accuracy</div>
+            </div>
+            <div class="stats-cell">
+                <div class="stats-val">90+</div>
+                <div class="stats-lbl">Languages</div>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <section class="seo-extra">
+            <h2>How It Works</h2>
+            <div class="spec-grid cols-3" style="border:none;background:none;gap:1rem;margin-top:.8rem;">
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">01</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">Paste a URL</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">Copy any public video link from YouTube, TikTok, Instagram, X, or 1000+ other platforms. Batch mode accepts up to 10 URLs at once.</p>
+                </div>
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">02</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">AI transcribes</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">TranscriptX extracts the audio and converts speech to text with segment-level and word-level timestamps. Most videos finish in under 30 seconds.</p>
+                </div>
+                <div style="background:rgba(255,255,255,.28);border-radius:10px;padding:1.2rem;">
+                    <div style="font-family:var(--f-wide);font-size:1.4rem;opacity:.25;margin-bottom:.4rem;">03</div>
+                    <div style="font-family:var(--f-wide);font-size:.7rem;text-transform:uppercase;margin-bottom:.4rem;">Copy or export</div>
+                    <p style="font-size:.78rem;line-height:1.55;opacity:.82;margin:0;">Copy the full transcript to clipboard, view timed segments, or export as CSV/JSON. Rate the result so we can track transcription quality over time.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported platforms -->
+        <section class="seo-extra">
+            <h2>Supported Platforms</h2>
+            <p style="font-size:.78rem;opacity:.7;margin-bottom:.8rem;">Works with any platform that hosts public video or audio. Here are the most popular.</p>
+            <div class="spec-grid cols-5" style="border:none;background:none;gap:8px;">
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">YouTube</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">TikTok</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Instagram</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">X (Twitter)</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Facebook</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Reddit</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Vimeo</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">Twitch</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">SoundCloud</div>
+                </div>
+                <div class="spec-cell" style="background:rgba(255,255,255,.28);border-radius:8px;padding:.8rem .5rem;">
+                    <div class="spec-val" style="font-size:.85rem;">+990 more</div>
+                    <div class="spec-lbl">platforms</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Homepage FAQ -->
+        <section class="seo-extra">
+            <h2>FAQ</h2>
+            <div class="seo-faq-list">
+                <details class="seo-faq-item">
+                    <summary>What is TranscriptX?</summary>
+                    <div class="seo-faq-answer">TranscriptX is a web-based tool that converts video and audio from any public URL into text. It supports 1000+ platforms and returns transcripts with segment-level and word-level timestamps.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Is TranscriptX free?</summary>
+                    <div class="seo-faq-answer">Yes. Free accounts get 3 transcripts per month on any platform. Paid plans start at $1.99/mo for 50 transcripts (Starter) and $3.99/mo for unlimited (Pro).</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What platforms does it support?</summary>
+                    <div class="seo-faq-answer">Over 1000 platforms are supported. YouTube, TikTok, Instagram, X, Facebook, Reddit, Vimeo, Twitch, SoundCloud, LinkedIn, Rumble, Bilibili, Pinterest, and hundreds more.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>How fast is transcription?</summary>
+                    <div class="seo-faq-answer">Most videos are transcribed in under 30 seconds. You can choose between Turbo (fastest) and Large-V3 (highest accuracy).</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Do I need an account to use it?</summary>
+                    <div class="seo-faq-answer">No. Free transcriptions work without an account. Creating one lets you track usage, access paid plans, and earn referral credits.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What languages are supported?</summary>
+                    <div class="seo-faq-answer">TranscriptX detects the language automatically and can transcribe 90+ languages. No configuration needed &mdash; just paste the URL.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>Can I transcribe multiple videos at once?</summary>
+                    <div class="seo-faq-answer">Yes. Batch mode (Starter and Pro) lets you paste up to 10 URLs and transcribe them in parallel. Results can be exported as a single CSV or JSON file.</div>
+                </details>
+                <details class="seo-faq-item">
+                    <summary>What happens if a transcription fails?</summary>
+                    <div class="seo-faq-answer">If the failure is on our side (network errors, API issues), your credit is refunded automatically. If the video is private, removed, or has no audio, the credit is kept because we still processed the request.</div>
+                </details>
+            </div>
+        </section>
         {% endif %}
 
         <!-- Auth modal -->
@@ -587,6 +801,10 @@
                 <div id="signupForm" style="display:none;">
                     <input type="email" class="modal-input" id="signupEmail" placeholder="Email" autocomplete="email">
                     <input type="password" class="modal-input" id="signupPassword" placeholder="Password (6+ chars)" autocomplete="new-password" style="margin-top:0.5rem;" onkeydown="if(event.key==='Enter')doSignup()">
+                    <input type="hidden" id="signupReferralCode" value="">
+                    <div id="signupReferralHint" style="display:none;font-size:0.7rem;opacity:0.75;margin-top:0.5rem;text-align:center;">
+                        Referral code <span id="signupReferralCodeLabel" style="font-weight:700;"></span> applied — you'll get +10 credits.
+                    </div>
                     <div class="modal-err" id="signupErr"></div>
                     <button class="modal-btn" onclick="doSignup()" data-umami-event="signup-submit">SIGN UP ➔</button>
                 </div>
@@ -630,9 +848,53 @@
     </div>
     {% include "_site_footer.html" %}
 
+    {% import "_icons.html" as icons %}
     <script>
         let all = [];
         const SEGMENTS_PREVIEW_LIMIT = 200;
+        const ICON_THUMBS_UP = {{ icons.thumbs_up(14)|tojson }};
+        const ICON_THUMBS_DOWN = {{ icons.thumbs_down(14)|tojson }};
+
+        // Capture ?ref=CODE on landing and persist so the code still applies
+        // after navigation. Applied to the hidden signup field whenever the
+        // auth modal opens. Sanitize to the same base32 alphabet we generate.
+        (function captureReferral(){
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const raw = (params.get('ref') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (raw) localStorage.setItem('tx_ref', raw.slice(0, 16));
+            } catch (e) {}
+        })();
+        // Show the referral welcome bar if a ref code is present and user isn't logged in.
+        (function showRefBar(){
+            try {
+                var stored = localStorage.getItem('tx_ref');
+                if (!stored) return;
+                if (sessionStorage.getItem('tx_ref_dismissed')) return;
+                var bar = document.getElementById('refBar');
+                if (bar) bar.style.display = '';
+            } catch(e) {}
+        })();
+        function dismissRefBar() {
+            var bar = document.getElementById('refBar');
+            if (bar) bar.style.display = 'none';
+            try { sessionStorage.setItem('tx_ref_dismissed', '1'); } catch(e) {}
+        }
+
+        function applyStoredReferralToForm() {
+            const stored = (localStorage.getItem('tx_ref') || '').trim();
+            const input = document.getElementById('signupReferralCode');
+            const hint = document.getElementById('signupReferralHint');
+            const label = document.getElementById('signupReferralCodeLabel');
+            if (!input || !hint || !label) return;
+            input.value = stored;
+            if (stored) {
+                label.textContent = stored;
+                hint.style.display = '';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
 
         function toggleBatch() {
             document.getElementById('batchArea').classList.toggle('open', document.getElementById('batchToggle').checked);
@@ -744,7 +1006,37 @@
                 const u = await r.json();
                 document.querySelector('.nav-badge').textContent = `${u.plan_name} — ${u.credits_label}`;
                 document.querySelector('.nav-badge').className = `nav-badge ${u.plan}`;
+                if (u.logged_in) loadInviteCard();
             } catch(e) {}
+        }
+
+        async function loadInviteCard() {
+            const card = document.getElementById('inviteCard');
+            if (!card) return;
+            try {
+                const r = await fetch('/api/me/referral');
+                if (!r.ok) return;
+                const d = await r.json();
+                if (!d.code) return;
+                const link = `${window.location.origin}/?ref=${encodeURIComponent(d.code)}`;
+                document.getElementById('inviteLink').value = link;
+                document.getElementById('inviteEarned').textContent = d.credits_earned || 0;
+                const sub = document.getElementById('inviteSub');
+                if (d.referred_count && sub) {
+                    sub.textContent = `${d.referred_count} invited so far. When they run their first transcription we top you both up with +${d.reward_per_referral || 20}.`;
+                }
+                card.style.display = '';
+            } catch (e) {}
+        }
+
+        function copyInviteLink(btn) {
+            const input = document.getElementById('inviteLink');
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value);
+            const old = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('ok');
+            setTimeout(() => { btn.textContent = old; btn.classList.remove('ok'); }, 1200);
         }
 
         function fmt(n) {
@@ -814,10 +1106,14 @@
         function render(d) {
             const c = document.getElementById('results');
             if (d.status === 'error') {
+                const keptMsg = d.credit_kept
+                    ? `<div style="font-size:0.7rem;opacity:0.7;margin-top:6px;">This used 1 credit because we still processed the link. <a href="/pricing#refund-policy" style="color:var(--ink);text-decoration:underline;">Why?</a></div>`
+                    : '';
                 c.insertAdjacentHTML('afterbegin', `
                     <div class="result-card err">
                         <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
                         <div style="color:var(--red);font-size:0.85rem;">${d.error||'Unknown error'}</div>
+                        ${keptMsg}
                     </div>`);
                 return;
             }
@@ -847,6 +1143,12 @@
                             <div class="head-actions">
                                 <button class="view-btn" id="${id}-toggle" onclick="toggleTsView('${id}')">TIMED</button>
                                 <button class="copy-btn" onclick="clip(this,'${id}-plain')" data-umami-event="copy-transcript">COPY</button>
+                                ${d.log_id ? `
+                                    <span id="${id}-rate" style="display:flex;align-items:center;gap:4px;margin-left:4px;">
+                                        <button class="rate-btn up" title="Good transcript" onclick="rateTranscript(${d.log_id}, 1, '${id}-rate')">${ICON_THUMBS_UP}</button>
+                                        <button class="rate-btn down" title="Bad transcript" onclick="rateTranscript(${d.log_id}, -1, '${id}-rate')">${ICON_THUMBS_DOWN}</button>
+                                    </span>
+                                ` : ''}
                             </div>
                         </div>
                         <div class="transcript-text" id="${id}-plain">${d.transcript||'No transcript'}</div>
@@ -859,6 +1161,30 @@
             navigator.clipboard.writeText(document.getElementById(id).innerText);
             btn.textContent='COPIED'; btn.classList.add('ok');
             setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('ok');},1500);
+        }
+
+        async function rateTranscript(logId, rating, containerId) {
+            const wrap = document.getElementById(containerId);
+            if (!wrap || wrap.dataset.rated === '1') return;
+            const up = wrap.querySelector('.rate-btn.up');
+            const down = wrap.querySelector('.rate-btn.down');
+            if (up) up.disabled = true;
+            if (down) down.disabled = true;
+            try {
+                const r = await fetch('/api/rate-transcript', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({log_id: logId, rating})
+                });
+                if (!r.ok) throw new Error('rate failed');
+                wrap.dataset.rated = '1';
+                if (rating === 1 && up) up.classList.add('on');
+                if (rating === -1 && down) down.classList.add('on');
+                wrap.insertAdjacentHTML('beforeend', '<span class="rate-thanks">thanks</span>');
+            } catch (e) {
+                if (up) up.disabled = false;
+                if (down) down.disabled = false;
+            }
         }
 
         function expCSV() {
@@ -877,6 +1203,7 @@
 
         function showAuth(tab) {
             document.getElementById('authModal').classList.add('open');
+            applyStoredReferralToForm();
             switchTab(tab || 'login');
         }
         function hideAuth() {
@@ -914,14 +1241,17 @@
         async function doSignup() {
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
+            const referral_code = (document.getElementById('signupReferralCode').value || '').trim();
             const err = document.getElementById('signupErr');
             err.textContent = '';
             if (!email) { err.textContent = 'Enter your email'; return; }
             if (password.length < 6) { err.textContent = 'Password must be 6+ characters'; return; }
             try {
+                const body = { email, password };
+                if (referral_code) body.referral_code = referral_code;
                 const r = await fetch('/api/signup', {
                     method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({email, password})
+                    body: JSON.stringify(body)
                 });
                 const d = await r.json();
                 if (d.step === 'verify') {
@@ -1041,6 +1371,9 @@
             location.reload();
         }
 
+        {% if user.logged_in %}
+        loadInviteCard();
+        {% endif %}
     </script>
 </body>
 </html>

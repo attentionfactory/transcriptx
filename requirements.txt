@@ -6,3 +6,4 @@ python-dotenv
 bcrypt
 requests
 disposable-email-domains
+dnspython>=2.4
