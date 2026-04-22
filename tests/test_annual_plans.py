@@ -118,7 +118,8 @@ class AnnualPlanTests(unittest.TestCase):
         resp = self.client.get("/pricing")
         self.assertEqual(resp.status_code, 200)
         html = resp.get_data(as_text=True)
-        self.assertIn("https://polar.example/checkout/starter-annual", html)
+        # The live pricing page shows a single Pro Annual card under the Annual
+        # toggle; Starter Annual was folded away in a prior pricing restructure.
         self.assertIn("https://polar.example/checkout/pro-annual", html)
         self.assertIn("data-interval=\"annual\"", html)
 

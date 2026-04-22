@@ -136,6 +136,7 @@ from database import (
     create_user, get_user_by_email, get_user_by_id,
     set_verify_code, verify_email, verify_code_for_user, set_user_password,
     log_transcript_attempt, set_transcript_rating,
+    get_transcript_log, mark_transcript_retried,
     maybe_claim_dunning_stage, clear_dunning_stage,
     set_billing_interval,
     get_or_create_referral_code, get_user_by_referral_code,
@@ -178,6 +179,37 @@ FEATUREBASE_JWT_SECRET = os.environ.get("FEATUREBASE_JWT_SECRET", "").strip()
 # Standard Webhooks (Polar) — timestamp skew tolerance for signature verification
 WEBHOOK_TS_TOLERANCE_SEC = 300
 _dev_polar_webhook_warned = False
+
+# Supported transcription languages (ISO-639-1). Empty string / None = auto-detect.
+# Whisper officially supports 90+ languages; we expose the top 25 by usage plus
+# a free-form "other" path that accepts any 2-letter ISO code that matches this regex.
+SUPPORTED_LANGUAGES = {
+    "en", "es", "fr", "de", "pt", "it", "ja", "ko", "zh", "ru",
+    "ar", "hi", "nl", "pl", "tr", "sv", "da", "no", "fi", "cs",
+    "uk", "vi", "th", "id", "ms", "he", "ro", "el", "hu", "bg",
+    "ca", "fa", "ta", "ur", "bn", "te", "mr", "gu", "kn", "ml",
+    "tl", "sw", "af", "sk", "sr", "hr", "lt", "lv", "et", "sl",
+}
+_LANG_CODE_RE = re.compile(r"^[a-z]{2}$")
+
+
+def _normalize_language(raw):
+    """Validate and normalize a language code. Returns the code or None (auto).
+
+    Empty / missing / 'auto' → None (auto-detect).
+    Known code → the code.
+    Any other value → raises ValueError so the caller can return 400.
+    """
+    if raw is None:
+        return None
+    code = str(raw).strip().lower()
+    if code in ("", "auto"):
+        return None
+    if not _LANG_CODE_RE.match(code):
+        raise ValueError("language must be a 2-letter ISO-639-1 code")
+    if code not in SUPPORTED_LANGUAGES:
+        raise ValueError(f"language '{code}' is not supported")
+    return code
 
 # Resend config
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
@@ -618,6 +650,12 @@ def api_extract():
     user_id = user.get("user_id")
     email = user.get("email")
 
+    # Optional language override. None = auto-detect (default, current behaviour).
+    try:
+        language = _normalize_language(data.get("language"))
+    except ValueError as e:
+        return jsonify({"status": "error", "error": str(e)}), 400
+
     if not url:
         log_transcript_attempt(user_id, email, url, "error_no_url", credits_used=0)
         return jsonify({"status": "error", "error": "No URL provided"}), 400
@@ -639,19 +677,29 @@ def api_extract():
     if model not in ("whisper-large-v3-turbo", "whisper-large-v3"):
         model = "whisper-large-v3-turbo"
 
-    result = process_url(url, model=model)
+    result = process_url(url, model=model, language=language)
     if result.get("status") == "error":
         # Refund only when the failure is on us (network, Groq, anti-bot, etc.).
         # If the user supplied a private/unsupported/missing video we still
         # spent yt-dlp + Groq cycles on it, so we keep the credit and tell them.
         if result.get("error_kind") == "user_input":
-            log_transcript_attempt(user_id, email, url, "error_user_input", credits_used=1)
+            log_transcript_attempt(
+                user_id, email, url, "error_user_input", credits_used=1,
+                requested_language=language,
+            )
             result["credit_kept"] = True
         else:
             refund_credit_for_user(user["user_id"])
-            log_transcript_attempt(user_id, email, url, "error", credits_used=0)
+            log_transcript_attempt(
+                user_id, email, url, "error", credits_used=0,
+                requested_language=language,
+            )
     else:
-        log_id = log_transcript_attempt(user_id, email, url, "success", credits_used=1)
+        log_id = log_transcript_attempt(
+            user_id, email, url, "success", credits_used=1,
+            requested_language=language,
+            detected_language=result.get("language"),
+        )
         if log_id:
             result["log_id"] = log_id
         # If this user was referred, pay the referrer on their first success.
@@ -660,6 +708,61 @@ def api_extract():
             pay_referrer_if_due(user_id)
         except Exception:
             logging.exception("referral payout failed (non-fatal)")
+    return jsonify(result)
+
+
+@app.route("/api/retranscribe", methods=["POST"])
+def api_retranscribe():
+    """Retry a previously-delivered transcript with a forced language.
+
+    Free (no credit charged), limited to one retry per log_id ever. The caller
+    owns the log_id. Used by the "Retry as English" smart recovery flow when
+    auto-detect misidentified the language.
+    """
+    user = _get_current_user()
+    if not user["logged_in"]:
+        return jsonify({"status": "error", "error": "Not authenticated"}), 401
+
+    data = request.json or {}
+    log_id = data.get("log_id")
+    try:
+        log_id = int(log_id)
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "error": "log_id required"}), 400
+
+    try:
+        language = _normalize_language(data.get("language"))
+    except ValueError as e:
+        return jsonify({"status": "error", "error": str(e)}), 400
+    if not language:
+        # Retry must target a specific language — "auto" again would just repeat
+        # the original failure.
+        return jsonify({"status": "error", "error": "language required for retry"}), 400
+
+    log = get_transcript_log(log_id, user["user_id"])
+    if not log:
+        return jsonify({"status": "error", "error": "Not found"}), 403
+    if log.get("retried_at"):
+        return jsonify({"status": "error", "error": "Already retried"}), 403
+    if (log.get("status") or "") != "success":
+        return jsonify({"status": "error", "error": "Can only retry successful transcripts"}), 400
+
+    url = log.get("url") or ""
+    if not url:
+        return jsonify({"status": "error", "error": "Log is missing a URL"}), 400
+
+    # Claim the retry slot up front so concurrent calls can't double-run.
+    if not mark_transcript_retried(log_id, user["user_id"]):
+        return jsonify({"status": "error", "error": "Already retried"}), 403
+
+    result = process_url(url, language=language)
+    if result.get("status") == "error":
+        # The retry itself failed — don't refund credits (there were none), but
+        # let the caller know. The retry slot stays claimed so we don't loop.
+        return jsonify(result), 200
+
+    result["log_id"] = log_id
+    result["retried"] = True
     return jsonify(result)
 
 
@@ -1449,7 +1552,8 @@ def admin_logs():
         rows = [
             dict(r)
             for r in db.execute(
-                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.rating, l.created_at,
+                f"""SELECT l.id, l.user_id, l.email, l.url, l.status, l.credits_used, l.rating,
+                           l.requested_language, l.detected_language, l.retried_at, l.created_at,
                            CASE WHEN COALESCE(u.plan, 'free') IN ('starter','pro') THEN COALESCE(u.plan, 'free') ELSE '' END AS plan_pill
                     {from_sql}
                     {where_sql}
