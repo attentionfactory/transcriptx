@@ -152,11 +152,14 @@
         .input-footer { margin-top:1rem; display:flex; gap:1rem; align-items:center; }
 
         /* ── Controls row ── */
-        .controls { display:flex; align-items:center; justify-content:space-between; margin-top:0.8rem; flex-wrap:wrap; gap:0.5rem; }
+        .controls { display:flex; justify-content:space-between; margin-top:0.8rem; flex-wrap:wrap; gap:12px; }
         .controls select {
             background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
             padding:0.4rem 0.6rem; font-family:var(--f-tech); font-size:0.65rem;
         }
+        .ctrl-field { display:flex; flex-direction:column; gap:4px; }
+        .ctrl-field .label { margin:0; font-size:0.55rem; opacity:0.55; }
+        .ctrl-group { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
         .toggle-wrap {
             display:flex; align-items:center; gap:6px; font-size:0.65rem;
             text-transform:uppercase; letter-spacing:0.05em; cursor:pointer; opacity:0.7;
@@ -541,33 +544,41 @@
                             <div class="toggle-track"></div>
                             Batch {% if not user.batch %}(paid){% endif %}
                         </label>
-                        <select id="modelSel">
-                            <option value="whisper-large-v3-turbo">TURBO (FAST)</option>
-                            <option value="whisper-large-v3">LARGE-V3 (BEST)</option>
-                        </select>
-                        <select id="langSel" title="Language — leave on Auto unless auto-detect is getting it wrong">
-                            <option value="">AUTO-DETECT</option>
-                            <option value="en">ENGLISH</option>
-                            <option value="es">SPANISH</option>
-                            <option value="fr">FRENCH</option>
-                            <option value="de">GERMAN</option>
-                            <option value="pt">PORTUGUESE</option>
-                            <option value="it">ITALIAN</option>
-                            <option value="ja">JAPANESE</option>
-                            <option value="ko">KOREAN</option>
-                            <option value="zh">CHINESE</option>
-                            <option value="ru">RUSSIAN</option>
-                            <option value="ar">ARABIC</option>
-                            <option value="hi">HINDI</option>
-                            <option value="nl">DUTCH</option>
-                            <option value="pl">POLISH</option>
-                            <option value="tr">TURKISH</option>
-                            <option value="id">INDONESIAN</option>
-                            <option value="ms">MALAY</option>
-                            <option value="vi">VIETNAMESE</option>
-                            <option value="th">THAI</option>
-                            <option value="sv">SWEDISH</option>
-                        </select>
+                        <div class="ctrl-group">
+                            <div class="ctrl-field">
+                                <span class="label">Language</span>
+                                <select id="langSel" title="Language — leave on Auto unless auto-detect is getting it wrong">
+                                    <option value="">AUTO-DETECT</option>
+                                    <option value="en">ENGLISH</option>
+                                    <option value="es">SPANISH</option>
+                                    <option value="fr">FRENCH</option>
+                                    <option value="de">GERMAN</option>
+                                    <option value="pt">PORTUGUESE</option>
+                                    <option value="it">ITALIAN</option>
+                                    <option value="ja">JAPANESE</option>
+                                    <option value="ko">KOREAN</option>
+                                    <option value="zh">CHINESE</option>
+                                    <option value="ru">RUSSIAN</option>
+                                    <option value="ar">ARABIC</option>
+                                    <option value="hi">HINDI</option>
+                                    <option value="nl">DUTCH</option>
+                                    <option value="pl">POLISH</option>
+                                    <option value="tr">TURKISH</option>
+                                    <option value="id">INDONESIAN</option>
+                                    <option value="ms">MALAY</option>
+                                    <option value="vi">VIETNAMESE</option>
+                                    <option value="th">THAI</option>
+                                    <option value="sv">SWEDISH</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-field">
+                                <span class="label">Model</span>
+                                <select id="modelSel">
+                                    <option value="whisper-large-v3-turbo">TURBO (FAST)</option>
+                                    <option value="whisper-large-v3">LARGE-V3 (BEST)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="batch-area" id="batchArea">
                         <textarea id="batchUrls" placeholder="One URL per line..."></textarea>

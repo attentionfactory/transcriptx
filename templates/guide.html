@@ -78,6 +78,7 @@
             </div>
         </nav>
         <h1>{{ guide.h1 }}</h1>
+        {% if last_updated %}<p style="font-size:0.75rem; opacity:0.6; margin:-.3rem 0 1rem;">Updated {{ last_updated }} &middot; TranscriptX editorial</p>{% endif %}
         <div class="panel"><strong>Quick answer:</strong> {{ guide.quick_answer }}</div>
         {{ guide.body_html | safe }}
         <div class="sticky-cta">

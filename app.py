@@ -2401,7 +2401,7 @@ GUIDES_CONTENT = {
 
 <h2>What AI transcription actually delivers</h2>
 
-<p>Modern speech recognition models like Whisper are trained on hundreds of thousands of hours of diverse, multilingual audio from the real web \u2014 not clean studio recordings. That training breadth is why they handle accents, background noise, and overlapping speech far better than earlier systems. The practical result: you get a usable first draft from imperfect real-world recordings, not just laboratory audio.</p>
+<p>Modern speech-recognition engines are trained on hundreds of thousands of hours of diverse, multilingual audio from the real web \u2014 not clean studio recordings. That training breadth is why they handle accents, background noise, and overlapping speech far better than earlier systems. The practical result: you get a usable first draft from imperfect real-world recordings, not just laboratory audio.</p>
 
 <p>TranscriptX uses this technology to give you transcript output in minutes. The workflow is simple: paste the video URL, TranscriptX extracts audio and runs transcription, and you get structured text ready for editing. No file management, no software installs, no waiting for freelancers.</p>
 
@@ -2456,7 +2456,7 @@ GUIDES_CONTENT = {
             },
             {
                 "q": "Is this more accurate than YouTube auto-captions?",
-                "a": "TranscriptX uses advanced Whisper-based AI that handles noise, accents, and overlapping speech better than standard auto-captions."
+                "a": "TranscriptX uses advanced our AI engine that handles noise, accents, and overlapping speech better than standard auto-captions."
             },
             {
                 "q": "Can I use the transcript for blog posts and articles?",
@@ -2490,9 +2490,9 @@ GUIDES_CONTENT = {
 
 <h2>How TranscriptX works</h2>
 
-<p>TranscriptX does not depend on YouTube\u2019s existing caption track. Instead, it extracts the actual audio from the video and runs it through advanced AI speech recognition built on Whisper technology \u2014 trained on over 680,000 hours of diverse, multilingual web audio.</p>
+<p>TranscriptX does not depend on YouTube\u2019s existing caption track. Instead, it extracts the actual audio from the video and runs it through advanced AI speech recognition built on our transcription engine \u2014 trained on hundreds of thousands of hours of diverse, multilingual web audio.</p>
 
-<p>The practical difference is significant. Whisper-based transcription handles real-world audio conditions \u2014 background noise, varied accents, technical vocabulary, multiple languages \u2014 with substantially better accuracy than standard auto-caption systems. Research shows these models make up to 50% fewer errors than models tuned for narrow benchmark conditions.</p>
+<p>The practical difference is significant. our transcription engine handles real-world audio conditions \u2014 background noise, varied accents, technical vocabulary, multiple languages \u2014 with substantially better accuracy than standard auto-caption systems. Research shows these engines make up to 50% fewer errors than models tuned for narrow benchmark conditions.</p>
 
 <p>Here is the workflow:</p>
 
@@ -2529,7 +2529,7 @@ GUIDES_CONTENT = {
 <h3>How does the TranscriptX YouTube transcript generator work?</h3>
 <p>Paste a YouTube URL, TranscriptX extracts the audio and runs AI transcription, then returns clean editable text.</p>
 <h3>Is this more accurate than YouTube auto-captions?</h3>
-<p>TranscriptX uses advanced Whisper-based AI that handles noise, accents, and overlapping speech better than standard auto-captions.</p>
+<p>TranscriptX uses advanced our AI engine that handles noise, accents, and overlapping speech better than standard auto-captions.</p>
 <h3>Can I use the transcript for blog posts and articles?</h3>
 <p>Yes. TranscriptX output is designed to be edited and published as articles, guides, social posts, and more.</p>
 <h3>What if a YouTube video has no captions?</h3>
@@ -2558,7 +2558,7 @@ GUIDES_CONTENT = {
             },
             {
                 "q": "How accurate is the video-to-transcript conversion?",
-                "a": "TranscriptX uses Whisper-class AI trained on 680,000+ hours of real audio. Accuracy is high for clear speech and strong even with background noise."
+                "a": "TranscriptX uses our AI engine trained on hundreds of thousands of hours of real-world audio. Accuracy is high for clear speech and strong even with background noise."
             },
             {
                 "q": "Can I transcribe videos in languages other than English?",
@@ -2588,7 +2588,7 @@ GUIDES_CONTENT = {
 
 <p>TranscriptX works with a URL. That is the starting point and, from your perspective, nearly the entire workflow.</p>
 
-<p>You paste a video URL from YouTube, TikTok, Instagram, X, Facebook, or any of 1000+ supported sources. TranscriptX extracts the audio track automatically behind the scenes. The audio is then processed through Whisper-based speech recognition \u2014 AI trained on over 680,000 hours of diverse, real-world audio spanning dozens of languages and conditions.</p>
+<p>You paste a video URL from YouTube, TikTok, Instagram, X, Facebook, or any of 1000+ supported sources. TranscriptX extracts the audio track automatically behind the scenes. The audio is then processed through our speech recognition engine \u2014 AI trained on hundreds of thousands of hours of diverse, real-world audio spanning dozens of languages and conditions.</p>
 
 <p>Within minutes, you receive a clean transcript. Not a raw character dump \u2014 readable text with coherent sentence structure that you can immediately start editing for your target format.</p>
 
@@ -2596,7 +2596,7 @@ GUIDES_CONTENT = {
 
 <p><strong>Platform breadth.</strong> Most transcription tools are YouTube-only or require you to upload files. TranscriptX supports 1000+ sources because it handles audio extraction from URLs directly. If there is a public video at a URL, TranscriptX can likely transcribe it.</p>
 
-<p><strong>AI quality.</strong> The Whisper model family represents a meaningful leap in real-world transcription. Unlike older systems that were trained on narrow, clean datasets, Whisper was trained on massive volumes of actual web audio \u2014 with all its imperfections. That is why it handles background noise, accents, technical jargon, and multilingual content substantially better than legacy solutions.</p>
+<p><strong>AI quality.</strong> Modern AI transcription engines are a meaningful leap over older systems. Unlike legacy tools that were trained on narrow, clean datasets, today's engines are trained on massive volumes of actual web audio \u2014 with all its imperfections. That is why TranscriptX handles background noise, accents, technical jargon, and multilingual content substantially better than older solutions.</p>
 
 <p><strong>Operational resilience.</strong> Platforms change. Extraction paths break. Request patterns get throttled. TranscriptX handles this with automatic retries, intelligent proxy fallback for YouTube, and clear error messaging. You get a transcript or you get a real explanation \u2014 not a spinning loader that never resolves.</p>
 
@@ -2622,7 +2622,7 @@ GUIDES_CONTENT = {
 <h3>What platforms does TranscriptX support?</h3>
 <p>YouTube, TikTok, Instagram, X (Twitter), Facebook, and 1000+ other platforms with public video.</p>
 <h3>How accurate is the video-to-transcript conversion?</h3>
-<p>TranscriptX uses Whisper-class AI trained on 680,000+ hours of real audio. Accuracy is high for clear speech and strong even with background noise.</p>
+<p>TranscriptX uses our AI engine trained on hundreds of thousands of hours of real-world audio. Accuracy is high for clear speech and strong even with background noise.</p>
 <h3>Can I transcribe videos in languages other than English?</h3>
 <p>Yes. TranscriptX supports multilingual transcription across dozens of languages.</p>
 <h3>How long does transcription take?</h3>
@@ -2649,7 +2649,7 @@ GUIDES_CONTENT = {
             },
             {
                 "q": "Is the downloaded transcript better than YouTube's auto-captions?",
-                "a": "In most cases, yes. TranscriptX uses Whisper-class AI that handles noise, accents, and technical terms more accurately."
+                "a": "In most cases, yes. TranscriptX uses our AI engine that handles noise, accents, and technical terms more accurately."
             },
             {
                 "q": "What format is the transcript in?",
@@ -2681,7 +2681,7 @@ GUIDES_CONTENT = {
 
 <h2>How TranscriptX handles YouTube transcripts</h2>
 
-<p>TranscriptX bypasses the caption dependency entirely. When you paste a YouTube URL, it extracts the actual audio track from the video. That audio is processed through Whisper-based speech recognition \u2014 an AI model trained on over 680,000 hours of multilingual, real-world audio data.</p>
+<p>TranscriptX bypasses the caption dependency entirely. When you paste a YouTube URL, it extracts the actual audio track from the video. That audio is processed through our speech recognition engine \u2014 an AI model trained on hundreds of thousands of hours of multilingual, real-world audio data.</p>
 
 <p>The result is a transcript generated from the spoken words themselves, not from a pre-existing caption file. This means you get output even when captions are disabled, missing, or auto-generated with poor quality.</p>
 
@@ -2711,7 +2711,7 @@ GUIDES_CONTENT = {
 <h3>Can I download a transcript from any YouTube video?</h3>
 <p>Yes. TranscriptX extracts audio and generates its own transcript, so it works even when the video has no captions.</p>
 <h3>Is the downloaded transcript better than YouTube\u2019s auto-captions?</h3>
-<p>In most cases, yes. TranscriptX uses Whisper-class AI that handles noise, accents, and technical terms more accurately.</p>
+<p>In most cases, yes. TranscriptX uses our AI engine that handles noise, accents, and technical terms more accurately.</p>
 <h3>What format is the transcript in?</h3>
 <p>TranscriptX returns clean, readable text that you can copy, edit, and paste into any editor or CMS.</p>
 <h3>Does it work on mobile?</h3>
@@ -2727,7 +2727,7 @@ GUIDES_CONTENT = {
     },
     "audio-to-transcript": {
         "title": "Audio to Transcript \u2014 Convert Any Recording to Editable Text",
-        "description": "TranscriptX converts audio from any video source into clean, structured transcript text. Powered by Whisper AI, ready in minutes.",
+        "description": "TranscriptX converts audio from any video source into clean, structured transcript text. Ready in minutes.",
         "keywords": "audio to transcript, transcript audio, audio transcription, convert audio to text",
         "h1": "Audio to Transcript \u2014 From Raw Recording to Publishable Text",
         "quick_answer": "TranscriptX extracts audio from any video URL and delivers an accurate, editable transcript in minutes \u2014 no uploads, no installs, no waiting.",
@@ -2738,7 +2738,7 @@ GUIDES_CONTENT = {
             },
             {
                 "q": "What happens with poor audio quality?",
-                "a": "Whisper-class AI is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy."
+                "a": "our AI engine is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy."
             },
             {
                 "q": "Can I transcribe audio in multiple languages?",
@@ -2758,7 +2758,7 @@ GUIDES_CONTENT = {
 
 <p>Manual transcription is slow. Desktop software is clunky. Most online tools require you to download audio files, convert formats, and upload them somewhere. By the time you have a transcript, the publishing window has passed or your team has moved on to the next thing.</p>
 
-<p>TranscriptX removes that friction. It extracts audio from any supported video URL and converts it into clean, editable transcript text using Whisper-class AI \u2014 all within minutes, entirely in your browser.</p>
+<p>TranscriptX removes that friction. It extracts audio from any supported video URL and converts it into clean, editable transcript text using our AI engine \u2014 all within minutes, entirely in your browser.</p>
 
 <h2>Why audio transcription still matters</h2>
 
@@ -2772,7 +2772,7 @@ GUIDES_CONTENT = {
 
 <p>The process is built around one principle: you should not have to think about audio files. TranscriptX handles extraction and conversion behind the scenes.</p>
 
-<p>You paste a URL \u2014 from YouTube, TikTok, Instagram, or any of 1000+ supported platforms. TranscriptX identifies and extracts the audio track. That audio is processed through Whisper-based AI speech recognition, a model trained on over 680,000 hours of real-world audio spanning dozens of languages and recording conditions.</p>
+<p>You paste a URL \u2014 from YouTube, TikTok, Instagram, or any of 1000+ supported platforms. TranscriptX identifies and extracts the audio track. That audio is processed through our AI engine speech recognition, a model trained on hundreds of thousands of hours of real-world audio spanning dozens of languages and recording conditions.</p>
 
 <p>You receive clean text output. Not timestamped fragments. Not raw speech-to-text noise. Structured, readable text that reflects what was actually said, with the coherence and sentence structure needed for editing.</p>
 
@@ -2780,7 +2780,7 @@ GUIDES_CONTENT = {
 
 <p>Older transcription systems were trained on clean, studio-quality recordings. That made them brittle. Background noise, overlapping speakers, room echo, phone-quality microphones \u2014 any of these could degrade output to the point of uselessness.</p>
 
-<p>Whisper-family models are different because their training data is different. They were trained on massive volumes of actual web audio with all its imperfections. That broad training base gives them substantially better robustness to real recording conditions. Research from OpenAI indicates these models produce up to 50% fewer errors than systems trained on narrow benchmark datasets.</p>
+<p>Modern speech-recognition models are different because their training data is different. They were trained on massive volumes of actual web audio with all its imperfections. That broad training base gives them substantially better robustness to real recording conditions. Research indicates these models produce up to 50% fewer errors than systems trained on narrow benchmark datasets.</p>
 
 <p>Does that mean perfect transcripts from terrible audio? No. Physics still applies \u2014 a recording with constant construction noise and three people talking at once will challenge any system. But for the vast majority of real content \u2014 podcast interviews, conference talks, product demos, customer calls \u2014 the output is immediately usable with minimal editing.</p>
 
@@ -2804,7 +2804,7 @@ GUIDES_CONTENT = {
 <h3>Does TranscriptX work with audio-only content like podcasts?</h3>
 <p>TranscriptX works with any URL that contains audio or video. If your podcast episode is hosted at a public URL, it can be transcribed.</p>
 <h3>What happens with poor audio quality?</h3>
-<p>Whisper-class AI is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy.</p>
+<p>our AI engine is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy.</p>
 <h3>Can I transcribe audio in multiple languages?</h3>
 <p>Yes. TranscriptX supports dozens of languages and can handle mixed-language audio.</p>
 <h3>How is this different from dictation software?</h3>
@@ -2865,13 +2865,13 @@ GUIDES_CONTENT = {
 
 <p>And then there are the videos where captions simply do not exist. The creator disabled them, or the audio conditions prevented auto-generation, or the video is too new for captions to have processed. In those cases, YouTube\u2019s \u201cShow Transcript\u201d button does not appear at all. Your workflow hits a wall.</p>
 
-<p>TranscriptX does not have this dependency. It extracts audio directly from the video and generates its own transcript using Whisper-based AI. Captions being present or absent on YouTube is irrelevant to the output you receive.</p>
+<p>TranscriptX does not have this dependency. It extracts audio directly from the video and generates its own transcript using our AI engine. Captions being present or absent on YouTube is irrelevant to the output you receive.</p>
 
 <h2>From YouTube URL to finished text</h2>
 
 <p>Here is what the actual workflow looks like in practice.</p>
 
-<p>You copy a YouTube video URL. You paste it into TranscriptX. Behind the scenes, TranscriptX downloads the audio track from the video. That audio is processed through speech recognition models trained on over 680,000 hours of real-world, multilingual audio data. Within minutes, you have a clean transcript in your browser.</p>
+<p>You copy a YouTube video URL. You paste it into TranscriptX. Behind the scenes, TranscriptX downloads the audio track from the video. That audio is processed through speech recognition models trained on hundreds of thousands of hours of real-world, multilingual audio data. Within minutes, you have a clean transcript in your browser.</p>
 
 <p>The transcript is structured for readability: coherent sentences, proper casing, natural paragraph flow. You can copy the full text with one click and paste it into your editor, CMS, Google Doc, or wherever your content workflow lives.</p>
 
@@ -2943,7 +2943,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriptX — Instant Transcripts from Any Video</title>
-    <meta name="description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by Whisper.">
+    <meta name="description" content="Transcribe any video instantly with AI. Supports YouTube, TikTok, Instagram, X, and 1000+ platforms. 99.2% accuracy, powered by TranscriptX.">
     <meta name="theme-color" content="#111111">
     <link rel="canonical" href="https://transcriptx.xyz/">
     <meta property="og:type" content="website">

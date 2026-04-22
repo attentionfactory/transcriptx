@@ -1,13 +1,24 @@
 import json
+from datetime import datetime
 from flask import render_template
 from seo_catalog import (
     COMPARISON_PAGES,
     CURATED_PLATFORM_OVERRIDES,
     GUIDE_TOOL_MAP,
     HEAD_TERM_PAGES,
+    HELP_PAGES,
     RESEARCH_PAGES,
+    current_lastmod,
     get_platform_pages,
 )
+
+
+def _format_last_updated(iso_date):
+    """Convert ISO (YYYY-MM-DD) to human-readable ('23 Apr 2026')."""
+    try:
+        return datetime.strptime(iso_date, "%Y-%m-%d").strftime("%d %b %Y")
+    except (ValueError, TypeError):
+        return iso_date or ""
 
 
 def register_page_routes(
@@ -194,6 +205,9 @@ def register_page_routes(
         if not guide:
             return ("Guide not found", 404)
 
+        last_updated_iso = current_lastmod()
+        last_updated_display = _format_last_updated(last_updated_iso)
+
         article_schema = {
             "@context": "https://schema.org",
             "@type": "Article",
@@ -202,6 +216,8 @@ def register_page_routes(
             "author": {"@type": "Organization", "name": "TranscriptX"},
             "publisher": {"@type": "Organization", "name": "TranscriptX"},
             "mainEntityOfPage": f"https://transcriptx.xyz/guides/{slug}",
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
         }
         faq_schema = {
             "@context": "https://schema.org",
@@ -223,6 +239,7 @@ def register_page_routes(
             primary_tool_path=GUIDE_TOOL_MAP.get(slug, "/youtube-transcript-generator"),
             article_schema_json=json.dumps(article_schema),
             faq_schema_json=json.dumps(faq_schema),
+            last_updated=last_updated_display,
         )
 
     for page in HEAD_TERM_PAGES.values():
@@ -300,6 +317,7 @@ def register_page_routes(
             page=page,
             canonical_url=canonical_url,
             faq_schema_json=json.dumps(_faq_schema(page)),
+            last_updated=_format_last_updated(current_lastmod()),
         )
 
     @app.route("/research/<slug>")
@@ -312,6 +330,42 @@ def register_page_routes(
             "research.html",
             page=page,
             canonical_url=canonical_url,
+        )
+
+    @app.route("/help")
+    def help_index():
+        return render_template(
+            "help_index.html",
+            articles=HELP_PAGES,
+        )
+
+    @app.route("/help/<slug>")
+    def help_page(slug):
+        page = HELP_PAGES.get(slug)
+        if not page:
+            return ("Help article not found", 404)
+        canonical_url = f"https://transcriptx.xyz/help/{slug}"
+        last_updated_iso = current_lastmod()
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": page["title"],
+            "description": page["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+
+        return render_template(
+            "help.html",
+            page=page,
+            canonical_url=canonical_url,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
+            last_updated=_format_last_updated(last_updated_iso),
         )
 
     @app.route("/press-kit")
