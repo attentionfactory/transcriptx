@@ -14,6 +14,7 @@ Working notebook for growth experiments, SEO bets, content plans, and referral/r
 ## Docs in this folder
 
 - [`content-guides-backlog.md`](content-guides-backlog.md) — the list of how-to guides we should write, ranked by intent. Replaces the SEO-fluff guides currently in `GUIDES_CONTENT`.
+- [`friction-points.md`](friction-points.md) — places the product makes users do extra work or fail silently. Sourced from FAQs, error messages, and the guide backlog (the "every guide is a missing feature" framing).
 - [`seo-strategy.md`](seo-strategy.md) — overall SEO direction, keyword tiers, and what we stop doing.
 - [`referral-loops.md`](referral-loops.md) — referral program tuning, viral coefficients worth testing, share-the-transcript loop ideas.
 - [`pricing-experiments.md`](pricing-experiments.md) — price tests, annual-plan positioning, free-tier calibration.
