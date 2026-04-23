@@ -170,6 +170,14 @@
             </aside>
         </section>
 
+        {% if page.body_html %}
+        <section class="long-form-content panel p-grey" style="margin-top:1rem;padding:1.6rem 2rem;">
+            <div class="long-form-inner" style="max-width:780px;margin:0 auto;line-height:1.65;font-size:0.85rem;">
+                {{ page.body_html | safe }}
+            </div>
+        </section>
+        {% endif %}
+
         <section class="faq-wrap">
             <article class="panel p-grey">
                 <div class="small-title">FAQ</div>
@@ -187,7 +195,7 @@
                     <li><a href="/compare/best-youtube-transcript-tools">Best transcript tools</a></li>
                     <li><a href="/research/platform-support-index">Platform support index</a></li>
                     <li><a href="/research/transcription-accuracy-benchmark">Accuracy benchmark</a></li>
-                    <li><a href="/press-kit">Press kit</a></li>
+                    <li><a href="/help">Troubleshooting & help</a></li>
                 </ul>
             </article>
         </section>

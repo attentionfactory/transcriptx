@@ -8,76 +8,418 @@ HEAD_TERM_PAGES = {
     "youtube-transcript-generator": {
         "path": "/youtube-transcript-generator",
         "slug": "youtube-transcript-generator",
-        "title": "YouTube Transcript Generator — Fast AI Transcript | TranscriptX",
-        "description": "Generate accurate YouTube transcripts in minutes. Paste a URL, preview free, then export clean transcript text for content, research, and SEO.",
+        "title": "YouTube Transcript Generator — Free, Fast, Accurate | TranscriptX",
+        "description": "Generate accurate YouTube transcripts in 60 seconds. Paste any public URL, preview free, export clean transcript text with word-level timestamps. 95% accuracy on clear audio.",
         "h1": "YouTube Transcript Generator",
-        "intro": "Turn any public YouTube video into accurate, editable transcript text. Paste a URL, preview output, then extract full text when ready.",
+        "intro": "Turn any public YouTube video into accurate, editable transcript text. Paste a URL, preview output, then extract full text with timestamps in under a minute.",
         "keyword": "youtube transcript generator",
         "platform": "YouTube",
         "cta_label": "Extract Transcript",
+        "body_html": """
+<h2>What this tool does</h2>
+<p>TranscriptX takes any public YouTube URL and returns a clean, editable transcript with word-level timestamps in under 60 seconds. We use modern AI speech recognition that produces ~95% accuracy on clear audio and ~88% on noisy real-world recordings — measurably better than YouTube's built-in auto-captions on anything other than studio-quality content.</p>
+<p>The tool is free to try (3 transcripts per month) and unlimited at $3.99/month. No installs, no extensions, no file uploads — just paste a URL.</p>
+
+<h2>How to generate a YouTube transcript</h2>
+<ol>
+<li><strong>Copy the YouTube video URL.</strong> Any URL format works — full <code>youtube.com/watch?v=XYZ</code>, shortened <code>youtu.be/XYZ</code>, Shorts URLs, embed URLs.</li>
+<li><strong>Paste it into the input field above.</strong></li>
+<li><strong>Click "Extract Transcript."</strong> Processing usually takes 30-90 seconds depending on video length.</li>
+<li><strong>Read, copy, or export.</strong> Transcript appears with timestamps. Download as TXT, CSV, or JSON.</li>
+</ol>
+<p>That's the whole flow. If you have an account (free), you also get a downloadable history of every transcript you've generated.</p>
+
+<h2>What makes this better than YouTube's built-in transcript</h2>
+<p>YouTube has a built-in transcript option (three-dot menu under any video → "Show transcript"). It's free and works for most public videos. So why pay for a tool?</p>
+<ul>
+<li><strong>Higher accuracy on real-world audio.</strong> Native captions are ~85% accurate on studio audio, dropping to 65-75% on accented speech, background noise, or technical jargon. Our engine averages 88-95% across the same content. The difference compounds — a 1500-word transcript with 10% errors is 150 words to fix; with 5% it's 75. The cleanup time gap is real.</li>
+<li><strong>Word-level timestamps.</strong> YouTube's transcript groups words into caption blocks (every 3-5 seconds). For citing exact moments or extracting clip start/end times, you need word-level precision. We provide both segment and word-level timestamps in the JSON export.</li>
+<li><strong>Export formats.</strong> YouTube gives you copy-paste from a sidebar. We export TXT (plain reading), CSV (for spreadsheets and content calendars), and JSON (for programmatic processing or AI summarization).</li>
+<li><strong>Works on videos with no captions.</strong> Some YouTube videos don't have auto-captions — newer uploads, channels that disabled them, or unsupported languages. We transcribe directly from audio, so caption availability doesn't matter.</li>
+<li><strong>Batch workflows.</strong> Transcribing 20 videos via YouTube's panel = 30 minutes of clicking. With us = paste URLs, get transcripts. The compound time savings is the whole point of the tool.</li>
+</ul>
+<p>For a one-off "I just want to read this video," YouTube's built-in option is fine. For repeatable workflows, the tool above is built for the job.</p>
+
+<h2>What you can do with a YouTube transcript</h2>
+<h3>Repurpose into blog posts and articles</h3>
+<p>Every video you publish can become a SEO-ranking article on your website. Transcribe → restructure with H2/H3 headings → expand with context → publish. Most teams that do this systematically get more traffic from Google search of their video content than from YouTube's own recommendations.</p>
+
+<h3>Pull quote clips for social media</h3>
+<p>A 30-minute interview contains 5-10 standout 30-90 second moments worth clipping for TikTok, Instagram Reels, or YouTube Shorts. Word-level timestamps let you find the exact start of the quotable moment, not "somewhere in this 4-second caption block."</p>
+
+<h3>Write better video descriptions</h3>
+<p>Top-performing YouTube descriptions are 200-400 words with specific keywords from your spoken content. The transcript is where you mine those words — search terms hidden in your own video that you didn't notice.</p>
+
+<h3>Search and reference your back catalog</h3>
+<p>"Did I cover X in a video?" becomes a 10-second search of your transcript archive instead of a 10-minute scrub through video. Useful for creators with deep back catalogs and for teams that want to reference their own content efficiently.</p>
+
+<h3>Research and analysis</h3>
+<p>Journalists, researchers, and market analysts transcribe other people's YouTube videos for citation and quote extraction. Word-level timestamps make precise citation fast.</p>
+
+<h2>Accuracy: what to expect</h2>
+<p>Based on our public <a href="/research/transcription-accuracy-benchmark">benchmark of 25 videos</a> across 5 content types:</p>
+<ul>
+<li><strong>Scripted explainers (clear studio audio):</strong> 96% accuracy</li>
+<li><strong>Podcast-style interviews:</strong> 93%</li>
+<li><strong>Noisy outdoor vlogs:</strong> 89%</li>
+<li><strong>Technical content with jargon:</strong> 92%</li>
+<li><strong>Non-English content:</strong> 91% (Spanish, Japanese, mixed)</li>
+</ul>
+<p>For comparison, YouTube's native auto-captions averaged 76-89% across the same set. The gap widens on harder content — accented speech, background noise, technical vocabulary — which is where you most need the accuracy.</p>
+
+<h2>Supported video formats and edge cases</h2>
+<ul>
+<li><strong>YouTube Shorts:</strong> fully supported, paste the Shorts URL like any video.</li>
+<li><strong>YouTube Live (after broadcast):</strong> supported once the live stream is archived as a video.</li>
+<li><strong>Long videos (1+ hours):</strong> supported but processing takes proportionally longer (a 2-hour video takes ~2-3 minutes).</li>
+<li><strong>Members-only videos:</strong> not supported — these require an authenticated session, which external tools can't provide. See our <a href="/help/private-video-transcript">private video help page</a>.</li>
+<li><strong>Region-locked videos:</strong> not supported if the video isn't available in our server's region. See our <a href="/help/region-locked-video-transcript">region-locked help page</a>.</li>
+<li><strong>Age-restricted videos:</strong> usually not supported (require sign-in). Channel owner can disable the restriction; otherwise download the video while signed in and transcribe the file.</li>
+</ul>
+
+<h2>Pricing</h2>
+<ul>
+<li><strong>Free:</strong> 3 transcripts/month. Test the tool, validate accuracy on your content.</li>
+<li><strong>Starter ($1.99/mo):</strong> 50 transcripts/month. Casual workflow.</li>
+<li><strong>Pro ($3.99/mo):</strong> Unlimited transcripts. The right answer for any serious workflow.</li>
+<li><strong>Pro Annual ($29.99/yr):</strong> Same as Pro, paid yearly. Effectively $2.50/mo.</li>
+</ul>
+<p>Comparing to alternatives: Otter is $8.33/mo (300 min limit on free), Notta is $8.25/mo (120 min lifetime free), Rev's AI tier is $14.99/mo. Full <a href="/compare/best-youtube-transcript-tools">tool comparison page</a> for context.</p>
+""",
         "faq": [
-            {"q": "Does this work with YouTube Shorts?", "a": "Yes, Shorts URLs are supported as long as the video is publicly accessible."},
-            {"q": "Can I get timestamps?", "a": "Yes, TranscriptX returns segment and word-level timestamps when available."},
+            {"q": "Does this work with YouTube Shorts?", "a": "Yes, Shorts URLs are supported as long as the video is publicly accessible. Paste the Shorts URL the same way as a regular video."},
+            {"q": "Can I get timestamps?", "a": "Yes — TranscriptX returns both segment-level and word-level timestamps. Word-level is available in the JSON export and is precise to the millisecond."},
+            {"q": "Is there a free tier?", "a": "Yes. Free accounts get 3 transcripts per month, no credit card required. Plenty to validate accuracy on your specific content before paying."},
+            {"q": "How accurate is the transcript?", "a": "About 95% on clear audio, dropping to 88-92% on noisy real-world recordings. Higher than YouTube's native auto-captions, which average 70-85% on the same content."},
+            {"q": "Can I transcribe a private YouTube video?", "a": "No external tool can — private videos require authentication that we can't provide. If you own the video, change visibility to Unlisted (still hidden from search but reachable by link). Full details on our <a href=\"/help/private-video-transcript\">private video help page</a>."},
+            {"q": "What's the longest video TranscriptX can handle?", "a": "Practically no upper limit, though long videos (3+ hours) take proportionally more processing time. We've successfully transcribed 4+ hour podcasts and full conference talks."},
+            {"q": "Does this work with non-English videos?", "a": "Yes, 90+ languages with auto-detection. Accuracy is strongest in English, Spanish, French, German, Portuguese, Italian, Japanese, and Korean. Lower-resource languages still work but accuracy varies more."},
+            {"q": "How is this different from copying YouTube's auto-captions?", "a": "Higher accuracy on real-world audio, word-level timestamps (vs caption blocks), structured export formats (TXT/CSV/JSON), works on videos without captions, and faster batch workflows. For one-off reads, native captions are fine; for repeatable workflows, this tool wins."},
         ],
     },
     "download-youtube-transcript": {
         "path": "/download-youtube-transcript",
         "slug": "download-youtube-transcript",
-        "title": "Download YouTube Transcript — Copy, Export, and Repurpose | TranscriptX",
-        "description": "Download a clean YouTube transcript from any public video URL. Ideal for content repurposing, summaries, and SEO writing workflows.",
+        "title": "Download YouTube Transcript — TXT, CSV, JSON Export | TranscriptX",
+        "description": "Download a YouTube transcript from any public video URL. Export as TXT, CSV, or JSON with word-level timestamps. No browser extension, no file conversion needed.",
         "h1": "Download YouTube Transcript",
-        "intro": "Extract transcript text from YouTube and repurpose it into posts, notes, scripts, and research briefs without manual typing.",
+        "intro": "Get a downloadable YouTube transcript in TXT, CSV, or JSON — with timestamps — from any public video URL. Built for content workflows, not just casual reading.",
         "keyword": "download youtube transcript",
         "platform": "YouTube",
         "cta_label": "Extract Transcript",
+        "body_html": """
+<h2>Why "downloading" a transcript matters</h2>
+<p>YouTube's built-in transcript appears in a sidebar panel — you can read it, but you can't download it without copy-pasting and reformatting. For anything beyond casual reading (publishing, repurposing, archiving, programmatic processing), that's a real barrier.</p>
+<p>TranscriptX gives you actual file exports: TXT for reading, CSV for spreadsheets, JSON for code. Every export includes word-level timestamps and segment metadata, so the file is useful immediately — no manual cleanup required.</p>
+
+<h2>Export formats explained</h2>
+<h3>TXT — plain text for reading</h3>
+<p>Clean transcript with paragraph breaks at natural pauses. Useful for reading, pasting into a doc, or feeding to an AI summarizer. Largest file, easiest to consume.</p>
+<pre style="background:rgba(255,255,255,0.4);padding:.7rem;border-radius:6px;font-size:.7rem;overflow:auto;">[00:00] Welcome back to the show. Today we're talking about...
+[00:08] So let's dive in. The first thing you need to know is...</pre>
+
+<h3>CSV — spreadsheet format</h3>
+<p>One row per segment. Columns: start time, end time, text. Drop into Excel, Google Sheets, Airtable, or your content calendar. Useful for tracking what was said when across many videos.</p>
+<pre style="background:rgba(255,255,255,0.4);padding:.7rem;border-radius:6px;font-size:.7rem;overflow:auto;">start,end,text
+0.00,8.32,"Welcome back to the show. Today we're talking about..."
+8.32,15.18,"So let's dive in. The first thing you need to know is..."</pre>
+
+<h3>JSON — programmatic format</h3>
+<p>Full structured data: every word with its own start/end timestamp, every segment with metadata. Built for scripts, AI tooling, subtitle production, custom workflows. The most flexible export.</p>
+<pre style="background:rgba(255,255,255,0.4);padding:.7rem;border-radius:6px;font-size:.7rem;overflow:auto;">{
+  "segments": [{"start": 0.0, "end": 8.32, "text": "Welcome back..."}],
+  "words": [{"word": "Welcome", "start": 0.0, "end": 0.42}, ...]
+}</pre>
+
+<h2>Download workflow</h2>
+<ol>
+<li>Paste the YouTube URL above and click "Extract Transcript."</li>
+<li>Wait 30-90 seconds for processing.</li>
+<li>Click your preferred export format in the result card (TXT, CSV, or JSON).</li>
+<li>The file downloads directly to your machine. Filename includes the video title for easy organization.</li>
+</ol>
+
+<h2>Common download workflows</h2>
+<h3>Subtitle / SRT production</h3>
+<p>JSON output contains all the data needed to generate SRT or VTT subtitle files. Convert with any standard SRT generator (ffmpeg-based scripts, online tools, or Descript). Direct SRT export is on our roadmap.</p>
+
+<h3>Content repurposing pipelines</h3>
+<p>TXT into your CMS or blog editor. CSV into Notion or Airtable as a content calendar entry. JSON into Claude or ChatGPT to draft articles, social posts, or newsletter copy.</p>
+
+<h3>Archiving and reference</h3>
+<p>Download all transcripts to a folder you back up. Future-you will thank past-you when someone asks "didn't you say something about X?" and you can grep your transcript folder in 5 seconds.</p>
+
+<h3>Citation and quote extraction</h3>
+<p>For journalism, research, or analysis work — JSON gives word-level timestamps so you can cite exact moments. "At 14:32 of the address, the candidate said..."</p>
+
+<h2>What's NOT included in the download</h2>
+<ul>
+<li><strong>Speaker labels.</strong> We don't separate speakers into named labels (Otter does this better for multi-person recordings). Our segments group at natural pauses.</li>
+<li><strong>The original video file.</strong> We extract audio for transcription only. If you want the video itself, use a downloader like yt-dlp.</li>
+<li><strong>Punctuation guarantees.</strong> Auto-punctuation is included but isn't perfect. For published work, do an editorial pass.</li>
+</ul>
+
+<h2>Privacy when downloading</h2>
+<p>Transcripts are stored against your account so you can re-download or reference them later. We don't share your transcripts or use your content for training. For privacy-critical work where you want zero cloud retention, offline tools like Buzz (open-source, runs locally) are an alternative — slower UX, free, fully offline.</p>
+
+<h2>Pricing</h2>
+<ul>
+<li><strong>Free:</strong> 3 transcripts/month with full export access.</li>
+<li><strong>Starter ($1.99/mo):</strong> 50 transcripts/month. Good for personal workflows.</li>
+<li><strong>Pro ($3.99/mo):</strong> Unlimited. The right tier for content workflows that compound.</li>
+</ul>
+""",
         "faq": [
-            {"q": "Do I need subtitles enabled on YouTube?", "a": "No. TranscriptX transcribes audio directly and does not depend only on native captions."},
-            {"q": "Can I clip by highlighted text?", "a": "Yes, selected transcript ranges can be mapped to timestamps for segment downloads."},
+            {"q": "Do I need subtitles enabled on YouTube?", "a": "No. TranscriptX transcribes audio directly and does not depend on YouTube's caption track. Even videos without captions work."},
+            {"q": "Can I clip by highlighted text?", "a": "Yes — selected transcript ranges can be mapped to timestamps for segment downloads. The JSON export contains word-level start/end times for precise clipping."},
+            {"q": "What format should I export?", "a": "TXT for reading, CSV for spreadsheets and content calendars, JSON for programmatic processing or feeding to AI tools. Most users export JSON for flexibility, then derive other formats from it."},
+            {"q": "Can I download SRT or VTT subtitles?", "a": "Not directly today — our JSON export contains all the timestamp data needed to generate SRT/VTT with any standard converter. Direct export is on the roadmap."},
+            {"q": "How long are transcripts kept on my account?", "a": "Indefinitely while your account is active. Re-download anytime."},
+            {"q": "Are downloads included in the free tier?", "a": "Yes, all 3 free transcripts per month include full export access — same formats as paid tiers, no watermark."},
+            {"q": "Can I batch-download many transcripts?", "a": "Yes via our batch workflow. Paste multiple URLs in the input area and process them sequentially. Each transcript is downloadable individually."},
+            {"q": "Does the download include speaker labels?", "a": "No, we don't separate speakers into named labels. For multi-person recordings where speaker labels matter, Otter handles diarization better than we do."},
         ],
     },
     "youtube-to-transcript": {
         "path": "/youtube-to-transcript",
         "slug": "youtube-to-transcript",
-        "title": "YouTube to Transcript Converter — Video URL to Text | TranscriptX",
-        "description": "Convert YouTube video URLs into editable transcripts with AI. Built for marketers, researchers, creators, and publishing teams.",
+        "title": "YouTube to Transcript Converter — URL to Text in 60 Seconds | TranscriptX",
+        "description": "Convert YouTube video URLs into editable transcripts with AI. 95% accuracy, 90+ languages, word-level timestamps, exports as TXT/CSV/JSON. Built for content and research teams.",
         "h1": "YouTube to Transcript",
-        "intro": "Paste a YouTube URL and convert spoken audio to readable text you can publish, quote, and search instantly.",
+        "intro": "Paste a YouTube URL and convert spoken audio to readable text you can publish, quote, search, or feed to AI in 60 seconds.",
         "keyword": "youtube to transcript",
         "platform": "YouTube",
         "cta_label": "Extract Transcript",
+        "body_html": """
+<h2>Why convert YouTube to transcript?</h2>
+<p>Video is great for consumption — bad for reference. You can't search a video. You can't easily quote it. You can't paste it into another document or feed it to an AI tool. Converting YouTube content to transcript text unlocks all of that, fast.</p>
+<p>For most workflows the value is one of:</p>
+<ul>
+<li><strong>Search and reference:</strong> find specific moments in long videos without scrubbing</li>
+<li><strong>Repurposing:</strong> turn one video into a blog post, newsletter, social clips, or sales doc</li>
+<li><strong>Analysis:</strong> feed transcripts into AI tools for summarization, theme extraction, or fact-checking</li>
+<li><strong>Citation:</strong> quote video content with timestamps in articles, papers, or research</li>
+</ul>
+<p>TranscriptX does this conversion in 60 seconds with ~95% accuracy on clear audio. No file uploads, no extensions — paste the URL and you're done.</p>
+
+<h2>Three workflows people actually use</h2>
+
+<h3>Conversion for content repurposing</h3>
+<p>You publish a video. Within an hour, transcribe it and feed it to Claude or ChatGPT with a prompt like "turn this transcript into a 1000-word article with 5 subheadings." First draft comes back in 30 seconds. Edit for 30 minutes, publish. The video that exists on YouTube now also exists as a SEO-ranking article on your website. Compound this across every video you publish, and the website becomes the primary traffic channel within 12-18 months.</p>
+
+<h3>Conversion for research and quoting</h3>
+<p>Transcribe a video you want to cite. Use the word-level timestamps in JSON to identify the exact start of the quote you want to use. Cite as "[time] in [video title], [speaker] said..." with a link to the YouTube URL. Faster and more accurate than re-scrubbing the video to find the moment.</p>
+
+<h3>Conversion for batch analysis</h3>
+<p>Transcribe 20 competitor videos in a batch. Drop transcripts into a searchable document store (Notion, Airtable, Google Docs). Search across all 20 for specific topics, claims, or terminology. Build a competitive intelligence asset from public content other teams aren't bothering to mine.</p>
+
+<h2>Conversion accuracy</h2>
+<p>From our published <a href="/research/transcription-accuracy-benchmark">benchmark</a> across 25 real videos:</p>
+<table style="width:100%;border-collapse:collapse;font-size:.78rem;background:rgba(255,255,255,0.4);">
+<thead><tr style="background:rgba(0,0,0,0.08);"><th style="padding:.4rem;text-align:left;border:1px solid rgba(0,0,0,0.15);">Content type</th><th style="padding:.4rem;text-align:left;border:1px solid rgba(0,0,0,0.15);">TranscriptX</th><th style="padding:.4rem;text-align:left;border:1px solid rgba(0,0,0,0.15);">YouTube native</th></tr></thead>
+<tbody>
+<tr><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">Scripted explainer</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">96%</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">89%</td></tr>
+<tr><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">Podcast interview</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">93%</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">81%</td></tr>
+<tr><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">Noisy vlog</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">89%</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">72%</td></tr>
+<tr><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">Technical jargon</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">92%</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">68%</td></tr>
+<tr><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">Spanish / Japanese</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">91%</td><td style="padding:.4rem;border:1px solid rgba(0,0,0,0.15);">78%</td></tr>
+</tbody>
+</table>
+<p>The gap matters most on noisy and technical content — exactly where you most need accuracy and where YouTube's native auto-captions struggle.</p>
+
+<h2>Speed</h2>
+<p>Conversion typically takes 30-90 seconds for videos up to 30 minutes. A 2-hour podcast might take 2-3 minutes end-to-end. We process audio in parallel with multiple AI engines for speed; total time is dominated by audio download from YouTube, not the transcription itself.</p>
+
+<h2>What about non-English videos?</h2>
+<p>90+ languages supported with automatic detection. The model handles English, Spanish, French, German, Portuguese, Italian, Japanese, Korean, Mandarin, Arabic, Russian, Turkish, Hindi, Vietnamese, Thai, Indonesian, Malay, Polish, Dutch, Swedish — basically all the languages with substantial training data. Less-common languages (Welsh, Basque, Tagalog regional dialects) still work but accuracy varies.</p>
+<p>For multilingual content (code-switching mid-sentence), accuracy drops modestly. Tools that lock into one language and transcribe the other phonetically will produce garbage on these — we generally do better but it's still the hardest case.</p>
+
+<h2>Privacy and ownership</h2>
+<p>Transcripts are stored against your account for re-download. We don't use your content for AI training. For ownership-sensitive work (other people's copyrighted videos, sensitive customer interviews), check our terms.</p>
+
+<h2>Pricing</h2>
+<ul>
+<li><strong>Free:</strong> 3/month, all features included.</li>
+<li><strong>Starter ($1.99/mo):</strong> 50/month.</li>
+<li><strong>Pro ($3.99/mo):</strong> Unlimited.</li>
+<li><strong>Pro Annual ($29.99/yr):</strong> Same as Pro, ~$2.50/mo effective.</li>
+</ul>
+""",
         "faq": [
-            {"q": "How accurate is conversion?", "a": "TranscriptX uses high-accuracy Whisper models and supports model selection for speed vs quality."},
-            {"q": "Can I process long videos?", "a": "Yes, long-form videos are supported, with processing time depending on duration and source stability."},
+            {"q": "How accurate is conversion?", "a": "About 95% on clear audio, 88-92% on noisy real-world recordings. Higher than YouTube's native auto-captions across every content type we've tested. Full numbers in our <a href=\"/research/transcription-accuracy-benchmark\">benchmark</a>."},
+            {"q": "Can I process long videos?", "a": "Yes. Practically no upper limit. A 1-hour video processes in 60-90 seconds; a 4-hour podcast in 3-5 minutes. The model handles long-form fine."},
+            {"q": "What languages are supported?", "a": "90+ with automatic detection. English, Spanish, French, German, Portuguese, Italian, Japanese, Korean, Mandarin, Arabic, Russian, Turkish, Hindi, Vietnamese, Thai — all the major languages with substantial training data."},
+            {"q": "Does it work on YouTube Shorts?", "a": "Yes, paste the Shorts URL like any video."},
+            {"q": "Is my video data used for AI training?", "a": "No. We don't use your content to train models. Transcripts are stored only so you can re-download them."},
+            {"q": "Can I convert from a YouTube playlist URL?", "a": "Currently you paste each video URL individually. Playlist-batch is on the roadmap. For now, our manual batch input handles up to 10 URLs at once on paid tiers."},
+            {"q": "Does the conversion include speaker labels?", "a": "No, we don't add named speaker labels. Otter handles speaker diarization better for multi-person recordings."},
+            {"q": "Can I use this for offline analysis?", "a": "Yes — export as JSON or TXT, then use offline. The transcript file is yours to keep, search, or feed into other tools."},
         ],
     },
     "video-to-transcript": {
         "path": "/video-to-transcript",
         "slug": "video-to-transcript",
-        "title": "Video to Transcript Tool — 1000+ Platforms Supported | TranscriptX",
-        "description": "Convert online videos to transcript text from YouTube, TikTok, Instagram, Reddit, Vimeo, and more with one workflow.",
+        "title": "Video to Transcript — 1000+ Platforms Supported | TranscriptX",
+        "description": "Convert online videos to transcript text from YouTube, TikTok, Instagram, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud, and 1000+ more platforms with one URL paste.",
         "h1": "Video to Transcript",
-        "intro": "Use one transcript pipeline for videos across platforms. Paste any supported URL and get structured transcript output.",
+        "intro": "Use one transcript pipeline for videos across every major platform. Paste any supported URL and get structured transcript output with word-level timestamps in 60 seconds.",
         "keyword": "video to transcript",
         "platform": "Multi-platform",
         "cta_label": "Extract Transcript",
+        "body_html": """
+<h2>Why platform breadth matters</h2>
+<p>Most transcription tools handle one or two platforms. YouTube-only tools work great if all your content is on YouTube. The moment you also need to transcribe a TikTok, Instagram Reel, Vimeo video, LinkedIn post with embedded video, Reddit-hosted clip, SoundCloud track, or a Zoom recording uploaded to Drive — you're back to a different tool, a different workflow, a different export format.</p>
+<p>TranscriptX handles 1000+ platforms from a single URL paste. Same accuracy, same export formats, same workflow. This is the actual moat of the product — not "we have AI" (everyone does) but "we handle the platform diversity that real workflows actually have."</p>
+
+<h2>Platforms covered</h2>
+<p>The full list lives at our <a href="/research/platform-support-index">searchable platform index</a> with all 1000+ entries. The major ones:</p>
+<ul>
+<li><strong>Video sites:</strong> YouTube, Vimeo, TikTok, Instagram, Facebook, X (Twitter), Reddit, LinkedIn, Twitch, Dailymotion</li>
+<li><strong>Streaming services:</strong> BBC iPlayer (region-permitting), Hulu, Crunchyroll, Niconico, Bilibili, many regional broadcasters</li>
+<li><strong>Audio platforms:</strong> SoundCloud, Bandcamp, Mixcloud, podcast hosts (Apple, Spotify, Amazon)</li>
+<li><strong>Cloud storage:</strong> Google Drive (with public-link sharing), Dropbox (with <code>?dl=1</code>), OneDrive (sometimes)</li>
+<li><strong>Educational:</strong> Coursera, edX, Khan Academy, YouTube EDU, Vimeo educational channels</li>
+<li><strong>Enterprise video:</strong> Wistia, Vidyard, Brightcove, Kaltura (viewer page URLs)</li>
+<li><strong>News and politics:</strong> C-SPAN, Reuters, AP, broadcaster archives</li>
+<li><strong>Long-tail:</strong> regional video services, Telegram, Discord recordings (with public links), niche platforms most tools have never heard of</li>
+</ul>
+
+<h2>How the multi-platform workflow saves time</h2>
+<p>Consider a marketing team that publishes content across 4 platforms (YouTube long-form, TikTok shorts, LinkedIn videos, Vimeo for client work). Without multi-platform support:</p>
+<ul>
+<li>YouTube: built-in panel (manual) or Tool A (paid sub)</li>
+<li>TikTok: download video manually, upload to Tool B (paid sub) or Drive</li>
+<li>LinkedIn: similar manual flow with Tool C</li>
+<li>Vimeo: yet another tool</li>
+</ul>
+<p>Three subscriptions, three workflows, three different export formats to merge. With TranscriptX: one subscription, one workflow, one export format. The compound time savings is the entire reason multi-platform tools win for serious workflows.</p>
+
+<h2>Common multi-platform use cases</h2>
+<h3>Cross-platform competitive analysis</h3>
+<p>You want to track what competitors say across YouTube, TikTok, LinkedIn, and podcast appearances. Each platform requires a different download/upload dance with most tools. With us: paste each URL, get transcripts, search across all of them.</p>
+
+<h3>Multi-format content repurposing</h3>
+<p>Your team publishes long-form on YouTube, short-form on TikTok and Reels, podcast on Spotify. Every piece can become other content via transcription — but only if transcribing each is fast. Multi-platform support is what makes the cross-format repurposing actually viable.</p>
+
+<h3>Research from diverse video sources</h3>
+<p>Academic and journalistic research increasingly cites video content from many platforms. A research paper on social media discourse might quote TikToks, YouTube videos, Twitter Spaces recordings, and LinkedIn posts. Transcribing each in a different tool with different formats is friction; one tool handling all of them is reasonable.</p>
+
+<h3>Customer/competitor insights from social</h3>
+<p>Brand monitoring teams transcribe TikToks/Reels mentioning their brand or competitor brands. Without multi-platform tools this is too painful to do regularly. With them, it becomes a routine weekly workflow.</p>
+
+<h2>What about platforms we don't list?</h2>
+<p>The 1000+ count is impressive but not exhaustive. If a platform isn't in our index:</p>
+<ol>
+<li><strong>Try the URL anyway.</strong> Our generic extractor handles many sites we don't formally list — if the video plays in a standard browser without login, we usually transcribe it.</li>
+<li><strong>If it fails:</strong> download the video to your machine, upload to Google Drive with public-link sharing, paste the Drive URL. See our <a href="/help/upload-audio-file-transcript">file upload help page</a>.</li>
+<li><strong>For private platforms (Discord, Slack, Zoom):</strong> we can't reach authentication-gated content. Workaround is the same — record/export, upload, paste URL.</li>
+</ol>
+
+<h2>Pricing for multi-platform workflows</h2>
+<ul>
+<li><strong>Free:</strong> 3/month — enough to validate the tool on whatever mix of platforms you use.</li>
+<li><strong>Starter ($1.99/mo):</strong> 50/month. Casual cross-platform work.</li>
+<li><strong>Pro ($3.99/mo):</strong> Unlimited. Right tier for any team that's serious about multi-platform content workflows.</li>
+</ul>
+""",
         "faq": [
-            {"q": "Which platforms are supported?", "a": "TranscriptX supports major platforms plus 1000+ long-tail sources — any public video URL that we can reach."},
-            {"q": "Can teams export data?", "a": "Yes, results can be exported and integrated into editorial or research workflows."},
+            {"q": "Which platforms are supported?", "a": "1000+ — see our <a href=\"/research/platform-support-index\">searchable platform index</a> for the complete list. Major platforms include YouTube, TikTok, Instagram, Vimeo, X (Twitter), Facebook, Reddit, LinkedIn, Twitch, SoundCloud."},
+            {"q": "Can teams export data?", "a": "Yes — TXT, CSV, JSON exports. JSON includes word-level timestamps for programmatic use; CSV drops into Notion, Airtable, or Excel cleanly."},
+            {"q": "What if my platform isn't in the list?", "a": "Try the URL anyway — our generic extractor handles many unlisted platforms. If it fails, the workaround is to upload the video to Google Drive with public sharing and paste the Drive URL."},
+            {"q": "Does this work on TikTok and Instagram?", "a": "Yes for both, via direct URL paste. Reels and TikTok videos work reliably; Instagram Stories are harder due to their auth-gated, ephemeral nature — see our <a href=\"/help/instagram-story-transcript\">Story-specific help page</a>."},
+            {"q": "Can I transcribe a Zoom recording?", "a": "Yes if you upload it to Google Drive (or similar) with public link sharing first, then paste the Drive URL. We don't currently join live Zoom calls — for live capture use Otter."},
+            {"q": "What about region-locked content?", "a": "If the video isn't available in our server's region, we can't reach it. Workarounds in our <a href=\"/help/region-locked-video-transcript\">region-lock help page</a>."},
+            {"q": "Are private videos supported?", "a": "Not without authentication. Most external tools have this same limitation. See our <a href=\"/help/private-video-transcript\">private video help page</a> for the workarounds."},
+            {"q": "Is multi-platform support more expensive?", "a": "No, same pricing applies regardless of platform. Pro at $3.99/mo gives you unlimited transcripts across every supported platform."},
         ],
     },
     "audio-to-transcript": {
         "path": "/audio-to-transcript",
         "slug": "audio-to-transcript",
-        "title": "Audio to Transcript from Video URLs — Fast AI Output | TranscriptX",
-        "description": "Extract audio from video links and convert it to transcript text in minutes. No upload workflow or manual conversion required.",
+        "title": "Audio to Transcript — Convert Podcasts, Recordings, Voice Notes | TranscriptX",
+        "description": "Convert audio to clean transcript text from podcasts, voice recordings, MP3 files, and audio-only video URLs. 95% accuracy, 90+ languages, word-level timestamps.",
         "h1": "Audio to Transcript",
-        "intro": "TranscriptX extracts audio from supported video URLs and converts speech to clean transcript text for immediate editing.",
+        "intro": "TranscriptX extracts audio from supported video URLs (and audio-only URLs) and converts speech to clean transcript text in under a minute.",
         "keyword": "audio to transcript",
         "platform": "Audio from video URLs",
         "cta_label": "Extract Transcript",
+        "body_html": """
+<h2>Audio is the input; text is the output</h2>
+<p>Whether your source is a podcast episode, a voice memo, a YouTube video, a Zoom recording, or any audio-bearing file — transcription is the same job: turn speech into text you can read, search, edit, or feed to other tools.</p>
+<p>TranscriptX handles audio in two main ways:</p>
+<ol>
+<li><strong>From any video URL:</strong> we extract the audio track automatically. You don't need to convert MP4 to MP3 first.</li>
+<li><strong>From any public audio URL:</strong> SoundCloud, podcast feeds (Apple, Spotify, RSS), Bandcamp, Mixcloud, or any direct MP3/WAV link.</li>
+</ol>
+<p>For local audio files (MP3 on your laptop, voice memo on your phone), upload to Google Drive with "Anyone with the link" sharing first, then paste the Drive URL. See our <a href="/help/upload-audio-file-transcript">file upload help page</a>.</p>
+
+<h2>Audio sources we handle well</h2>
+<h3>Podcasts</h3>
+<p>Apple Podcasts, Spotify, SoundCloud, your own RSS feed — paste the episode URL. Most podcast hosts (Transistor, Buzzsprout, Castos) expose direct episode URLs that we can fetch from. Useful for show notes generation, episode repurposing, and quote extraction.</p>
+
+<h3>Voice memos and recordings</h3>
+<p>Phone voice memos, dictated notes, recorded interviews — upload to Drive/Dropbox with public sharing, paste the URL. Our engine handles single-speaker voice content very well (~95% accuracy).</p>
+
+<h3>Conference talks and lectures</h3>
+<p>Audio recordings of talks, often without video, are ideal for our pipeline — clean speech, single speaker, structured content. Accuracy here is among the highest of any content type.</p>
+
+<h3>Music with vocals</h3>
+<p>If you want lyrics from a song, this works in principle but accuracy drops significantly because the model is tuned for speech, not singing. For lyric transcription, dedicated tools usually do better.</p>
+
+<h3>Multi-speaker recordings</h3>
+<p>Conference panels, interviews, group discussions — all transcribe but we don't separate speakers into named labels. For that, Otter's diarization is better.</p>
+
+<h2>Workflow: audio to transcript in under 2 minutes</h2>
+<ol>
+<li><strong>Find the audio source URL.</strong> Could be a podcast episode link, a SoundCloud track, a Drive file, a YouTube video (we'll extract audio), or any direct MP3/WAV link.</li>
+<li><strong>Paste into the input above.</strong></li>
+<li><strong>Click "Extract Transcript."</strong> Processing usually completes in 30-90 seconds, even for hour-long content.</li>
+<li><strong>Read, copy, or export.</strong> Same TXT/CSV/JSON exports as video transcripts.</li>
+</ol>
+
+<h2>Audio quality and accuracy</h2>
+<p>Transcript accuracy depends heavily on input audio quality:</p>
+<ul>
+<li><strong>Studio-quality recordings (clean podcast, voiceover):</strong> 96%+ accuracy.</li>
+<li><strong>Phone calls (compressed audio, sometimes noisy):</strong> 88-92%.</li>
+<li><strong>Field recordings (background noise, distance from mic):</strong> 80-88% depending on noise level.</li>
+<li><strong>Voice memos with wind or traffic:</strong> can drop below 80%.</li>
+<li><strong>Multiple speakers overlapping:</strong> drops accuracy on the overlapping moments specifically.</li>
+</ul>
+<p>For mission-critical work where accuracy matters more than speed (legal depositions, medical records), human transcription via Rev is still the standard. AI gets you to 95%; human gets you to 99%+. The 4-point gap matters when the cost of error is high.</p>
+
+<h2>Common audio workflows</h2>
+<h3>Podcast show notes</h3>
+<p>Transcribe episode → extract 5-8 quotes worth highlighting → write 2-3 sentence summary → publish as show notes. 30 minutes of work; without transcription, 2-3 hours.</p>
+
+<h3>Interview transcription for journalism or research</h3>
+<p>Record interview (Zoom, phone recorder, in-person device). Upload audio to Drive with public link. Paste URL. Get transcript. Verify direct quotes against the audio. Cite with timestamps.</p>
+
+<h3>Voice notes to action items</h3>
+<p>Record voice notes during walks/commutes. Upload + transcribe. Paste transcript into Claude with "extract action items" prompt. End result: voice memo becomes structured to-do list.</p>
+
+<h3>Audio archive search</h3>
+<p>Old podcasts, recorded lectures, voice memos from years ago — transcribe and store as searchable text. "Did I record a thought about X?" becomes a 5-second grep.</p>
+
+<h2>Privacy for sensitive audio</h2>
+<p>Voice recordings often contain sensitive content. Our infrastructure processes audio without retaining files beyond the transcription pass, and we don't use audio for training. For maximum privacy on highly sensitive content (medical, legal, personal), offline tools like Buzz let you run the same class of AI model locally on your machine — slower UX, free, fully offline.</p>
+
+<h2>Pricing</h2>
+<ul>
+<li><strong>Free:</strong> 3 audio transcripts/month.</li>
+<li><strong>Starter ($1.99/mo):</strong> 50/month.</li>
+<li><strong>Pro ($3.99/mo):</strong> Unlimited. Best fit for podcasters and anyone with regular audio transcription needs.</li>
+</ul>
+""",
         "faq": [
-            {"q": "Do I need to download MP3 first?", "a": "No. TranscriptX handles media extraction internally from URL input."},
-            {"q": "Does it support multiple languages?", "a": "Yes, language detection is automatic and multilingual transcription is supported."},
+            {"q": "Do I need to download MP3 first?", "a": "No. TranscriptX handles audio extraction internally from URL input. Paste a YouTube/Vimeo/podcast URL directly — we extract the audio automatically."},
+            {"q": "Does it support multiple languages?", "a": "Yes — 90+ languages with automatic detection. Strongest in English, Spanish, French, German, Portuguese, Italian, Japanese, Korean, Mandarin, and Arabic."},
+            {"q": "Can I transcribe a podcast episode from Spotify?", "a": "Yes for publicly available episodes — paste the Spotify episode URL. Same for Apple Podcasts, SoundCloud, and most RSS-distributed podcasts."},
+            {"q": "What about voice memos from my phone?", "a": "Upload to Google Drive with \"Anyone with the link\" sharing, then paste the Drive file URL. See our <a href=\"/help/upload-audio-file-transcript\">file upload help page</a> for the exact steps."},
+            {"q": "What audio file formats work?", "a": "Common ones — MP3, M4A, WAV, OGG, AAC, FLAC. If it plays in standard media players, it usually works for us."},
+            {"q": "How long can the audio be?", "a": "Practically no upper limit, though long audio (3+ hours) takes proportionally more processing. We've successfully transcribed 4+ hour podcasts."},
+            {"q": "Does this work for multi-speaker conversations?", "a": "Transcription works fine; we don't separate speakers into named labels though. For multi-person recordings where labels matter, Otter's diarization is better."},
+            {"q": "Can I get accurate transcripts of music lyrics?", "a": "In principle yes, but our engine is tuned for speech, not singing — accuracy on music drops significantly. For lyric transcription, dedicated lyric tools usually do better."},
         ],
     },
 }
