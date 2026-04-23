@@ -26,6 +26,7 @@ from xml.sax.saxutils import escape as _xml_escape
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 from disposable_email_domains import blocklist as _disposable_pkg
 from dotenv import load_dotenv
+from error_classifier import format_error_response
 
 EXTRA_DISPOSABLE_DOMAINS = {
     # Manual additions (general)
@@ -563,7 +564,13 @@ def rate_limit_auth(max_hits, window_sec):
         def wrapped(*args, **kwargs):
             key = f"{f.__name__}:{_client_ip()}"
             if not _auth_rate_limiter.allow(key, max_hits, window_sec):
-                return jsonify({"status": "error", "error": "Too many requests. Try again later."}), 429
+                return jsonify({
+                    "status": "error",
+                    "error": "Too many requests",
+                    "action": f"Wait {window_sec} seconds and try again",
+                    "retry_after": window_sec,
+                    "help_url": "/help"
+                }), 429
             return f(*args, **kwargs)
 
         return wrapped
@@ -654,7 +661,8 @@ def api_extract():
     try:
         language = _normalize_language(data.get("language"))
     except ValueError as e:
-        return jsonify({"status": "error", "error": str(e)}), 400
+        error_response = format_error_response(str(e), "language validation")
+        return jsonify(error_response), 400
 
     if not url:
         log_transcript_attempt(user_id, email, url, "error_no_url", credits_used=0)
@@ -667,10 +675,26 @@ def api_extract():
     # Check + deduct credits
     if user["credits"] != -1 and user["credits"] <= 0:
         log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
-        return jsonify({"status": "error", "error": "No credits remaining. Upgrade your plan!"}), 403
+        return jsonify({
+            "status": "error",
+            "error": "No credits remaining",
+            "action": "Upgrade your plan to continue transcribing",
+            "help_url": "/pricing",
+            "current_credits": 0,
+            "current_plan": user.get("plan_name", "Free"),
+            "suggested_plan": "Starter" if user.get("plan_name") == "Free" else "Pro"
+        }), 403
     if not use_credit_for_user(user["user_id"]):
         log_transcript_attempt(user_id, email, url, "error_no_credits", credits_used=0)
-        return jsonify({"status": "error", "error": "No credits remaining."}), 403
+        return jsonify({
+            "status": "error",
+            "error": "No credits remaining",
+            "action": "Upgrade your plan to continue transcribing",
+            "help_url": "/pricing",
+            "current_credits": 0,
+            "current_plan": user.get("plan_name", "Free"),
+            "suggested_plan": "Starter" if user.get("plan_name") == "Free" else "Pro"
+        }), 403
 
     # Process
     model = data.get("model", "whisper-large-v3-turbo")

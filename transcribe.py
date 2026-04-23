@@ -12,6 +12,7 @@ import tempfile
 import time
 import re
 from groq import Groq
+from error_classifier import classify_user_error
 
 log = logging.getLogger(__name__)
 
@@ -290,21 +291,29 @@ def process_url(url, model="whisper-large-v3-turbo", language=None):
             meta = {}
         else:
             log.warning("[pipeline] metadata error: %s", metadata_error)
+            user_error = classify_user_error(metadata_error, "metadata fetch")
             return {
                 "url": url,
                 "status": "error",
-                "error": metadata_error,
+                "error": user_error["message"],
+                "action": user_error["action"],
+                "help_url": user_error["help_url"],
                 "error_kind": classify_error(metadata_error),
+                "retry_after": user_error.get("retry_after", 0),
             }
 
     # Download
     filepath, err = download_audio(url)
     if err:
+        user_error = classify_user_error(err, "audio download")
         return {
             "url": url,
             "status": "error",
-            "error": err,
+            "error": user_error["message"],
+            "action": user_error["action"],
+            "help_url": user_error["help_url"],
             "error_kind": classify_error(err),
+            "retry_after": user_error.get("retry_after", 0),
             "metadata_error": metadata_error,
             **{k: meta.get(k, 0) for k in ["views", "likes", "comments", "duration"]},
         }
@@ -346,7 +355,14 @@ def process_url(url, model="whisper-large-v3-turbo", language=None):
     if status == "error":
         # Transcription stage errors (Groq) are upstream by default — operator
         # problem, not the user's. classify_error handles this conservatively.
-        payload["error_kind"] = classify_error(result.get("error"))
+        raw_error = result.get("error")
+        user_error = classify_user_error(raw_error, "transcription")
+        payload["error"] = user_error["message"]
+        payload["action"] = user_error["action"]
+        payload["help_url"] = user_error["help_url"]
+        payload["error_kind"] = classify_error(raw_error)
+        if user_error.get("retry_after", 0) > 0:
+            payload["retry_after"] = user_error["retry_after"]
     return payload
 
 
