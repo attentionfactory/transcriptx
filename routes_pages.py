@@ -8,9 +8,11 @@ from seo_catalog import (
     HEAD_TERM_PAGES,
     HELP_PAGES,
     PERSONA_PAGES,
+    PLATFORM_CATEGORIES,
     RESEARCH_PAGES,
     current_lastmod,
     get_platform_pages,
+    get_platforms_by_category,
 )
 
 
@@ -551,6 +553,31 @@ def register_page_routes(
             article_schema_json=json.dumps(article_schema),
             faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
             last_updated=_format_last_updated(last_updated_iso),
+        )
+
+    @app.route("/categories")
+    def categories_index():
+        # Pre-compute platform counts per category so the index can show them.
+        counts = {slug: len(get_platforms_by_category(slug)) for slug in PLATFORM_CATEGORIES}
+        return render_template(
+            "categories_index.html",
+            categories=PLATFORM_CATEGORIES,
+            counts=counts,
+        )
+
+    @app.route("/category/<slug>")
+    def category_page(slug):
+        category = PLATFORM_CATEGORIES.get(slug)
+        if not category:
+            return ("Category not found", 404)
+        platforms = get_platforms_by_category(slug)
+        canonical_url = f"https://transcriptx.xyz/category/{slug}"
+        return render_template(
+            "category.html",
+            category=category,
+            platforms=platforms,
+            canonical_url=canonical_url,
+            last_updated=_format_last_updated(current_lastmod()),
         )
 
     @app.route("/press-kit")

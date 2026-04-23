@@ -2907,6 +2907,126 @@ def get_platform_pages():
     return dict(sorted(pages.items(), key=lambda kv: kv[0]))
 
 
+PLATFORM_CATEGORIES = {
+    "video-streaming": {
+        "slug": "video-streaming",
+        "title": "Video Streaming Platforms — Transcribe Any Streaming Source",
+        "meta_title": "Streaming Video Transcript Tool — YouTube, Vimeo, Dailymotion + 50 More | TranscriptX",
+        "meta_description": "Transcribe video from major streaming platforms — YouTube, Vimeo, Dailymotion, Bilibili, Niconico, Rumble, Odysee, and 50+ more. One URL paste, structured transcript output.",
+        "lede": "The big platforms most people think of when they think \"online video.\" YouTube alone accounts for the bulk of video transcription requests we see, but the long tail of streaming platforms — regional services, alternative platforms, archive sites — adds up to real volume.",
+        "match_keywords": ["youtube", "vimeo", "dailymotion", "bilibili", "niconico", "rumble", "odysee", "bitchute", "veoh", "metacafe", "viddler", "vbox", "dtube", "peertube"],
+    },
+    "social-media": {
+        "slug": "social-media",
+        "title": "Social Media Video Transcript Tool",
+        "meta_title": "Social Media Video Transcripts — TikTok, Instagram, X, Facebook | TranscriptX",
+        "meta_description": "Transcribe video from social platforms — TikTok, Instagram Reels, X (Twitter), Facebook, Reddit, LinkedIn, Snapchat, Threads. Built for creators and competitive research.",
+        "lede": "Short-form social video has eaten content marketing. Transcribing what your competitors and customers post lets you mine for messaging, monitor brand mentions, and repurpose viral moments. We support every major social platform via direct URL paste.",
+        "match_keywords": ["tiktok", "instagram", "twitter", "x-twitter", "facebook", "reddit", "linkedin", "snapchat", "threads", "tumblr", "weibo", "kuaishou", "pinterest", "bluesky", "substack"],
+    },
+    "podcasts-audio": {
+        "slug": "podcasts-audio",
+        "title": "Podcast & Audio Transcript Tool",
+        "meta_title": "Podcast Transcript Tool — Apple, Spotify, SoundCloud + 30 More | TranscriptX",
+        "meta_description": "Transcribe podcast episodes from Apple Podcasts, Spotify, SoundCloud, Bandcamp, Mixcloud, and dozens more audio platforms. Show notes, episode SEO, quote extraction.",
+        "lede": "Podcast transcription used to be a separate workflow with separate tools. We handle podcast hosts the same way we handle video platforms — paste the episode URL, get a transcript with timestamps. See our <a href=\"/for/podcasters\">podcaster page</a> for workflow ideas.",
+        "match_keywords": ["soundcloud", "podcast", "applepodcasts", "spotify", "bandcamp", "mixcloud", "audible", "audiomack", "iheart", "stitcher", "podchaser", "podomatic", "anchor", "buzzsprout", "transistor", "castos", "simplecast", "megaphone"],
+    },
+    "live-streaming": {
+        "slug": "live-streaming",
+        "title": "Live Stream Transcript Tool",
+        "meta_title": "Live Stream Transcripts — Twitch, Kick, YouTube Live + 20 More | TranscriptX",
+        "meta_description": "Transcribe live streams and VODs from Twitch, Kick, YouTube Live, Facebook Live, and more. After-the-fact transcripts of recorded streams for clipping, recap, and reference.",
+        "lede": "We transcribe streams after they've ended (the recorded VOD), not in real time. For live capture as it's happening, look at Otter or Tactiq. For everything else — recap content, clip extraction, transcript-driven highlight reels — paste the VOD URL.",
+        "match_keywords": ["twitch", "kick", "youtube-live", "facebook-live", "instagram-live", "tiktok-live", "huya", "douyu", "afreeca", "bigo", "trovo", "dlive", "streamable", "livestream", "ustream", "periscope"],
+    },
+    "education": {
+        "slug": "education",
+        "title": "Educational Video Transcript Tool",
+        "meta_title": "Education Video Transcripts — MOOCs, Lectures, Khan Academy + 30 More | TranscriptX",
+        "meta_description": "Transcribe educational video from Coursera, edX, Khan Academy, MIT OCW, Udemy, Skillshare, and dozens more. Built for students, researchers, and lifelong learners.",
+        "lede": "Educational content is high-value transcription territory — long-form, scripted, dense with terminology you want to search. Lectures and MOOC modules transcribe with very high accuracy because the audio is usually clean.",
+        "match_keywords": ["khanacademy", "coursera", "edx", "udemy", "skillshare", "ocw", "udacity", "lynda", "linkedin-learning", "pluralsight", "domestika", "masterclass", "ted", "tedx", "academic", "lecture"],
+    },
+    "news-media": {
+        "slug": "news-media",
+        "title": "News & Media Video Transcript Tool",
+        "meta_title": "News Video Transcripts — BBC, CNN, Reuters + 50 More | TranscriptX",
+        "meta_description": "Transcribe news video from BBC, CNN, Reuters, AP, Bloomberg, and 50+ international broadcasters. Built for journalists, researchers, and political accountability work.",
+        "lede": "News organizations publish a huge volume of video that's not always easy to search or quote. We support most major broadcasters and many regional outlets. See our <a href=\"/for/journalists\">journalist page</a> for workflow ideas.",
+        "match_keywords": ["bbc", "cnn", "reuters", "bloomberg", "aljazeera", "cbsnews", "abcnews", "nbcnews", "foxnews", "msnbc", "wsj", "ny-times", "washingtonpost", "guardian", "spiegel", "lemonde", "huffpost", "vice", "nbc", "abc", "cbs", "fox", "ap", "axs", "newsy", "news"],
+    },
+    "regional-asia": {
+        "slug": "regional-asia",
+        "title": "Asian Video Platform Transcripts",
+        "meta_title": "Asian Video Transcripts — Bilibili, Youku, NicoNico + 30 More | TranscriptX",
+        "meta_description": "Transcribe video from Asian platforms — Bilibili, Youku, NicoNico, Niconico, Tudou, AcFun, MangoTV, iQiyi, and more. 90+ language support.",
+        "lede": "If you do business in Asia or research Asian content, region-specific platforms matter. We support the major Chinese, Japanese, and Korean platforms with full transcription in their native languages.",
+        "match_keywords": ["bilibili", "youku", "tudou", "iqiyi", "qqmusic", "kuwo", "netease", "douyin", "kuaishou", "weibo", "weibovideo", "xiaohongshu", "nicovideo", "niconico", "fc2", "showroom", "mirrativ", "openrec", "naver", "kakao", "afreeca", "vlive", "weverse"],
+    },
+    "regional-europe": {
+        "slug": "regional-europe",
+        "title": "European Video Platform Transcripts",
+        "meta_title": "European Video Transcripts — BBC iPlayer, ARD, France TV + 40 More | TranscriptX",
+        "meta_description": "Transcribe video from European broadcasters and platforms — BBC iPlayer, ARD, ZDF, France Télévisions, Rai, RTVE, NPO, NRK, SVT, and more.",
+        "lede": "European public broadcasters and streaming services. Most are region-locked outside their home country (see our <a href=\"/help/region-locked-video-transcript\">region lock help</a>) but if you're inside the right region, we transcribe these reliably.",
+        "match_keywords": ["bbc", "iplayer", "arte", "ard", "zdf", "francetv", "francetvinfo", "rai", "rtve", "npo", "nrk", "svtplay", "svt", "yle", "drtv", "kommunetv", "rtbf", "vrt", "ceskatelevize", "rt", "tv2", "tv4", "lcp", "europa", "europarl", "bundestag", "ndr", "wdr", "mdr", "br", "swr", "rbb", "hr", "sr", "sat1"],
+    },
+    "creators-paid": {
+        "slug": "creators-paid",
+        "title": "Creator Platform Transcripts (Patreon, Substack, Memberful)",
+        "meta_title": "Creator Platform Transcripts — Patreon, Substack, Nebula | TranscriptX",
+        "meta_description": "Transcribe video from creator platforms — Patreon, Substack, Nebula, Memberful, Floatplane, and more. Useful for creators repurposing their own content.",
+        "lede": "If you're a creator who publishes paywalled video on Patreon, Nebula, Floatplane, or similar, transcribing your own content for show notes, repurposing, or cross-platform publishing is a high-leverage workflow. Public-tier content transcribes via direct URL; gated content requires the workarounds in our <a href=\"/help/private-video-transcript\">private content help</a>.",
+        "match_keywords": ["patreon", "substack", "nebula", "memberful", "floatplane", "ko-fi", "podia", "teachable", "thinkific", "kajabi", "skool", "circle", "discord", "twitch-subscriber"],
+    },
+    "cloud-storage": {
+        "slug": "cloud-storage",
+        "title": "Cloud Storage Video Transcripts (Drive, Dropbox, Box)",
+        "meta_title": "Cloud Storage Video Transcripts — Google Drive, Dropbox, Box | TranscriptX",
+        "meta_description": "Transcribe video stored in Google Drive, Dropbox, OneDrive, and Box. Just paste the file URL with public sharing enabled. Common gotchas covered.",
+        "lede": "If your video is in cloud storage rather than on a video platform, transcription works the same way — paste the file URL. But there's a common Drive folder-vs-file mistake we see constantly. See our <a href=\"/help/google-drive-transcript-link\">Drive link help</a> and <a href=\"/help/upload-audio-file-transcript\">file upload guide</a>.",
+        "match_keywords": ["googledrive", "dropbox", "onedrive", "box", "icloud", "mega", "wetransfer", "pcloud", "sync", "owncloud", "nextcloud"],
+    },
+    "enterprise-meetings": {
+        "slug": "enterprise-meetings",
+        "title": "Enterprise & Meeting Video Transcripts",
+        "meta_title": "Enterprise Video Transcripts — Zoom, Webex, Loom, Wistia | TranscriptX",
+        "meta_description": "Transcribe video from enterprise platforms — Zoom recordings, Webex, Loom, Vidyard, Wistia, Brightcove, Kaltura, Panopto. Built for B2B teams.",
+        "lede": "For recorded enterprise content (Loom, Wistia, Vidyard, Panopto), paste the public viewer URL. For Zoom recordings, upload the file to Drive with public sharing first. For live meeting capture, use Otter — we handle the post-recording transcription.",
+        "match_keywords": ["zoom", "webex", "teams", "loom", "wistia", "vidyard", "brightcove", "kaltura", "panopto", "vimeo-pro", "vimeo-business", "vimeo-enterprise", "ringcentral", "gotomeeting", "bluejeans", "jitsi", "8x8"],
+    },
+    "music-audio-podcast": {
+        "slug": "music-audio-podcast",
+        "title": "Music Platform Video Transcripts",
+        "meta_title": "Music Video Transcripts — YouTube Music, Spotify, Apple Music | TranscriptX",
+        "meta_description": "Transcribe music videos and music podcast content from YouTube Music, Spotify, Apple Music, SoundCloud, and more. Note: lyric transcription has lower accuracy than speech.",
+        "lede": "Music platforms host both songs (where lyrics-as-transcript has lower accuracy because our model is tuned for speech) and music-related video/podcast content (where standard transcription works well). For lyric transcription specifically, dedicated lyric tools usually do better.",
+        "match_keywords": ["youtube-music", "spotify", "apple-music", "tidal", "deezer", "audius", "qobuz", "qq-music", "netease-music", "yandexmusic", "soundcloud", "bandcamp", "jamendo", "monstercat", "mixcloud", "pandora"],
+    },
+}
+
+
+def categorize_platform(slug):
+    """Return the category slug a platform belongs to, or None if uncategorized."""
+    if not slug:
+        return None
+    s = slug.lower()
+    # Check each category's match_keywords. First match wins.
+    for cat_slug, cat in PLATFORM_CATEGORIES.items():
+        for kw in cat.get("match_keywords", []):
+            if kw in s:
+                return cat_slug
+    return None
+
+
+def get_platforms_by_category(category_slug):
+    """Return the list of platform pages that belong to a category, sorted by name."""
+    pages = get_platform_pages()
+    matched = [p for slug, p in pages.items() if categorize_platform(slug) == category_slug]
+    return sorted(matched, key=lambda p: (p.get("display_name") or "").lower())
+
+
 def current_lastmod():
     return datetime.now(timezone.utc).date().isoformat()
 
@@ -2917,6 +3037,8 @@ def get_static_seo_paths():
     paths.extend([f"/research/{slug}" for slug in RESEARCH_PAGES])
     paths.extend([f"/help/{slug}" for slug in HELP_PAGES])
     paths.extend([f"/for/{slug}" for slug in PERSONA_PAGES])
+    paths.extend([f"/category/{slug}" for slug in PLATFORM_CATEGORIES])
     paths.append("/help")
+    paths.append("/categories")
     paths.append("/press-kit")
     return paths
