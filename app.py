@@ -2325,7 +2325,7 @@ GUIDES_CONTENT = {
 <ul>
   <li>Put keyword in title, H1, slug, and first paragraph.</li>
   <li>Add internal links to <a href="/">home</a>, <a href="/pricing">pricing</a>, and <a href="/guides/manual-vs-ai-transcription">manual vs AI</a>.</li>
-  <li>Include FAQ for long-tail capture.</li>
+  <li>Add an FAQ to catch the smaller, more specific searches.</li>
 </ul>
 <h3>5) Publish and interlink</h3>
 <ul>
@@ -2421,7 +2421,7 @@ GUIDES_CONTENT = {
 
 <h2>The publishing speed advantage</h2>
 
-<p>Content that ships weekly compounds faster than content that ships monthly. That is not theory \u2014 it is how search indexing and topical authority work. Every published page is a new entry point, a new ranking opportunity, and a new internal linking node. Teams that transcribe faster, publish faster. Teams that publish faster, grow faster.</p>
+<p>Publishing weekly beats publishing monthly. Every new page is another door into your site from search, and the more doors you have, the more people walk in. Teams that transcribe faster publish faster. Teams that publish faster grow faster.</p>
 
 <p>TranscriptX exists to remove the bottleneck between having content and publishing content. Your videos already contain the substance. TranscriptX turns that substance into text you can use today.</p>
 
