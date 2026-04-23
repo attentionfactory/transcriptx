@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.meta_title }}</title>
+    <meta name="description" content="{{ page.meta_description }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ canonical_url }}">
+    {% if article_schema_json %}<script type="application/ld+json">{{ article_schema_json | safe }}</script>{% endif %}
+    {% if faq_schema_json %}<script type="application/ld+json">{{ faq_schema_json | safe }}</script>{% endif %}
+    <style>
+        :root { --bg:#050505; --grey:#C4C5C7; --orange:#F0A860; --green:#709472; --ink:#0a0a0a; --f-wide:"Michroma",sans-serif; --f-tech:"Space Mono",monospace; --radius:2rem; --bw:1.5px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.55; }
+        .layout { max-width:900px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+        nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:var(--grey); border-radius:100px; }
+        .nav-logo { font-family:var(--f-wide); font-size:1.1rem; font-weight:900; color:var(--ink); text-decoration:none; }
+        .nav-logo em { font-style:normal; font-size:0.5em; vertical-align:super; }
+        .nav-links { display:flex; gap:0.5rem; align-items:center; }
+        .nav-links a { color:var(--ink); text-decoration:none; font-size:0.7rem; text-transform:uppercase; font-weight:700; padding:0.5rem 1rem; border:1px solid transparent; border-radius:4px; }
+        .nav-links a:hover { border-color:var(--ink); background:rgba(0,0,0,0.05); }
+        .panel { background:var(--grey); border-radius:var(--radius); padding:1.8rem 2rem; }
+        h1 { font-family:var(--f-wide); font-size:clamp(1.3rem,2.6vw,2.1rem); line-height:1.15; margin-bottom:.7rem; }
+        h2 { font-family:var(--f-wide); font-size:.9rem; text-transform:uppercase; margin:1.8rem 0 .6rem; }
+        h3 { font-size:.95rem; margin:1.1rem 0 .4rem; }
+        p, li { font-size:.83rem; opacity:0.88; margin-bottom:.6rem; line-height:1.6; }
+        ol, ul { padding-left:1.2rem; }
+        code { background:rgba(0,0,0,0.08); padding:1px 5px; border-radius:4px; font-size:.78rem; }
+        a { color:var(--ink); }
+        .kicker { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6; display:block; margin-bottom:.35rem; }
+        .hero-sub { font-size:.85rem; opacity:.78; margin-bottom:1.2rem; max-width:62ch; }
+        .use-case { background:rgba(255,255,255,0.28); padding:1rem 1.2rem; border-radius:12px; margin:.8rem 0; border-left:3px solid var(--green); }
+        .use-case h3 { margin-top:0; font-family:var(--f-wide); font-size:.75rem; text-transform:uppercase; color:var(--ink); }
+        .use-case p { margin-bottom:0; font-size:.78rem; }
+        .faq-list { display:grid; gap:8px; margin-top:.6rem; }
+        .faq-list details { border:var(--bw) solid rgba(10,10,10,0.25); border-radius:10px; background:rgba(255,255,255,0.35); }
+        .faq-list summary { cursor:pointer; list-style:none; padding:.75rem .9rem; font-size:.78rem; font-weight:700; }
+        .faq-list summary::-webkit-details-marker { display:none; }
+        .faq-list .answer { padding:0 .9rem .9rem; font-size:.78rem; line-height:1.55; opacity:0.88; }
+        .cta { margin-top:1.2rem; display:flex; gap:.55rem; flex-wrap:wrap; }
+        .cta a { text-decoration:none; padding:.55rem .9rem; border:var(--bw) solid rgba(10,10,10,0.3); border-radius:8px; color:var(--ink); font-size:.72rem; font-weight:700; text-transform:uppercase; }
+        .cta a.main { background:var(--ink); color:var(--orange); border-color:var(--ink); }
+        @media (max-width:760px) { nav { padding:.8rem 1rem; border-radius:1.2rem; } .panel { padding:1.3rem 1.2rem; } }
+    </style>
+</head>
+<body>
+<main class="layout">
+    {% include "_site_nav.html" %}
+    <section class="panel">
+        <span class="kicker">TranscriptX for {{ page.persona_label }}</span>
+        <h1>{{ page.title }}</h1>
+        {% if last_updated %}<p style="font-size:0.7rem;opacity:0.55;margin:-.3rem 0 .6rem;">Updated {{ last_updated }} &middot; TranscriptX editorial</p>{% endif %}
+        {% if page.hero_sub %}<p class="hero-sub">{{ page.hero_sub }}</p>{% endif %}
+        {{ page.body_html | safe }}
+        {% if page.faq %}
+        <h2>FAQ</h2>
+        <div class="faq-list">
+            {% for row in page.faq %}
+            <details>
+                <summary>{{ row.q }}</summary>
+                <div class="answer">{{ row.a }}</div>
+            </details>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="cta">
+            <a class="main" href="/">Try TranscriptX free &rarr;</a>
+            <a href="/pricing">See pricing</a>
+            <a href="/compare/best-youtube-transcript-tools">Tool comparison</a>
+        </div>
+    </section>
+</main>
+{% include "_site_footer.html" %}
+</body>
+</html>

@@ -7,6 +7,7 @@ from seo_catalog import (
     GUIDE_TOOL_MAP,
     HEAD_TERM_PAGES,
     HELP_PAGES,
+    PERSONA_PAGES,
     RESEARCH_PAGES,
     current_lastmod,
     get_platform_pages,
@@ -516,6 +517,35 @@ def register_page_routes(
 
         return render_template(
             "help.html",
+            page=page,
+            canonical_url=canonical_url,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
+            last_updated=_format_last_updated(last_updated_iso),
+        )
+
+    @app.route("/for/<slug>")
+    def persona_page(slug):
+        page = PERSONA_PAGES.get(slug)
+        if not page:
+            return ("Persona page not found", 404)
+        canonical_url = f"https://transcriptx.xyz/for/{slug}"
+        last_updated_iso = current_lastmod()
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": page["title"],
+            "description": page["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+
+        return render_template(
+            "persona.html",
             page=page,
             canonical_url=canonical_url,
             article_schema_json=json.dumps(article_schema),

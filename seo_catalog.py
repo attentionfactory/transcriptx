@@ -1696,6 +1696,494 @@ HELP_PAGES = {
 }
 
 
+PERSONA_PAGES = {
+    "podcasters": {
+        "slug": "podcasters",
+        "persona_label": "Podcasters",
+        "title": "TranscriptX for Podcasters — Show Notes, SEO, and Clips in Minutes",
+        "meta_title": "Podcast Transcription Tool — Show Notes + Clips | TranscriptX",
+        "meta_description": "Every podcast episode is 8 pieces of content waiting to happen. TranscriptX transcribes your episode from the YouTube/Spotify URL and gives you show notes, clips, and SEO-ready text.",
+        "hero_sub": "If you publish a podcast weekly, you're already producing the raw content for a newsletter, a blog post, 5 social clips, and a SEO-optimized show notes page. The bottleneck is transcription. TranscriptX removes it for $3.99/mo.",
+        "body_html": """
+<h2>The podcaster's content compounding problem</h2>
+<p>You record a 60-minute podcast. You publish it to Apple Podcasts, Spotify, and YouTube. In a world where every platform rewards short-form video and text-based search, that episode is also:</p>
+<ul>
+<li>A blog post (the episode's thesis, expanded)</li>
+<li>A newsletter edition (5 minutes of reading)</li>
+<li>5-10 social clips (30-90 seconds each)</li>
+<li>A SEO-optimized show notes page that ranks for "[guest name] interview"</li>
+<li>A tweet thread (10-15 tweets)</li>
+<li>A LinkedIn carousel for founder-focused episodes</li>
+</ul>
+<p>Most podcasters stop at "episode + show notes" because everything after that requires transcription, and transcription is tedious. TranscriptX makes transcription free-enough and fast-enough that the rest of the funnel becomes worth doing.</p>
+
+<h2>The 30-minute workflow</h2>
+<p>This is what podcast teams using TranscriptX do after publishing each episode:</p>
+<ol>
+<li><strong>Paste the episode URL into TranscriptX.</strong> YouTube, Spotify, Apple, SoundCloud, your own RSS — we handle all of them. Wait 60 seconds.</li>
+<li><strong>Export as JSON</strong> (word-level timestamps) or TXT for editing.</li>
+<li><strong>Pull 5-8 "clip candidates"</strong> — the 30-90 second moments where your guest said something strong, surprising, or quotable. Word-level timestamps make finding the exact start/end fast.</li>
+<li><strong>Structure show notes</strong> around 4-6 topic headings with timestamps. Readers skim; they want to jump to the specific moment that interests them.</li>
+<li><strong>Draft the newsletter</strong> from the transcript — lead with the strongest quote, not the summary.</li>
+<li><strong>Queue social clips</strong> in your scheduler using the timestamps you pulled.</li>
+</ol>
+<p>From finish-recording to ready-to-schedule: about 30 minutes once you've done it a few times. Without transcription it's 2-3 hours.</p>
+
+<div class="use-case">
+<h3>Real example</h3>
+<p>A founder-interview podcast we work with publishes one 60-minute episode weekly. Each episode becomes: show notes (45 min work), newsletter (20 min), 8 social clips over the following week (scheduled in bulk), and one LinkedIn carousel. Before TranscriptX: ~5 hours of human editorial per episode. After: 1.5 hours.</p>
+</div>
+
+<h2>Which podcast-specific features matter</h2>
+<h3>URL paste (instead of upload)</h3>
+<p>Your episode is already on YouTube or Spotify. Why re-upload the audio file to a transcription tool? We handle URL paste for both, so you're transcribing from the public episode 60 seconds after it drops.</p>
+
+<h3>Word-level timestamps</h3>
+<p>Critical for clip production. If your guest says something interesting at 23:14, word-level timestamps let you start a clip at exactly that word, not at the nearest 5-second caption boundary. This is the difference between a clip that starts mid-sentence (looks amateur) and one that starts on a beat (gets shared).</p>
+
+<h3>Multi-platform support</h3>
+<p>If you cross-post to YouTube, SoundCloud, and your own RSS, every platform is a different URL. TranscriptX handles all of them — you don't need a separate tool per platform.</p>
+
+<h3>Export to JSON</h3>
+<p>If your show notes workflow is in Notion or Airtable, the JSON export drops directly into a structured table. If you use Claude or ChatGPT to draft content from the transcript, JSON with timestamps is much more useful than plain text.</p>
+
+<h2>What TranscriptX doesn't do (that podcasters sometimes need)</h2>
+<ul>
+<li><strong>Speaker separation with names.</strong> If your podcast has 3+ guests, you might want speaker labels. We return segment-level grouping but don't name speakers. For multi-person podcasts where labels matter, Otter handles this better.</li>
+<li><strong>Audio editing.</strong> We give you transcript text. For editing the audio by editing the transcript — cutting filler words, splicing sections — use Descript. Best combined workflow: TranscriptX for fast weekly transcripts, Descript for episodes you're heavily editing.</li>
+<li><strong>Hosting / distribution.</strong> We're a transcription tool. Your podcast host (Transistor, Buzzsprout, Castos) stays your podcast host.</li>
+</ul>
+
+<h2>Pricing for podcast use</h2>
+<ul>
+<li><strong>Weekly podcast (1 episode/week):</strong> Free tier (3/mo) doesn't cover this. Starter at $1.99/mo covers 50 transcripts — enough for weekly podcasting plus experimentation.</li>
+<li><strong>Daily podcast or multi-show network:</strong> Pro at $3.99/mo unlimited. You'll transcribe more than you think once the workflow becomes fast.</li>
+<li><strong>Networks with 10+ shows:</strong> Pro Annual at $29.99/yr ($2.50/mo effective). Still cheaper than any enterprise transcription tool.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "Can TranscriptX transcribe my podcast from Spotify?",
+                "a": "Yes, if the episode is publicly available (most podcast episodes are). Paste the Spotify episode URL and we fetch the audio. Same for Apple Podcasts, SoundCloud, YouTube, your own RSS feed, and most podcast hosts.",
+            },
+            {
+                "q": "How long does transcribing a 60-minute episode take?",
+                "a": "About 30-60 seconds for us to process. Much faster than tools that upload the audio file — we don't need to wait for a file transfer because we fetch from the URL directly.",
+            },
+            {
+                "q": "Do you separate speakers in multi-person podcasts?",
+                "a": "Not with named labels. We group at segment boundaries which handles most 2-person interviews fine, but for 3+ speaker panels where you need \"Guest 1 said X\" attribution, Otter's speaker-diarization output is better.",
+            },
+            {
+                "q": "Can I get SRT or VTT for podcast captions?",
+                "a": "JSON export contains word-level timestamps that any SRT tool can consume. Direct SRT export is on the roadmap — email us if it's blocking.",
+            },
+            {
+                "q": "What about re-uploading transcripts to Spotify for Podcasters?",
+                "a": "Spotify's transcripts feature accepts SRT files. Take our JSON output, convert to SRT with any tool (ffmpeg-based scripts, online converters, or Descript), upload. Our transcript quality is comparable to or better than Spotify's auto-generated version.",
+            },
+            {
+                "q": "Is TranscriptX GDPR / privacy compliant for podcasts with guest content?",
+                "a": "We don't store your audio files beyond the transcription pass. The transcript itself is stored tied to your account. For shows where guest privacy is critical, check our terms and send us specific questions.",
+            },
+        ],
+    },
+    "youtubers": {
+        "slug": "youtubers",
+        "persona_label": "YouTubers",
+        "title": "TranscriptX for YouTubers — Descriptions, SEO, and Cross-Platform Content",
+        "meta_title": "YouTube Creator Transcription Tool — Video to Text | TranscriptX",
+        "meta_description": "YouTube pays creators by watchtime. Transcripts pay creators by ranking in Google, answering queries, and generating content for every other platform. TranscriptX turns videos into text at scale.",
+        "hero_sub": "Every video you publish should be a page on your website, a newsletter edition, a Twitter thread, and an Instagram carousel — not just a YouTube video. TranscriptX is how you build that pipeline without hating your life.",
+        "body_html": """
+<h2>The YouTube creator's traffic problem</h2>
+<p>YouTube is the best place to build an audience and the worst place to own that audience. YouTube owns the recommendation algorithm, the ad relationship, and the audience — you rent access. If YouTube changes its mind about your channel tomorrow, you lose everything that isn't already captured somewhere you control.</p>
+<p>The fix is obvious but effortful: turn every video into content on platforms you own. Your website. Your newsletter. Your social accounts with follower-based reach. The bottleneck to doing this is transcription — every downstream piece of content starts with the transcript.</p>
+
+<h2>What YouTube creators do with transcripts</h2>
+<h3>1. Build a searchable blog from your back catalog</h3>
+<p>Every video becomes a blog post on your site. The blog post ranks in Google for the specific query your video answers, driving traffic to your website (where you own the relationship) instead of only to YouTube. Channels that do this systematically build 6-figure monthly search traffic in 18-24 months.</p>
+
+<h3>2. Reformat for short-form platforms</h3>
+<p>Long-form YouTube essays contain 5-10 natural "clip candidates" — moments where you made a specific point, stated a counterintuitive fact, or delivered a memorable line. Transcript + word-level timestamps = fast extraction of these moments for TikTok, Instagram Reels, and YouTube Shorts.</p>
+
+<h3>3. Write better video descriptions</h3>
+<p>Most YouTube descriptions are 2 sentences and "subscribe." The top-performing descriptions on your content are 200-400 words with keywords that match what people actually search. The transcript is where you mine those keywords — search terms show up in your own spoken content you just didn't notice.</p>
+
+<h3>4. Reference your own content fast</h3>
+<p>Six months from now when someone asks "didn't you say something about X in a video?" — having every video transcribed and searchable means you find the answer in 10 seconds, not 10 minutes.</p>
+
+<div class="use-case">
+<h3>Real example</h3>
+<p>A tech-explainer YouTuber with 250k subscribers transcribes every video on publish. Each video becomes a blog post (expanded with related research), a newsletter item, and 3-5 short-form clips across TikTok + Instagram. Website now drives 40% of total sponsorship inquiries — audience reaches them via Google search, not YouTube's algorithm.</p>
+</div>
+
+<h2>Workflow: video to cross-platform content</h2>
+<ol>
+<li><strong>Publish video to YouTube as usual.</strong></li>
+<li><strong>Paste YouTube URL into TranscriptX.</strong> 60 seconds.</li>
+<li><strong>Export JSON.</strong> Word-level timestamps are your clip map.</li>
+<li><strong>Draft blog post.</strong> Start with the video's thesis, expand with additional context, link back to the video. Target 800-1500 words.</li>
+<li><strong>Draft 3-5 clips.</strong> Identify the tight 30-60 second moments. Write short social-platform copy for each.</li>
+<li><strong>Update YouTube description.</strong> Pull 200 words from the transcript that include the most important keywords for search.</li>
+<li><strong>Newsletter edition.</strong> Reformat the blog post intro, link to the full post + video.</li>
+</ol>
+<p>First few times: 2-3 hours. Once you have templates: 45-60 minutes per video. Without transcription: nobody does this because it's too slow.</p>
+
+<h2>Why YouTube's native transcript isn't enough</h2>
+<p>YouTube has a built-in transcript panel (three-dot menu → Show transcript). It's free and works. Limitations when you're using it as raw material for other content:</p>
+<ul>
+<li><strong>Accuracy drops on anything that isn't studio English.</strong> Accented speech, technical jargon, or background noise all degrade native captions noticeably. Our accuracy is 5-10 points higher depending on content.</li>
+<li><strong>Timestamps round to caption blocks.</strong> For clip extraction you want word-level precision. Native gives you segment-level.</li>
+<li><strong>No export formats.</strong> Copy-paste from a panel into a doc, reformat. We export JSON, CSV, TXT directly.</li>
+<li><strong>Manual per-video workflow.</strong> If you want to batch-transcribe your last 20 videos to start building the blog, our batch flow is much faster.</li>
+</ul>
+<p>For a one-off read, use YouTube's native option. For a systematic cross-platform content workflow, it's the wrong tool.</p>
+
+<h2>Pricing for YouTube creators</h2>
+<ul>
+<li><strong>Weekly uploader:</strong> Starter at $1.99/mo covers 50 transcripts/month. Plenty for weekly.</li>
+<li><strong>Daily uploader or multi-channel:</strong> Pro at $3.99/mo unlimited.</li>
+<li><strong>Serious creator with 100+ video back catalog:</strong> Pro Annual at $29.99/yr. Batch-process your archive, then use it for ongoing workflow.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "Can I transcribe videos from other creators (not my own)?",
+                "a": "Yes, any public YouTube video works. Many YouTubers use TranscriptX to research competitor or influence content, pull quotes for reviews, or reference other creators in their own work.",
+            },
+            {
+                "q": "Will transcribing my videos help with YouTube SEO?",
+                "a": "Indirectly. YouTube already has auto-captions — our transcript doesn't replace those for YouTube's internal search. What it does is help you write better video descriptions (which do affect YouTube SEO) and better external content that links back (which affects Google SEO, which drives YouTube traffic).",
+            },
+            {
+                "q": "What's the fastest workflow for a back catalog?",
+                "a": "Paste URLs into TranscriptX in batches. Free tier is 3/month so serious back-catalog work needs Starter ($1.99/mo) or Pro. A 100-video backlog costs $2-4 total.",
+            },
+            {
+                "q": "Can I write a blog post with AI from the transcript?",
+                "a": "Yes. Export JSON, paste into Claude or ChatGPT with a prompt like \"turn this transcript into a 1000-word article with 5 subheadings.\" First draft comes back in seconds. Always human-edit before publishing.",
+            },
+            {
+                "q": "Do you have a Chrome extension for YouTube?",
+                "a": "Not yet. The URL paste flow works fast enough that we haven't prioritized it. If you'd use an extension regularly, email us — it bumps the priority.",
+            },
+            {
+                "q": "What about YouTube Shorts?",
+                "a": "Fully supported. Paste the Shorts URL the same way as a regular video. Shorts have the same auto-captions on YouTube but our accuracy is higher — useful for extracting text to paste into the Short's description or as source for longer-form content.",
+            },
+        ],
+    },
+    "researchers": {
+        "slug": "researchers",
+        "persona_label": "Academic & Market Researchers",
+        "title": "TranscriptX for Researchers — Interview Transcription, Video Data, Literature Review",
+        "meta_title": "Research Transcription Tool — Interviews, Videos, Literature | TranscriptX",
+        "meta_description": "Academic and market researchers spend hours transcribing interviews, lectures, and video data. TranscriptX automates the mechanical part so you can focus on analysis.",
+        "hero_sub": "Qualitative research, market research, literature reviews with video sources — the transcription step is a time tax that stops being necessary in 2026. TranscriptX handles it; you handle the analysis.",
+        "body_html": """
+<h2>The researcher's transcription bottleneck</h2>
+<p>If you do qualitative research, user interviews, market research, literature reviews with video content, or ethnographic fieldwork, transcription is a bottleneck disguised as grunt work. A single one-hour interview takes 3-4 hours to transcribe by hand. Most graduate students have done this, hated it, and written off transcription as "the part of research you pay a service for."</p>
+<p>AI transcription changes the economics. The same 60-minute interview transcribes in under a minute at ~95% accuracy. A human pass (correcting proper nouns, ambiguous moments) takes 15-20 minutes. Net: 3.5 hours saved per interview. Across a 30-interview study, that's a full work week reclaimed.</p>
+
+<h2>Research-specific use cases</h2>
+<h3>Qualitative user research (UX, product research)</h3>
+<p>A UX researcher running 12 user interviews per month can transcribe every interview, tag themes, and build a searchable research repository. Over a year, this compounds into a library of customer knowledge that makes every new product decision faster. Without transcription, most studies live in scattered notes and fade fast.</p>
+
+<h3>Academic qualitative research (interviews, focus groups)</h3>
+<p>Social science and humanities researchers run long-form interviews where participants speak freely. Manual transcription used to eat 20-40% of total project time. AI transcription — with a human verification pass for IRB-sensitive work — compresses that to 5-10%.</p>
+
+<h3>Market research (customer calls, focus groups, competitor analysis)</h3>
+<p>Market research firms running dozens of customer interviews per project benefit from fast, structured transcripts that feed directly into thematic coding tools (NVivo, Dedoose, Atlas.ti). JSON export makes the import clean.</p>
+
+<h3>Literature review with video sources</h3>
+<p>More of the academic record lives in video (YouTube lectures, conference recordings, panel discussions). Transcribing these for citation and review used to require watching in full and taking notes. Now: paste URL, search transcript for the relevant passage, cite with timestamp.</p>
+
+<h3>Ethnographic fieldwork</h3>
+<p>Field researchers recording interviews in settings with background noise (community centers, street settings, homes) benefit from our higher accuracy on noisy audio (~88% vs ~78% for older tools).</p>
+
+<div class="use-case">
+<h3>Real example</h3>
+<p>A PhD student running 40 semi-structured interviews for a dissertation used to budget 8 weeks for transcription. With TranscriptX + a 15-min verification pass per interview, the same work completed in 1.5 weeks — leaving 6.5 weeks for coding and analysis.</p>
+</div>
+
+<h2>Workflow: interview to coded theme</h2>
+<ol>
+<li><strong>Record interview</strong> (Zoom, phone, in-person recorder).</li>
+<li><strong>Upload to Google Drive</strong> with "Anyone with the link" sharing (see our <a href="/help/upload-audio-file-transcript">file upload guide</a>).</li>
+<li><strong>Paste the Drive URL into TranscriptX.</strong> 60 seconds to transcribe.</li>
+<li><strong>Export as JSON</strong> for programmatic coding tools, or TXT for manual coding in NVivo/Dedoose.</li>
+<li><strong>Human verification pass</strong> (~15-20 min per hour of audio) — correct proper nouns, names, ambiguous phrases. This is the editorial step AI can't do.</li>
+<li><strong>Import into coding software</strong> and tag themes.</li>
+</ol>
+
+<h2>Accuracy considerations for research</h2>
+<p>Our headline accuracy is ~95% on clear audio. For research-grade use, consider:</p>
+<ul>
+<li><strong>Always do a human verification pass.</strong> 95% AI accuracy means 50 errors per 1000 words. Most errors are on proper nouns and numbers — exactly what gets quoted in research papers. Verify before you cite.</li>
+<li><strong>For IRB-sensitive work</strong>, check with your institution. Many accept AI transcripts with documented human verification; some still require human-only transcription (Rev's human tier is the standard).</li>
+<li><strong>Keep the original audio.</strong> Even verified transcripts can have errors. Having the source audio lets you re-verify specific passages when quoting.</li>
+<li><strong>Document the transcription method in your paper.</strong> \"Transcribed by AI (TranscriptX, using the whisper-large-v3 model) and verified by human pass\" is increasingly accepted in journals.</li>
+</ul>
+
+<h2>Privacy and data handling</h2>
+<p>For interview data containing personal information, check:</p>
+<ul>
+<li><strong>Our terms</strong> for data retention and processing.</li>
+<li><strong>Your institution's IRB</strong> for whether AI transcription is an approved method.</li>
+<li><strong>Your participant consent forms</strong> — some explicitly allow AI processing; others require human-only.</li>
+</ul>
+<p>If you need fully offline transcription for maximum privacy, open-source tools like Buzz let you run the same class of AI model locally on your machine with no cloud round-trip. Free, rougher UX, but legitimate for privacy-critical research.</p>
+
+<h2>Pricing for research</h2>
+<ul>
+<li><strong>Single study (10-20 interviews):</strong> Starter at $1.99/mo for one month covers 50 transcripts. Total cost: $1.99.</li>
+<li><strong>Multi-study / ongoing research:</strong> Pro at $3.99/mo unlimited.</li>
+<li><strong>Lab or research group:</strong> Pro Annual ($29.99/yr) per researcher. Still cheaper than any research-focused transcription service.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "Is AI transcription accepted in academic publishing?",
+                "a": "Increasingly yes, when you document the method and verify critical passages. Check your target journal's methodology guidelines — specifics vary by field and journal.",
+            },
+            {
+                "q": "How does TranscriptX compare to Rev for research?",
+                "a": "Rev's human tier is more accurate (99%+ vs our 95%) but costs $15/hr of audio vs our $3.99/mo unlimited. For exploratory research we're cheaper; for final-publication-quality transcripts you may want to upgrade specific interviews to human verification.",
+            },
+            {
+                "q": "Can I use TranscriptX for IRB-regulated research?",
+                "a": "Depends on your IRB's policy. Some explicitly allow AI transcription with human verification; some require fully human transcription. Ask your IRB directly — they've usually issued guidance by now.",
+            },
+            {
+                "q": "Does TranscriptX handle multi-language interviews (code-switching)?",
+                "a": "Yes, auto-detection handles single-language audio well. For interviews that code-switch between languages mid-sentence, accuracy drops modestly — we're still competitive with other tools but none handle this perfectly. Manual verification is especially important here.",
+            },
+            {
+                "q": "Can I export directly to NVivo or Atlas.ti?",
+                "a": "Export as TXT or DOCX and import. JSON export is useful if you're writing a custom parser for specific coding software.",
+            },
+            {
+                "q": "What about transcribing from a personal audio recorder?",
+                "a": "Upload the file to Google Drive with public-link sharing (see our <a href=\"/help/upload-audio-file-transcript\">file upload guide</a>), then paste the URL.",
+            },
+        ],
+    },
+    "marketing-teams": {
+        "slug": "marketing-teams",
+        "persona_label": "Marketing Teams",
+        "title": "TranscriptX for Marketing Teams — Content Repurposing + Competitor Research",
+        "meta_title": "Marketing Transcription Tool — Competitor Research + Content Ops | TranscriptX",
+        "meta_description": "Marketing teams transcribe webinars, competitor content, podcasts, and customer calls. TranscriptX is the fastest URL-to-text pipeline for marketing operations.",
+        "hero_sub": "Content repurposing, competitor research, customer call analysis, webinar recaps — everything a modern marketing team does compounds when the transcription step is fast and free-enough to do by default.",
+        "body_html": """
+<h2>The marketing team's content problem</h2>
+<p>Modern marketing teams produce a lot of video content: webinars, customer interviews, product demos, founder talks, panel discussions. That content performs fine in its native format — but the repurposing pipeline (blog posts, social, newsletters, sales enablement docs) is usually bottlenecked by transcription.</p>
+<p>When transcription is fast and cheap, every long-form video asset becomes 5-8 other pieces of content. When it's slow and manual, most teams produce the video, publish it, and the long-tail value decays.</p>
+
+<h2>Core marketing use cases</h2>
+<h3>1. Webinar → blog + newsletter + social</h3>
+<p>Every webinar is an hour of content that should become:</p>
+<ul>
+<li>A blog post summarizing key takeaways (ranks for product/topic queries)</li>
+<li>A newsletter issue (lead with best quote)</li>
+<li>5-8 social clips (LinkedIn, X, depending on audience)</li>
+<li>A sales enablement doc for prospects who can't attend live</li>
+</ul>
+<p>Without transcription: this is 5-8 hours of human work per webinar. With TranscriptX: 60-90 minutes once the templates exist.</p>
+
+<h3>2. Competitor content analysis</h3>
+<p>Competitors publish founder interviews, product announcements, and thought-leadership content across YouTube, podcasts, and webinars. Transcribing these into searchable text lets you:</p>
+<ul>
+<li>Track competitor positioning over time</li>
+<li>Extract specific quotes for sales battle cards</li>
+<li>Identify topics competitors cover that you don't</li>
+<li>Monitor for specific claims (pricing, features, customer wins)</li>
+</ul>
+
+<h3>3. Customer call analysis</h3>
+<p>Sales teams record discovery calls, product demos, and customer success conversations. Marketing teams benefit from transcribed versions for:</p>
+<ul>
+<li>Case study development (finding the quote from the customer's own words)</li>
+<li>Voice-of-customer research (what language do prospects actually use?)</li>
+<li>Common objection tracking (feeds positioning work)</li>
+<li>Feature request aggregation (what are prospects asking for?)</li>
+</ul>
+
+<h3>4. Thought-leadership video → multi-format publication</h3>
+<p>When your founder or executives appear on podcasts, webinars, or conference talks, the same content should land on:</p>
+<ul>
+<li>Your company blog (SEO ranking)</li>
+<li>LinkedIn (executive's personal brand)</li>
+<li>Newsletter (audience touchpoint)</li>
+<li>Sales enablement (pass to prospects)</li>
+</ul>
+<p>Transcript is the raw material for all four. Without it, only one version ever gets made.</p>
+
+<div class="use-case">
+<h3>Real example</h3>
+<p>A B2B SaaS marketing team of 4 runs a monthly webinar series. Pre-TranscriptX: each webinar produced the recording + a 500-word recap email. Post-TranscriptX: each webinar produces a 2000-word SEO blog post, a newsletter lead, 6 LinkedIn posts (3 executive, 3 company), and a sales enablement one-pager. Same team, same hours — leveraged 4x via transcription.</p>
+</div>
+
+<h2>Workflow: webinar to 5 content pieces</h2>
+<ol>
+<li><strong>Run webinar</strong> (Zoom, Teams, Restream, etc.).</li>
+<li><strong>Publish recording to YouTube</strong> after the event.</li>
+<li><strong>Paste YouTube URL into TranscriptX.</strong> 60 seconds.</li>
+<li><strong>Export JSON.</strong> Word-level timestamps for clip extraction.</li>
+<li><strong>Use Claude or ChatGPT</strong> to draft the 5 content pieces from the transcript (one prompt per format). Human editorial pass on each.</li>
+<li><strong>Schedule / publish</strong> via your existing content stack.</li>
+</ol>
+<p>First time: 2-3 hours. After you have templates: 60-90 minutes. Without transcription: none of this happens consistently.</p>
+
+<h2>Integration with existing marketing tools</h2>
+<h3>Content ops (Notion, Airtable, Monday)</h3>
+<p>Transcripts export as TXT, JSON, or CSV. Drop them into your content calendar as linked assets. Airtable integration is common — one row per transcript, linked to the campaign.</p>
+
+<h3>AI writing tools (Claude, ChatGPT, Jasper)</h3>
+<p>Paste transcript into your AI writing tool with a specific prompt. The transcript gives the AI something concrete to work from — much better output than "write a blog post about X."</p>
+
+<h3>Social schedulers (Buffer, Hootsuite, Later)</h3>
+<p>Use word-level timestamps to identify clip moments, then pull those clips via video editing tool, then schedule via your social stack.</p>
+
+<h3>CRM (HubSpot, Salesforce)</h3>
+<p>For customer call transcripts, you'll likely want Otter (which has native CRM integrations) over us. Customer call transcription is where Otter wins; content repurposing transcription is where we win.</p>
+
+<h2>Pricing for marketing teams</h2>
+<ul>
+<li><strong>Small marketing team (5-10 transcripts/month):</strong> Starter at $1.99/mo covers 50, so you've got room.</li>
+<li><strong>Content-heavy marketing team (20-50 transcripts/month):</strong> Pro at $3.99/mo unlimited. Competitor research + webinars + customer calls add up fast.</li>
+<li><strong>Agency or multi-brand team:</strong> Pro Annual at $29.99/yr per seat. Combine with team member sharing via your internal tools.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "Can TranscriptX integrate with our CMS?",
+                "a": "Not directly — we export TXT, CSV, JSON. Most CMSes (WordPress, Webflow, Ghost) accept these via copy-paste or import. Zapier-based automation is the common workaround for custom integrations.",
+            },
+            {
+                "q": "Is it GDPR-compliant for European customers?",
+                "a": "We don't store video content after processing. Transcripts stored with your account are under standard data protection rules. For specific GDPR questions around customer call recordings, consult our terms or email us.",
+            },
+            {
+                "q": "How do we share transcripts across a marketing team?",
+                "a": "Currently one account per user — team workspaces are on the roadmap. The interim workaround is shared Google Drive folders for the exported transcripts.",
+            },
+            {
+                "q": "Which tool is better for customer call transcription — TranscriptX or Otter?",
+                "a": "Otter, for live calls and CRM-integrated workflows. TranscriptX is better if you already have the recording and want URL-based transcription at scale for content work.",
+            },
+            {
+                "q": "Can we use the API to automate our content pipeline?",
+                "a": "API is on the roadmap. For production automation today, Rev AI, AssemblyAI, or Deepgram have more mature API options.",
+            },
+            {
+                "q": "What about multilingual content (international markets)?",
+                "a": "We support 90+ languages with auto-detection. Useful for international marketing teams transcribing content across regions. Accuracy is strongest in English, Spanish, French, German, Portuguese, Italian, Japanese; lower on less-common languages.",
+            },
+        ],
+    },
+    "journalists": {
+        "slug": "journalists",
+        "persona_label": "Journalists",
+        "title": "TranscriptX for Journalists — Interview Transcription, Fact Checking, Quote Finding",
+        "meta_title": "Journalist Transcription Tool — Interviews + Fact Checking | TranscriptX",
+        "meta_description": "Journalists spend hours transcribing interviews and hunting for quotes. TranscriptX turns audio/video into searchable text in 60 seconds, with word-level citation timestamps.",
+        "hero_sub": "Most of the labor in reporting is still transcription. TranscriptX gives you transcripts in 60 seconds, searchable by keyword, with timestamps for every quote. The hours you reclaim go back into actual reporting.",
+        "body_html": """
+<h2>The journalist's hidden time tax</h2>
+<p>Every hour of interview audio takes 3-4 hours to transcribe by hand. A typical feature piece involves 5-10 hours of interview material. That's 20-40 hours of pure transcription work per feature — usually front-loaded before any writing happens, and universally hated.</p>
+<p>AI transcription cuts that to 30-60 minutes per piece (including verification). The time isn't just saved; it's reclaimed for reporting, follow-ups, and fact-checking — the work that actually differentiates good journalism from filler.</p>
+
+<h2>Journalism-specific use cases</h2>
+<h3>1. Interview transcription for features</h3>
+<p>Standard long-form feature workflow: conduct 5-10 interviews, transcribe them, read through, pull quotes, weave into a narrative. Transcription is the unglamorous step that takes the most time. TranscriptX compresses that step so you can focus on the analysis.</p>
+
+<h3>2. Political speech and press conference coverage</h3>
+<p>Real-time coverage of speeches and press conferences benefits from fast post-event transcripts. Paste the YouTube URL (C-SPAN, news channels, official government streams) and have the full transcript within a minute. Search for specific claims, pull exact quotes, cite with timestamps.</p>
+
+<h3>3. Verification and fact-checking</h3>
+<p>When a quote is disputed or a claim is contested, having the full transcript with word-level timestamps means you can verify the exact wording fast. "Did they really say X?" becomes a 30-second search rather than a 30-minute re-listen.</p>
+
+<h3>4. Investigative work with video evidence</h3>
+<p>Investigative pieces increasingly use video evidence from social platforms (YouTube, TikTok, Facebook, Telegram). TranscriptX handles 1000+ platforms, which matters when the source video isn't on a mainstream site. Transcribing this footage fast lets you search, cite, and cross-reference.</p>
+
+<h3>5. Archive research</h3>
+<p>For historical pieces, transcribing old YouTube uploads, speech archives, or podcast back catalogs turns unsearchable audio/video into searchable text. Find every time a politician said X, every time a CEO addressed Y — across years of public content.</p>
+
+<div class="use-case">
+<h3>Real example</h3>
+<p>A freelance reporter working on a political accountability piece transcribed 40 hours of public speeches across 18 months. Total transcription cost: $7.99 (two months of TranscriptX Pro). Same work manually: 160+ hours. The piece ran with word-for-word verified quotes and citations accurate to the second.</p>
+</div>
+
+<h2>Accuracy and verification for journalism</h2>
+<p>Journalistic standards require higher accuracy than casual transcription. Our approach:</p>
+<ul>
+<li><strong>AI transcription at ~95%</strong> on clear audio gets you a fast first pass.</li>
+<li><strong>Always verify direct quotes against the source audio</strong> before publication. AI errors cluster on proper nouns, numbers, and technical terms — exactly the content most likely to be quoted.</li>
+<li><strong>For legally sensitive material</strong> (court testimony, corporate disclosures, defamation risk), human-verified transcription (Rev's human tier, or similar) is still the standard. AI is fine for exploratory work; human is required for anything that could be legally contested.</li>
+<li><strong>Keep original audio files</strong>. Always. Transcripts are derived data; audio is primary evidence.</li>
+</ul>
+
+<h2>Workflow: source video to published quote</h2>
+<ol>
+<li><strong>Find the source video</strong> (YouTube, news archive, social platform).</li>
+<li><strong>Paste URL into TranscriptX.</strong> 60 seconds.</li>
+<li><strong>Export with word-level timestamps</strong> (JSON).</li>
+<li><strong>Search for the specific quote or topic.</strong></li>
+<li><strong>Verify against source audio</strong> (play at the exact timestamp the transcript indicates).</li>
+<li><strong>Cite with timestamp</strong> in your piece — "at 14:32 of the address, the candidate said..."</li>
+</ol>
+
+<h2>Privacy, ethics, and source protection</h2>
+<ul>
+<li><strong>For confidential source interviews</strong>, check our data retention policy before uploading. If strict confidentiality is required, offline tools like Buzz (free, open-source, runs locally) may be preferred.</li>
+<li><strong>For Freedom of Information / open records</strong>, AI transcription of public records speeds up research without introducing new privacy concerns.</li>
+<li><strong>For off-the-record material</strong>, transcribe locally if you're uncertain. Our Pro plan handles most mainstream needs but explicit source-protection workflows may warrant local tools.</li>
+</ul>
+
+<h2>Cost vs. a freelance transcriptionist</h2>
+<p>Freelance human transcription: $1-2 per audio minute = $60-120/hr. A single feature piece with 8 hours of interviews: $480-960.</p>
+<p>TranscriptX Pro: $3.99/mo for unlimited. One month of subscription covers every feature piece you produce that month and all the archive research.</p>
+<p>For publications with tight transcription budgets, this is the easiest cost shift available.</p>
+
+<h2>Pricing for journalists</h2>
+<ul>
+<li><strong>Freelance reporter (5-10 interviews/month):</strong> Starter at $1.99/mo covers 50. Easy starting point.</li>
+<li><strong>Staff reporter or feature writer:</strong> Pro at $3.99/mo unlimited.</li>
+<li><strong>Newsroom-wide deployment:</strong> Pro Annual at $29.99/yr per journalist. Still dramatically cheaper than any enterprise journalism tool.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "Is AI transcription acceptable for journalism?",
+                "a": "Yes for exploratory work and fact-checking; always verify direct quotes against source audio before publication. Professional style guides (AP, NYT, Reuters) don't mandate transcription method — they mandate accuracy. AI plus verification meets that standard.",
+            },
+            {
+                "q": "Can I protect source confidentiality?",
+                "a": "Our infrastructure processes audio and doesn't retain files beyond the transcription pass. For maximum source protection on sensitive material, consider offline tools (Buzz, Whisper locally). For standard reporting, our workflow is appropriate.",
+            },
+            {
+                "q": "How do I cite with timestamps?",
+                "a": "Word-level timestamps in our JSON export give precise start times. Standard citation: \"at [H:MM:SS] of [source title] on [platform], [speaker] said [quote].\" Readers and editors can verify against the source video.",
+            },
+            {
+                "q": "What about FOIA video records?",
+                "a": "Public records received as video are fully supported — upload to Drive or paste any public URL. Faster than manual review of hours of footage.",
+            },
+            {
+                "q": "Can I transcribe from podcasts for reporting?",
+                "a": "Yes. Paste any podcast episode URL (Apple, Spotify, SoundCloud, your own RSS). Useful for quote research and fact-checking statements made on podcasts.",
+            },
+            {
+                "q": "How does this compare to Otter for journalism?",
+                "a": "Otter is better for live interview capture (auto-joining a call). TranscriptX is better for URL-based content (published videos, podcasts, archive research). Many journalists use both depending on workflow.",
+            },
+        ],
+    },
+}
+
+
 RESEARCH_PAGES = {
     "transcription-accuracy-benchmark": {
         "slug": "transcription-accuracy-benchmark",
@@ -2086,6 +2574,7 @@ def get_static_seo_paths():
     paths.extend([f"/compare/{slug}" for slug in COMPARISON_PAGES])
     paths.extend([f"/research/{slug}" for slug in RESEARCH_PAGES])
     paths.extend([f"/help/{slug}" for slug in HELP_PAGES])
+    paths.extend([f"/for/{slug}" for slug in PERSONA_PAGES])
     paths.append("/help")
     paths.append("/press-kit")
     return paths
