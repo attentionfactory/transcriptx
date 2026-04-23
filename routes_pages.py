@@ -21,6 +21,150 @@ def _format_last_updated(iso_date):
         return iso_date or ""
 
 
+def _build_platform_index_html(platform_pages):
+    """Render the 1000+ supported platforms as a searchable HTML table.
+
+    Groups pages alphabetically and wraps in a client-side filter input. Kept in
+    this module (not the template) so the existing research.html stays generic.
+    """
+    from html import escape as h
+
+    rows = sorted(platform_pages.values(), key=lambda p: p.get("display_name", "").lower())
+    total = len(rows)
+
+    # Group into A-Z buckets plus "0-9 / other".
+    buckets = {}
+    for page in rows:
+        name = (page.get("display_name") or "").strip()
+        if not name:
+            continue
+        first = name[0].upper()
+        key = first if first.isalpha() else "0-9"
+        buckets.setdefault(key, []).append(page)
+
+    letters = sorted(k for k in buckets if k != "0-9")
+    if "0-9" in buckets:
+        letters.append("0-9")
+
+    parts = []
+    parts.append(
+        '<div class="platform-index-wrap" style="background:rgba(255,255,255,0.22);'
+        'padding:1.2rem 1.4rem;border-radius:14px;margin:1rem 0;">'
+    )
+    parts.append(
+        f'<p style="font-size:.85rem;opacity:.9;margin-bottom:1rem;">'
+        f'<strong>{total:,} platforms supported.</strong> Search below to check '
+        f'whether a specific source is covered. If you don\'t see a platform here, '
+        f'paste the URL anyway — our generic extractor handles many sites that '
+        f'aren\'t named.</p>'
+    )
+    parts.append(
+        '<input type="text" id="platform-filter" placeholder="Filter — type a platform name..." '
+        'oninput="filterPlatforms()" '
+        'style="width:100%;padding:.7rem 1rem;font-family:inherit;font-size:.8rem;'
+        'border:var(--bw) solid rgba(0,0,0,.3);border-radius:8px;'
+        'background:rgba(255,255,255,.5);margin-bottom:1rem;">'
+    )
+    parts.append(
+        '<div class="platform-letter-nav" style="display:flex;gap:4px;flex-wrap:wrap;'
+        'margin-bottom:1rem;font-size:.7rem;">'
+    )
+    for L in letters:
+        parts.append(
+            f'<a href="#letter-{h(L)}" style="padding:.25rem .45rem;border:var(--bw) solid '
+            f'rgba(0,0,0,.25);border-radius:4px;text-decoration:none;color:var(--ink);'
+            f'background:rgba(255,255,255,.4);">{h(L)}</a>'
+        )
+    parts.append("</div>")
+    parts.append('<div id="platform-sections">')
+    for L in letters:
+        entries = buckets[L]
+        parts.append(
+            f'<section class="platform-letter-section" data-letter="{h(L)}" '
+            f'id="letter-{h(L)}" style="margin-top:1.4rem;">'
+        )
+        parts.append(
+            f'<h3 style="font-family:var(--f-wide);font-size:.9rem;text-transform:uppercase;'
+            f'margin-bottom:.5rem;border-bottom:var(--bw) solid rgba(0,0,0,.25);'
+            f'padding-bottom:.25rem;">{h(L)}</h3>'
+        )
+        parts.append(
+            '<ul class="platform-list" style="list-style:none;padding:0;'
+            'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));'
+            'gap:.25rem .8rem;margin:0;">'
+        )
+        for page in entries:
+            name = h(page.get("display_name") or page.get("slug", ""))
+            path = h(page.get("path", "#"))
+            slug = h(page.get("slug", ""))
+            parts.append(
+                f'<li class="platform-item" data-name="{name.lower()}" '
+                f'data-slug="{slug}" style="font-size:.78rem;padding:.2rem 0;">'
+                f'<a href="{path}" style="color:var(--ink);text-decoration:none;">{name}</a>'
+                f'</li>'
+            )
+        parts.append("</ul>")
+        parts.append("</section>")
+    parts.append("</div>")
+    parts.append("""
+<script>
+(function(){
+  var input = document.getElementById('platform-filter');
+  if (!input) return;
+  window.filterPlatforms = function(){
+    var q = (input.value || '').trim().toLowerCase();
+    var items = document.querySelectorAll('.platform-item');
+    var sections = document.querySelectorAll('.platform-letter-section');
+    if (!q) {
+      items.forEach(function(el){ el.style.display=''; });
+      sections.forEach(function(s){ s.style.display=''; });
+      return;
+    }
+    sections.forEach(function(s){
+      var anyVisible = false;
+      s.querySelectorAll('.platform-item').forEach(function(el){
+        var match = (el.dataset.name || '').indexOf(q) !== -1 ||
+                    (el.dataset.slug || '').indexOf(q) !== -1;
+        el.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      });
+      s.style.display = anyVisible ? '' : 'none';
+    });
+  };
+})();
+</script>
+""")
+    parts.append("</div>")
+
+    # Add context around the index.
+    preamble = """
+<h2>How this list was built</h2>
+<p>This page is auto-generated from TranscriptX's live extractor catalog. When we add a new platform or remove one, this list updates automatically — it's the single source of truth for what we support on a given day.</p>
+<p>Use it to check whether a specific platform is covered before you paste a URL. Platforms are listed by their canonical name; the link on each platform goes to its dedicated transcript page.</p>
+<h2>A note on "1000+ platforms"</h2>
+<p>The raw count is in the 1000-range, but not every platform is equally useful. Most people transcribe from 8-10 of these most of the time: YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud. The long tail — regional news broadcasters, educational platforms, streaming services — is how we stay ahead of single-platform competitors when you need transcripts from somewhere unusual.</p>
+"""
+
+    appendix = """
+<h2>What if a platform isn't listed?</h2>
+<p>A few possibilities:</p>
+<ul>
+<li><strong>Try it anyway.</strong> Our generic extractor handles many sites that aren't named in this list. If the video plays in a standard browser and the URL points at a specific file (not a login wall), we can usually transcribe it.</li>
+<li><strong>The platform is private / login-gated.</strong> Discord stages, internal Slack calls, private Zoom rooms, etc. We can't reach these without authentication. See our <a href="/help/private-video-transcript">private video page</a> for workarounds.</li>
+<li><strong>It's a new platform.</strong> This list updates weekly as extractors are added. If you need a specific platform, email us — it gets prioritized.</li>
+<li><strong>The content is on a CDN we don't know about.</strong> Some enterprise video platforms (Panopto, Kaltura, Brightcove) are supported but the direct CDN URLs aren't. Find the viewer page URL instead.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a href="/compare/best-youtube-transcript-tools">Best YouTube transcript tools</a> — compares TranscriptX against named alternatives</li>
+<li><a href="/help">Help &amp; troubleshooting</a> — common issues and fixes</li>
+<li><a href="/research/transcription-accuracy-benchmark">Accuracy benchmark</a> — how we measure transcript quality</li>
+</ul>
+"""
+
+    return preamble + "".join(parts) + appendix
+
+
 def register_page_routes(
     app,
     *,
@@ -326,10 +470,21 @@ def register_page_routes(
         if not page:
             return ("Research page not found", 404)
         canonical_url = f"https://transcriptx.xyz/research/{slug}"
+
+        # Special case: platform-support-index renders the live list of platforms.
+        # We build the body HTML here so the catalog entry stays small and the
+        # data source (get_platform_pages) stays the single source of truth.
+        if slug == "platform-support-index":
+            page = dict(page)
+            page["body_html"] = _build_platform_index_html(get_platform_pages())
+
+        last_updated_iso = current_lastmod()
         return render_template(
             "research.html",
             page=page,
             canonical_url=canonical_url,
+            last_updated=_format_last_updated(last_updated_iso),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
         )
 
     @app.route("/help")

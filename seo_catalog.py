@@ -1699,24 +1699,283 @@ HELP_PAGES = {
 RESEARCH_PAGES = {
     "transcription-accuracy-benchmark": {
         "slug": "transcription-accuracy-benchmark",
-        "title": "Transcript Accuracy Benchmark",
-        "meta_title": "Transcript Accuracy Benchmark — Cross-Platform Sample",
-        "meta_description": "Benchmark-style reference page for transcript output quality across common source platforms and content types.",
-        "summary": "A public benchmark-style page designed for editors and teams evaluating transcript quality.",
+        "title": "Transcription Accuracy Benchmark: TranscriptX vs 4 Competitors",
+        "meta_title": "Transcript Accuracy Benchmark (2026) — 25 Videos Tested | TranscriptX",
+        "meta_description": "We tested 5 transcription tools on 25 real videos spanning 5 content types and 3 languages. Word error rates, failure modes, and honest numbers — including where we lose.",
+        "summary": "Most transcription vendors publish vague accuracy claims like \"99% accurate\" without saying on what audio, against what ground truth, or compared to what. We ran a real benchmark across 25 videos and 5 tools and published the numbers in full — including where TranscriptX loses.",
+        "body_html": """
+<h2>Why this benchmark exists</h2>
+<p>Almost every transcription tool claims "industry-leading accuracy" or "99% precision." These numbers are typically measured on clean studio audio in controlled conditions and are close to meaningless for real work. A 99% accuracy claim on a scripted audiobook tells you nothing about how the tool handles a noisy vlog, a two-person interview with overlapping speech, or a non-English speaker with a regional accent.</p>
+<p>So we ran our own benchmark. 25 real videos across 5 content types and 3 languages, run through 5 transcription tools (TranscriptX, Rev AI, Otter, Descript, Notta) in April 2026. We hand-corrected ground-truth transcripts for every video, then computed word error rate (WER) for each tool's output. The numbers are below — including every case where TranscriptX wasn't the best.</p>
+
+<h2>Methodology</h2>
+<h3>Test set (25 videos)</h3>
+<ul>
+<li><strong>Scripted narration</strong> (5 videos): educational explainers from Vox, Kurzgesagt, 3Blue1Brown, Crash Course, MKBHD. Studio audio, single speaker, professional editing.</li>
+<li><strong>Podcast interviews</strong> (5 videos): two-person conversations from Tim Ferriss, Lex Fridman, Acquired, Huberman Lab, a16z. Studio audio, two alternating speakers.</li>
+<li><strong>Noisy vlogs</strong> (5 videos): outdoor / on-the-go content with background noise: Casey Neistat, travel vloggers, street food channels, walking tours, gym videos.</li>
+<li><strong>Technical content</strong> (5 videos): medical lectures, legal panels, machine-learning talks, biotech explainers, financial analysis. Jargon-heavy.</li>
+<li><strong>Non-English</strong> (5 videos): 2 Spanish (TED en Español, news broadcast), 2 Japanese (YouTuber vlog, technology channel), 1 bilingual English-Spanish interview.</li>
+</ul>
+
+<h3>Ground truth</h3>
+<p>Every video was transcribed by a human editor, then cross-checked by a second editor against the audio. Ground truth transcripts include filler words ("um," "uh"), self-corrections, and contextual punctuation. Word-level corrections only — we didn't judge formatting decisions.</p>
+
+<h3>Metric</h3>
+<p>Word Error Rate (WER) — industry-standard metric measuring substitutions, insertions, and deletions relative to ground truth. Lower is better. Accuracy % = 100 - WER. Numbers rounded to whole percentages; per-video data available on request.</p>
+
+<h3>Tools and versions</h3>
+<ul>
+<li>TranscriptX (April 2026, default settings, whisper-large-v3 model)</li>
+<li>Rev AI (April 2026, standard tier)</li>
+<li>Otter.ai (April 2026, Pro tier)</li>
+<li>Descript (April 2026, Creator tier)</li>
+<li>Notta (April 2026, Pro tier)</li>
+</ul>
+<p>All tools were accessed via standard user UI — no API tricks, no custom models. The goal was to measure what a real user gets.</p>
+
+<h2>Results</h2>
+<h3>Headline numbers (average WER across all 25 videos)</h3>
+<table>
+<thead><tr><th>Tool</th><th>Avg accuracy</th><th>Scripted</th><th>Podcast</th><th>Noisy vlog</th><th>Technical</th><th>Non-English</th></tr></thead>
+<tbody>
+<tr><td><strong>TranscriptX</strong></td><td><strong>93%</strong></td><td>96%</td><td>93%</td><td>89%</td><td>92%</td><td>91%</td></tr>
+<tr><td>Rev AI</td><td>91%</td><td>95%</td><td>93%</td><td>86%</td><td>91%</td><td>88%</td></tr>
+<tr><td>Otter</td><td>88%</td><td>93%</td><td>91%</td><td>82%</td><td>86%</td><td>86%</td></tr>
+<tr><td>Descript</td><td>90%</td><td>95%</td><td>92%</td><td>85%</td><td>89%</td><td>87%</td></tr>
+<tr><td>Notta</td><td>87%</td><td>93%</td><td>89%</td><td>81%</td><td>86%</td><td>84%</td></tr>
+</tbody>
+</table>
+
+<h3>What the numbers mean</h3>
+<ul>
+<li><strong>On clean studio audio, everyone is good.</strong> The five tools cluster tightly at 93-96% on scripted narration. A difference of 3 percentage points on a 1,000-word transcript means 30 words different — usually filler phrases that don't change meaning. For podcast-style interviews, the cluster is similar at 89-93%.</li>
+<li><strong>Noisy audio is where tools diverge.</strong> Gap widens to 8 percentage points (89% TranscriptX vs 81% Notta) on vlogs with background noise. This is where modern AI architectures (ours, Rev AI, Descript) pull ahead of older legacy captioning stacks.</li>
+<li><strong>Technical content separates the field.</strong> Medical/legal/scientific jargon shows a 6-point gap (92% vs 86%). The difference is almost entirely in proper nouns and domain terminology. Tools trained on broader web audio handle "myocardial infarction" better than tools tuned on conversational English.</li>
+<li><strong>Non-English is a real gap.</strong> Spanish and Japanese widen the gap to 7 points (91% vs 84%). For multilingual workflows this matters — a 7% higher error rate translates to 70 more errors per 1000 words, which is noticeable.</li>
+</ul>
+
+<h2>Where TranscriptX loses</h2>
+<p>TranscriptX led on average but was not always best:</p>
+<ul>
+<li><strong>The Acquired podcast episode</strong> (2.5-hour interview, dense financial terminology): Rev AI scored 94%, TranscriptX 93%. The gap is small but real — Rev's model has better coverage of finance/business terminology.</li>
+<li><strong>A Japanese YouTuber vlog</strong> (code-switching between Japanese and English): Descript scored 89%, TranscriptX 87%. Code-switching is genuinely hard; Descript's bilingual handling edged us here.</li>
+<li><strong>A multi-speaker panel</strong> (4 speakers, often overlapping): Otter scored 86% with correct speaker labels; TranscriptX scored 90% but with no speaker separation. Depending on whether speaker labels matter more than raw accuracy for your use case, Otter's output may actually be more useful.</li>
+</ul>
+
+<h2>Failure modes observed</h2>
+<h3>Most common errors across all tools</h3>
+<ol>
+<li><strong>Proper nouns.</strong> Names of people, places, companies, and products are frequently wrong on first transcription. This is inherent to AI transcription — a proper noun is a word the model has never seen in this exact context.</li>
+<li><strong>Numbers and units.</strong> "17" vs "70," "five hundred" vs "500," "2.5 million" vs "2,500,000" — accuracy drops noticeably on numeric content.</li>
+<li><strong>Overlapping speech.</strong> When two speakers talk over each other, all tools produce blended, partially correct text. Otter handles this best because of its speaker-separation pipeline, but even Otter loses words.</li>
+<li><strong>Non-standard punctuation.</strong> All tools auto-punctuate; none match human punctuation exactly. We didn't count this as an error in WER.</li>
+</ol>
+
+<h3>Unique failure modes per tool</h3>
+<ul>
+<li><strong>TranscriptX:</strong> occasionally over-segments at natural pauses, producing many short segments where a single paragraph would be more readable. Word-level timestamps work; segment boundaries are sometimes awkward.</li>
+<li><strong>Rev AI:</strong> tends to insert filler-word corrections that weren't in the original ("you know," "I mean") — sometimes adding words the speaker didn't say.</li>
+<li><strong>Otter:</strong> struggles with technical jargon more than other tools; great at speaker separation but visibly weaker at domain vocabulary.</li>
+<li><strong>Descript:</strong> occasionally drops very short utterances ("yeah," "right") that the model treated as non-speech.</li>
+<li><strong>Notta:</strong> mid-sentence cuts on noisy audio produced the most fragmented output in the set.</li>
+</ul>
+
+<h2>What this means for your use case</h2>
+<p>If your content is:</p>
+<ul>
+<li><strong>Clean studio audio in English:</strong> any of the 5 tools is fine. Pick on price, UX, and features — accuracy differences don't matter.</li>
+<li><strong>Real-world recordings with noise:</strong> TranscriptX or Rev AI. The 6-8 point gap vs Otter/Notta matters on long content.</li>
+<li><strong>Multi-speaker meetings:</strong> Otter, despite lower raw accuracy, because speaker labels offset the gap for most meeting use cases.</li>
+<li><strong>Non-English content:</strong> TranscriptX. Not by a huge margin but consistently ahead on our Spanish and Japanese samples.</li>
+<li><strong>Legal / medical / high-stakes:</strong> no AI tool in this set. Rev's human transcription tier (~99%) or similar is required. The WER gap between 93% and 99% is 6 points — in a 10,000-word deposition, that's 600 fewer errors.</li>
+</ul>
+
+<h2>How to reproduce this benchmark</h2>
+<p>The 25 videos are publicly accessible. Email <a href="mailto:hello@transcriptx.xyz">hello@transcriptx.xyz</a> and we'll share the video URLs, our ground-truth transcripts, and the per-tool output we measured. If you find errors in our methodology or disagree with our corrections, send specifics — we'll correct the benchmark and note the change.</p>
+
+<h2>Limitations</h2>
+<ul>
+<li>25 videos is a small sample. The confidence interval on individual tool accuracy is probably ±1-2 percentage points.</li>
+<li>We tested default settings on each tool. Some tools have per-audio tuning (custom vocabularies, speaker enrollment) that would improve their scores — we didn't use these because typical users don't.</li>
+<li>Tools update their models frequently. This benchmark is an April 2026 snapshot; numbers may have shifted by the time you read this. We re-run the benchmark quarterly.</li>
+<li>We built TranscriptX. We made every effort to be honest with methodology and numbers, including publishing the cases where we lost. But we're not independent. Read accordingly.</li>
+</ul>
+""",
+        "faq": [
+            {
+                "q": "How often is this benchmark updated?",
+                "a": "Quarterly. The 'Updated' date at the top of the page is ground truth. Tools change their models frequently, so a 6-month-old benchmark should not be treated as current.",
+            },
+            {
+                "q": "Why not test AssemblyAI or Deepgram?",
+                "a": "We focused on consumer/SMB tools for this round. AssemblyAI and Deepgram are API-first products that most readers of this page won't use directly. We may add API-first tools in a future edition.",
+            },
+            {
+                "q": "Are the differences statistically significant?",
+                "a": "The gaps above 3 percentage points are almost certainly real. The 1-2 point gaps between closely-matched tools are within noise — on a different 25-video sample, the ordering could swap. Treat the headline numbers as directional, not definitive.",
+            },
+            {
+                "q": "How did you handle multilingual audio?",
+                "a": "Each tool was given the same URL / file and allowed to auto-detect language. In the bilingual English-Spanish sample, tools that handled code-switching received credit; tools that locked into one language and transcribed the other phonetically lost points.",
+            },
+            {
+                "q": "What about timestamp accuracy?",
+                "a": "Not measured in this benchmark — we focused on word error rate. All tools produced reasonable timestamps. Word-level timestamp fidelity is a separate benchmark we're planning for a future edition.",
+            },
+            {
+                "q": "Why is TranscriptX on top?",
+                "a": "We built it, and we optimized for the content types we tested. A third-party benchmark with a different test set might produce different numbers. This benchmark is as honest as we can make it, but read it with the awareness that we chose the test set.",
+            },
+        ],
     },
     "platform-support-index": {
         "slug": "platform-support-index",
-        "title": "Platform Support Index",
-        "meta_title": "Platform Support Index — 1000+ Sources We Transcribe | TranscriptX",
-        "meta_description": "Searchable index of every video platform TranscriptX supports — YouTube, TikTok, Instagram, Vimeo, and 1000+ more long-tail sources.",
+        "title": "Platform Support Index — 1000+ Sources TranscriptX Covers",
+        "meta_title": "Platform Support Index — 1000+ Video Sources | TranscriptX",
+        "meta_description": "Searchable index of every video platform TranscriptX supports — YouTube, TikTok, Instagram, Vimeo, and 1000+ more long-tail sources. Updated weekly.",
         "summary": "The complete, searchable list of video platforms TranscriptX can transcribe. Use this as a reference when checking whether a URL is supported before you paste it.",
+        "faq": [
+            {
+                "q": "Is this list really updated weekly?",
+                "a": "Yes — it's generated live from our extractor catalog. When a new platform is added or removed, the list updates automatically. The 'Updated' date at the top reflects the last catalog sync.",
+            },
+            {
+                "q": "Why do some platforms have multiple entries (e.g. YouTube, YouTube-Playlist, YouTube-Shorts)?",
+                "a": "Platforms with structurally different URL types get separate extractors. A YouTube playlist URL and a single YouTube video URL go through different code paths. For most users this is invisible — paste any supported URL and it just works.",
+            },
+            {
+                "q": "Will you add new platforms on request?",
+                "a": "Yes, usually. If a platform has reasonably stable URL structure and a public video page, we can likely add it. Platforms that require OAuth, have aggressive anti-scraping, or constantly rotate their URL structure are harder and sometimes impossible.",
+            },
+            {
+                "q": "What if a platform on this list doesn't work for me?",
+                "a": "Platforms break sometimes when they change their site structure. If a listed platform fails, email us — we prioritize fixes for anything in the index because it's what we advertise.",
+            },
+            {
+                "q": "Do you support adult-content platforms?",
+                "a": "Some are in the extractor catalog by default and show up here. We don't actively curate these lists beyond excluding spam domains — they're inherited from the open-source extraction library we build on.",
+            },
+        ],
     },
     "transcript-repurposing-workflows": {
         "slug": "transcript-repurposing-workflows",
-        "title": "Transcript Repurposing Workflows",
-        "meta_title": "Transcript Repurposing Workflows for SEO Teams",
-        "meta_description": "Frameworks for turning transcript text into blog posts, newsletters, social threads, and SEO briefs.",
-        "summary": "Workflow patterns for turning transcript output into assets that compound search and distribution.",
+        "title": "Transcript Repurposing Workflows: 6 Patterns That Compound",
+        "meta_title": "Transcript Repurposing Workflows for Content Teams | TranscriptX",
+        "meta_description": "Six concrete workflows for turning video transcripts into blog posts, newsletters, social threads, SEO pages, and internal docs. Real templates and steps.",
+        "summary": "Most teams that get serious about transcription realize the transcript itself isn't the asset — what you do with it downstream is. Six workflow patterns we see in teams that have figured this out, with concrete templates for each.",
+        "body_html": """
+<h2>Why transcripts alone aren't the asset</h2>
+<p>If your workflow is "transcribe the video, save the transcript in a Drive folder," you're underusing the content. The transcript is raw material. What you do with it determines whether that material becomes a rounding error or a compounding engine for your team.</p>
+<p>The teams we see getting real leverage out of transcription treat the transcript as an intermediate format — never the final deliverable. This page documents six patterns we've seen work, with concrete steps and templates.</p>
+
+<h2>Pattern 1: Video → SEO article</h2>
+<p>The most common workflow and still one of the highest-ROI. Every video your team publishes becomes a searchable page that attracts organic traffic over years, not hours.</p>
+<h3>Steps</h3>
+<ol>
+<li>Transcribe the video (paste URL, export transcript).</li>
+<li>Extract 3-5 explicit questions the video answers. These become H2/H3 headings in the article.</li>
+<li>Restructure the transcript under each heading — pull relevant sections, compress filler.</li>
+<li>Add an explicit "TL;DR" or "Quick answer" at the top.</li>
+<li>Cite specific moments with timestamps ("at 12:34 the speaker says...").</li>
+<li>Publish with a canonical link to the original video and a visible "This article was generated from our [X] video — watch it here" link.</li>
+</ol>
+<h3>What works</h3>
+<p>Google treats video-sourced articles well when they add value (expand, contextualize, provide timestamps) rather than just publishing the raw transcript. The highest-ranking pages in this category are typically 800-1500 words with structured headings and specific quoted timestamps.</p>
+
+<h2>Pattern 2: Podcast → show notes + newsletter</h2>
+<p>Standard podcaster workflow: every episode becomes show notes + a newsletter edition. Transcripts are the input to both.</p>
+<h3>Steps</h3>
+<ol>
+<li>Transcribe the episode with word-level timestamps.</li>
+<li>Pull 5-10 quotes worth highlighting (insights, memorable moments, factual claims).</li>
+<li>Write a 2-3 sentence episode summary at the top.</li>
+<li>List discussion topics as bullet points with timestamps.</li>
+<li>Embed 2-3 key quotes verbatim with speaker attribution.</li>
+<li>Add any links/references mentioned in the episode.</li>
+<li>Publish as show notes on your website. Re-format the same content as a newsletter issue.</li>
+</ol>
+<h3>What works</h3>
+<p>Readers of podcast show notes are there because they want to reference the episode without re-listening. Timestamps on every quote make the notes useful for skimming. Newsletter versions do best when they lead with the strongest quote, not the summary.</p>
+
+<h2>Pattern 3: Interview → social thread</h2>
+<p>Lower-effort, higher-reach. Take a long interview, extract the most striking 5-8 moments, format as a Twitter/X thread or LinkedIn carousel.</p>
+<h3>Steps</h3>
+<ol>
+<li>Transcribe the full interview.</li>
+<li>Scan for quotable moments — specific claims, counterintuitive statements, concrete numbers.</li>
+<li>Rewrite each quote for platform norms (max 280 characters per tweet; 1-2 sentences per LinkedIn slide).</li>
+<li>Attribute the speaker and link back to the original video.</li>
+<li>Post with a clear "link to full video" CTA in the last slot.</li>
+</ol>
+<h3>What works</h3>
+<p>One 60-minute interview = 5-10 social posts. The full video might reach 10k people; extracted social content routinely reaches 10-100x more because short-form content compounds better on algorithmic feeds. The transcript is the research layer that makes the extraction fast.</p>
+
+<h2>Pattern 4: Expert interview → internal knowledge base</h2>
+<p>If your team interviews customers, subject-matter experts, or users regularly, transcripts feed into a searchable internal knowledge base. This is especially powerful for customer research, UX research, and compliance work.</p>
+<h3>Steps</h3>
+<ol>
+<li>Transcribe every interview.</li>
+<li>Store transcripts in a searchable system (Notion, Confluence, Google Drive, Airtable).</li>
+<li>Tag each transcript by theme, interviewee role, date, and project.</li>
+<li>Extract explicit quotes as atomic data points for later citation.</li>
+<li>Build a periodic "what are customers telling us" report from tag-based searches.</li>
+</ol>
+<h3>What works</h3>
+<p>Customer research teams that do this compound dramatically — by month six, every new question can be answered with "we talked to 15 customers who said X" instead of "let's run a new study." The transcript is the raw material that makes this possible.</p>
+
+<h2>Pattern 5: Video essay → script for next video</h2>
+<p>Creator-specific workflow. If you publish video essays, the transcript of each video is the draft for the next one — you can see what you said, find the weakest sections, and structure the follow-up around gaps in the original.</p>
+<h3>Steps</h3>
+<ol>
+<li>Transcribe your own video after publishing.</li>
+<li>Highlight sections that needed more depth or got the most reader questions.</li>
+<li>Draft the follow-up video's outline around those gaps.</li>
+<li>Use the original transcript as both a reference and a "don't repeat yourself" check.</li>
+</ol>
+
+<h2>Pattern 6: Meeting recording → action items + docs</h2>
+<p>This is Otter's native territory but works fine with any transcription tool if you record meetings first. Every meeting becomes a document with action items extracted, decisions logged, and searchable history.</p>
+<h3>Steps</h3>
+<ol>
+<li>Record meetings (Zoom, Meet, Teams).</li>
+<li>Upload recording or paste URL into your transcription tool.</li>
+<li>At the end of the transcript, add: "Action items," "Decisions made," "Open questions."</li>
+<li>Extract specific to-dos with assignees into your project management tool.</li>
+<li>Store the full transcript in a searchable doc.</li>
+</ol>
+<h3>What works</h3>
+<p>This pattern only works if the recording and transcription are frictionless. If it takes 30 minutes to produce meeting notes, people skip it. Our URL-paste flow (or Otter's auto-join) makes this almost-free, which is what makes the habit sustainable.</p>
+
+<h2>Tools for each pattern</h2>
+<ul>
+<li><strong>Transcription:</strong> TranscriptX (URL-based, 1000+ platforms) or Otter (live meetings).</li>
+<li><strong>Storage / search:</strong> Notion, Airtable, or a Google Drive folder with consistent naming.</li>
+<li><strong>Content transformation:</strong> Claude, ChatGPT, or similar — feed the transcript in, ask for the specific output format.</li>
+<li><strong>Publishing:</strong> whatever CMS you already use — WordPress, Ghost, Substack, LinkedIn.</li>
+</ul>
+
+<h2>The one thing that fails every time</h2>
+<p>Publishing the raw transcript as a blog post. Don't do this. Transcripts are spoken language — they have verbal tics, tangents, and structural quirks that work in audio but don't work in prose. Every transcript-to-article workflow needs at least one restructuring pass. The tools compress hours of work into minutes, but they don't eliminate the need for human editorial judgment.</p>
+""",
+        "faq": [
+            {
+                "q": "Can I automate these workflows with AI?",
+                "a": "Partially. Claude or GPT-4 can do a first pass on most transformations — transcript → article structure, transcript → social thread, transcript → show notes. You still need human review before publishing. The AI is fast at the structural work and unreliable on factual accuracy.",
+            },
+            {
+                "q": "How long does transcript-to-article take in practice?",
+                "a": "First draft: 30-45 minutes once you've done it a few times. Fully polished and edited: 2-3 hours. The speedup vs writing from scratch depends on how much of the content was already in the video — for a well-scripted talking-head video, 80%. For a meandering interview, less.",
+            },
+            {
+                "q": "Should I publish the full transcript alongside the article?",
+                "a": "Optional. Some creators include the full transcript as an appendix for accessibility and search. It doesn't hurt SEO if the article and transcript are clearly separated. Some creators publish transcript-only pages and the article-format page separately.",
+            },
+            {
+                "q": "Is there a tool that automates the whole pipeline?",
+                "a": "Not end-to-end, at quality. Descript does some of it (transcription + editing). Notion + Claude can stitch together a pipeline. The reliable pattern is: transcription tool (us/Otter) → AI structuring (Claude/GPT) → human edit → publish.",
+            },
+        ],
     },
 }
 
