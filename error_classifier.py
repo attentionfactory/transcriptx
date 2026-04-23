@@ -4,7 +4,10 @@ error_classifier.py — Unified error classification for user-facing messages
 Maps raw exceptions and error strings to structured, actionable error responses.
 """
 
+import logging
 import re
+
+log = logging.getLogger(__name__)
 
 
 def classify_user_error(error_message, context="transcription"):
@@ -217,6 +220,66 @@ def classify_user_error(error_message, context="transcription"):
         }
 
     # ============================================================
+    # YOUTUBE PREMIUM / PAID MEMBERSHIP CONTENT
+    # ============================================================
+    if any(x in msg for x in ["youtube premium", "music premium", "join this channel", "channel's members", "members on level"]):
+        return {
+            "message": "This video is for paid members only",
+            "action": "YouTube Premium, Music Premium, and channel memberships aren't accessible to us. Download it through your own account, then upload the file.",
+            "help_url": "/help/upload-audio-file-transcript",
+            "severity": "user_error",
+            "retry_after": 0,
+        }
+
+    # ============================================================
+    # LIVE STREAM IN PROGRESS / NOT YET STARTED
+    # ============================================================
+    if any(x in msg for x in ["live event will begin", "live stream hasn't started", "stream hasn't started", "this live event", "is currently live"]):
+        return {
+            "message": "This live stream hasn't finished yet",
+            "action": "Wait until the stream ends and YouTube finishes processing the recording, then try again.",
+            "help_url": "/help",
+            "severity": "user_error",
+            "retry_after": 0,
+        }
+
+    # ============================================================
+    # PREMIERE SCHEDULED FOR FUTURE
+    # ============================================================
+    if any(x in msg for x in ["premieres in", "premiere will begin", "scheduled to start"]):
+        return {
+            "message": "This video hasn't premiered yet",
+            "action": "The video is scheduled for a future premiere. Come back after it airs.",
+            "help_url": "/help",
+            "severity": "user_error",
+            "retry_after": 0,
+        }
+
+    # ============================================================
+    # PAID VIDEO / PURCHASE / RENTAL REQUIRED
+    # ============================================================
+    if any(x in msg for x in ["requires payment", "purchase this video", "this video is a rental", "this video is for purchase"]):
+        return {
+            "message": "This video requires payment to watch",
+            "action": "Paid rentals and purchases aren't supported. Download it through your own account, then upload the file.",
+            "help_url": "/help/upload-audio-file-transcript",
+            "severity": "user_error",
+            "retry_after": 0,
+        }
+
+    # ============================================================
+    # COPYRIGHT-BLOCKED
+    # ============================================================
+    if any(x in msg for x in ["copyright grounds", "copyright claim", "blocked on copyright"]):
+        return {
+            "message": "This video is copyright-blocked",
+            "action": "The rights holder has blocked this video in our servers' region. Try an official mirror or a different upload.",
+            "help_url": "/help/region-locked-video-transcript",
+            "severity": "user_error",
+            "retry_after": 0,
+        }
+
+    # ============================================================
     # FALLBACK: UNKNOWN ERROR
     # ============================================================
     return _unknown_error(context, error_message)
@@ -226,6 +289,10 @@ def _unknown_error(context="operation", raw_error=None):
     """Fallback for errors we can't classify."""
     # Truncate raw error to avoid leaking sensitive internals
     safe_error = str(raw_error)[:100] if raw_error else ""
+
+    # Log so we can expand pattern coverage — grep for "[unclassified]"
+    if raw_error:
+        log.warning("[unclassified] context=%s raw=%r", context, safe_error)
 
     return {
         "message": f"Something went wrong with {context}",

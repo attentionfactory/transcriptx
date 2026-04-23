@@ -1172,10 +1172,22 @@
                 const keptMsg = d.credit_kept
                     ? `<div style="font-size:0.7rem;opacity:0.7;margin-top:6px;">This used 1 credit because we still processed the link. <a href="/pricing#refund-policy" style="color:var(--ink);text-decoration:underline;">Why?</a></div>`
                     : '';
+                const actionMsg = d.action
+                    ? `<div style="font-size:0.8rem;opacity:0.85;margin-top:4px;">${d.action}</div>`
+                    : '';
+                const retryMsg = d.retry_after
+                    ? `<div style="font-size:0.75rem;opacity:0.7;margin-top:4px;">Try again in ${d.retry_after}s</div>`
+                    : '';
+                const helpLink = d.help_url
+                    ? `<div style="font-size:0.75rem;margin-top:6px;"><a href="${d.help_url}" style="color:var(--ink);text-decoration:underline;">See how to fix this →</a></div>`
+                    : '';
                 c.insertAdjacentHTML('afterbegin', `
                     <div class="result-card err">
                         <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
                         <div style="color:var(--red);font-size:0.85rem;">${d.error||'Unknown error'}</div>
+                        ${actionMsg}
+                        ${retryMsg}
+                        ${helpLink}
                         ${keptMsg}
                     </div>`);
                 return;
