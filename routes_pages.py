@@ -56,10 +56,9 @@ def _build_platform_index_html(platform_pages):
     )
     parts.append(
         f'<p style="font-size:.85rem;opacity:.9;margin-bottom:1rem;">'
-        f'<strong>{total:,} platforms supported.</strong> Search below to check '
-        f'whether a specific source is covered. If you don\'t see a platform here, '
-        f'paste the URL anyway — our generic extractor handles many sites that '
-        f'aren\'t named.</p>'
+        f"<strong>{total:,} sites and counting.</strong> Not sure if yours is on the list? "
+        f"Search below. And even if you don't find it, paste the link anyway — we can "
+        f"often handle sites we haven't officially listed.</p>"
     )
     parts.append(
         '<input type="text" id="platform-filter" placeholder="Filter — type a platform name..." '
@@ -141,27 +140,27 @@ def _build_platform_index_html(platform_pages):
 
     # Add context around the index.
     preamble = """
-<h2>How this list was built</h2>
-<p>This page is auto-generated from TranscriptX's live extractor catalog. When we add a new platform or remove one, this list updates automatically — it's the single source of truth for what we support on a given day.</p>
-<p>Use it to check whether a specific platform is covered before you paste a URL. Platforms are listed by their canonical name; the link on each platform goes to its dedicated transcript page.</p>
-<h2>A note on "1000+ platforms"</h2>
-<p>The raw count is in the 1000-range, but not every platform is equally useful. Most people transcribe from 8-10 of these most of the time: YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud. The long tail — regional news broadcasters, educational platforms, streaming services — is how we stay ahead of single-platform competitors when you need transcripts from somewhere unusual.</p>
+<h2>How to use this</h2>
+<p>If you're wondering whether we can transcribe a video from a specific site, check here first. The list below stays in sync with what we actually support — when we add a new site, it shows up automatically.</p>
+<p>Each site name links to its own page with a bit more detail, in case you want to read up before pasting a link.</p>
+<h2>Where most people actually transcribe from</h2>
+<p>The list is long, but most of the time people are pulling videos from 8 or 9 familiar spots: YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud. The rest is the long list of everything else — regional news, niche streaming, educational sites, and so on — so you've got options when the video you need isn't on a mainstream site.</p>
 """
 
     appendix = """
-<h2>What if a platform isn't listed?</h2>
-<p>A few possibilities:</p>
+<h2>Don't see your site?</h2>
+<p>A few things to try:</p>
 <ul>
-<li><strong>Try it anyway.</strong> Our generic extractor handles many sites that aren't named in this list. If the video plays in a standard browser and the URL points at a specific file (not a login wall), we can usually transcribe it.</li>
-<li><strong>The platform is private / login-gated.</strong> Discord stages, internal Slack calls, private Zoom rooms, etc. We can't reach these without authentication. See our <a href="/help/private-video-transcript">private video page</a> for workarounds.</li>
-<li><strong>It's a new platform.</strong> This list updates weekly as extractors are added. If you need a specific platform, email us — it gets prioritized.</li>
-<li><strong>The content is on a CDN we don't know about.</strong> Some enterprise video platforms (Panopto, Kaltura, Brightcove) are supported but the direct CDN URLs aren't. Find the viewer page URL instead.</li>
+<li><strong>Paste the link anyway.</strong> We can often handle sites we haven't officially listed. If the video plays in a normal browser without a login, there's a good chance it'll work.</li>
+<li><strong>Is it behind a login?</strong> Discord calls, private Zoom rooms, internal Slack — we can't reach those without being logged in. <a href="/help/private-video-transcript">Here's the workaround</a>.</li>
+<li><strong>Is it a brand-new site?</strong> We add new ones fairly regularly. Email us with the site you need and we'll take a look.</li>
+<li><strong>Some enterprise video tools are funny.</strong> Panopto, Kaltura, Brightcove — we support them, but you need the link to the viewer page (the one where you watch), not the raw media URL.</li>
 </ul>
-<h2>Related</h2>
+<h2>Also worth a look</h2>
 <ul>
-<li><a href="/compare/best-youtube-transcript-tools">Best YouTube transcript tools</a> — compares TranscriptX against named alternatives</li>
-<li><a href="/help">Help &amp; troubleshooting</a> — common issues and fixes</li>
-<li><a href="/research/transcription-accuracy-benchmark">Accuracy benchmark</a> — how we measure transcript quality</li>
+<li><a href="/compare/best-youtube-transcript-tools">How we compare to other transcript tools</a></li>
+<li><a href="/help">Help &amp; troubleshooting</a> — if something's not working, the fix is probably here</li>
+<li><a href="/research/transcription-accuracy-benchmark">How accurate is this really?</a> — honest numbers against 4 other tools</li>
 </ul>
 """
 
@@ -258,7 +257,7 @@ def register_page_routes(
         primary = "/youtube-transcript-generator" if "youtube" in platform else "/video-to-transcript"
         return [
             {"href": primary, "label": "Main transcript workflow"},
-            {"href": "/research/platform-support-index", "label": "Platform support index"},
+            {"href": "/research/platform-support-index", "label": "Sites we support"},
             {"href": "/compare/best-youtube-transcript-tools", "label": "Tool comparison"},
         ]
 

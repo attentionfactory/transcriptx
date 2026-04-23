@@ -260,19 +260,19 @@ HEAD_TERM_PAGES = {
         "path": "/video-to-transcript",
         "slug": "video-to-transcript",
         "title": "Video to Transcript — 1000+ Platforms Supported | TranscriptX",
-        "description": "Convert online videos to transcript text from YouTube, TikTok, Instagram, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud, and 1000+ more platforms with one URL paste.",
+        "description": "Convert online videos to transcript text from YouTube, TikTok, Instagram, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud, and 1000+ more platforms by pasting a link.",
         "h1": "Video to Transcript",
-        "intro": "Use one transcript pipeline for videos across every major platform. Paste any supported URL and get structured transcript output with word-level timestamps in 60 seconds.",
+        "intro": "Use one transcript pipeline for videos across every major platform. Paste any supported URL and get a clean transcript with word-level timestamps in 60 seconds.",
         "keyword": "video to transcript",
         "platform": "Multi-platform",
         "cta_label": "Extract Transcript",
         "body_html": """
-<h2>Why platform breadth matters</h2>
+<h2>Why the number of sites we cover matters</h2>
 <p>Most transcription tools handle one or two platforms. YouTube-only tools work great if all your content is on YouTube. The moment you also need to transcribe a TikTok, Instagram Reel, Vimeo video, LinkedIn post with embedded video, Reddit-hosted clip, SoundCloud track, or a Zoom recording uploaded to Drive — you're back to a different tool, a different workflow, a different export format.</p>
-<p>TranscriptX handles 1000+ platforms from a single URL paste. Same accuracy, same export formats, same workflow. This is the actual moat of the product — not "we have AI" (everyone does) but "we handle the platform diversity that real workflows actually have."</p>
+<p>TranscriptX handles 1000+ platforms by pasting a single link. Same accuracy, same export formats, same workflow. This is the actual moat of the product — not "we have AI" (everyone does) but "we handle the platform diversity that real workflows actually have."</p>
 
 <h2>Platforms covered</h2>
-<p>The full list lives at our <a href="/research/platform-support-index">searchable platform index</a> with all 1000+ entries. The major ones:</p>
+<p>The full list lives at our <a href="/research/platform-support-index">full list of sites we support</a> with all 1000+ entries. The major ones:</p>
 <ul>
 <li><strong>Video sites:</strong> YouTube, Vimeo, TikTok, Instagram, Facebook, X (Twitter), Reddit, LinkedIn, Twitch, Dailymotion</li>
 <li><strong>Streaming services:</strong> BBC iPlayer (region-permitting), Hulu, Crunchyroll, Niconico, Bilibili, many regional broadcasters</li>
@@ -323,10 +323,10 @@ HEAD_TERM_PAGES = {
 </ul>
 """,
         "faq": [
-            {"q": "Which platforms are supported?", "a": "1000+ — see our <a href=\"/research/platform-support-index\">searchable platform index</a> for the complete list. Major platforms include YouTube, TikTok, Instagram, Vimeo, X (Twitter), Facebook, Reddit, LinkedIn, Twitch, SoundCloud."},
+            {"q": "Which platforms are supported?", "a": "1000+ — see our <a href=\"/research/platform-support-index\">full list of sites we support</a> for the complete list. Major platforms include YouTube, TikTok, Instagram, Vimeo, X (Twitter), Facebook, Reddit, LinkedIn, Twitch, SoundCloud."},
             {"q": "Can teams export data?", "a": "Yes — TXT, CSV, JSON exports. JSON includes word-level timestamps for programmatic use; CSV drops into Notion, Airtable, or Excel cleanly."},
             {"q": "What if my platform isn't in the list?", "a": "Try the URL anyway — our generic extractor handles many unlisted platforms. If it fails, the workaround is to upload the video to Google Drive with public sharing and paste the Drive URL."},
-            {"q": "Does this work on TikTok and Instagram?", "a": "Yes for both, via direct URL paste. Reels and TikTok videos work reliably; Instagram Stories are harder due to their auth-gated, ephemeral nature — see our <a href=\"/help/instagram-story-transcript\">Story-specific help page</a>."},
+            {"q": "Does this work on TikTok and Instagram?", "a": "Yes for both, by pasting a link directly. Reels and TikTok videos work reliably; Instagram Stories are harder due to their auth-gated, ephemeral nature — see our <a href=\"/help/instagram-story-transcript\">Story-specific help page</a>."},
             {"q": "Can I transcribe a Zoom recording?", "a": "Yes if you upload it to Google Drive (or similar) with public link sharing first, then paste the Drive URL. We don't currently join live Zoom calls — for live capture use Otter."},
             {"q": "What about region-locked content?", "a": "If the video isn't available in our server's region, we can't reach it. Workarounds in our <a href=\"/help/region-locked-video-transcript\">region-lock help page</a>."},
             {"q": "Are private videos supported?", "a": "Not without authentication. Most external tools have this same limitation. See our <a href=\"/help/private-video-transcript\">private video help page</a> for the workarounds."},
@@ -440,11 +440,11 @@ CURATED_PLATFORM_OVERRIDES = {
     },
     "twitter": {
         "display": "X (Twitter)",
-        "intro": "Extract transcript-ready text from X video posts for editorial workflows and quote capture.",
+        "intro": "Extract transcript-ready text from X video posts for writing and editing and quote capture.",
     },
     "x-twitter": {
         "display": "X (Twitter)",
-        "intro": "Extract transcript-ready text from X video posts for editorial workflows and quote capture.",
+        "intro": "Extract transcript-ready text from X video posts for writing and editing and quote capture.",
     },
     "facebook": {
         "display": "Facebook",
@@ -788,7 +788,7 @@ COMPARISON_PAGES = {
             },
             {
                 "persona": "You transcribe videos from many platforms (TikTok, Instagram, Reddit, Vimeo, LinkedIn, etc.)",
-                "pick": "TranscriptX. This is our actual moat — we handle 1000+ platforms from a single URL paste. Every other tool here is YouTube-only, meetings-only, or requires manual file upload.",
+                "pick": "TranscriptX. This is our actual moat — we handle 1000+ platforms by pasting a single link. Every other tool here is YouTube-only, meetings-only, or requires manual file upload.",
             },
             {
                 "persona": "Your team runs meetings in Zoom / Google Meet / Teams and you want automatic notes",
@@ -835,15 +835,15 @@ COMPARISON_PAGES = {
 
 <h3>TranscriptX — best for multi-platform URL transcription</h3>
 <p>Full disclosure: we built this. Honest take on where we win and where we don't.</p>
-<p><strong>Where we win:</strong> platform breadth. We handle 1000+ sources — YouTube, TikTok, Instagram, X, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud, and a long tail of regional streaming services. Paste any public video URL and we extract the audio and transcribe it. No upload, no file conversion, no "install this extension first."</p>
+<p><strong>Where we win:</strong> the number of sites we cover. We handle 1000+ sources — YouTube, TikTok, Instagram, X, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud, and a long tail of regional streaming services. Paste any public video URL and we extract the audio and transcribe it. No upload, no file conversion, no "install this extension first."</p>
 <p>Our engine handles noisy real-world audio, accents, and technical vocabulary better than YouTube's native auto-captions. Word-level and segment-level timestamps are returned by default, and the output is structured for repurposing (CSV/JSON export, not just copy-paste).</p>
 <p><strong>Where we lose:</strong> we don't do live meetings (use Otter), we don't replace your video editor (use Descript), and we don't do human-verified transcripts (use Rev). Our API is on the roadmap but not shipped yet.</p>
-<p><strong>Use it when:</strong> you transcribe URL-based content across more than one platform, you want cheap unlimited usage ($3.99/mo), and you care about exportable, timestamped output.</p>
+<p><strong>Use it when:</strong> you transcribe public videos and podcasts across more than one platform, you want cheap unlimited usage ($3.99/mo), and you care about exportable, timestamped output.</p>
 
 <h3>Otter.ai — the meeting notes tool</h3>
 <p>Otter isn't really a transcript tool; it's a meeting assistant. It joins your Zoom/Google Meet/Teams calls as a bot, transcribes the whole meeting in real-time with speaker attribution, and dumps shared notes into your team's workspace. For that use case it's excellent.</p>
-<p>You <em>can</em> upload YouTube audio to Otter and get a transcript out, but it's not the path of least resistance — the tool's UX is optimized around meetings, not URL-based content. Accuracy is good (~90% on clear audio). Integrations with Slack, Notion, and Salesforce are best-in-class. Pricing is $8.33/mo annually with a generous 300-min free tier.</p>
-<p><strong>Use it when:</strong> team meetings are the unit of work. Skip if your content is URL-based video.</p>
+<p>You <em>can</em> upload YouTube audio to Otter and get a transcript out, but it's not the path of least resistance — the tool's UX is optimized around meetings, not public videos and podcasts. Accuracy is good (~90% on clear audio). Integrations with Slack, Notion, and Salesforce are best-in-class. Pricing is $8.33/mo annually with a generous 300-min free tier.</p>
+<p><strong>Use it when:</strong> team meetings are the unit of work. Skip if your content is videos from a link.</p>
 
 <h3>Descript — the transcript-as-editor</h3>
 <p>Descript is a video/audio editor where the transcript IS the timeline. Delete a word in the transcript, the corresponding audio gets cut. Move a paragraph, the footage moves. If you're editing podcasts or YouTube essays, this is transformative. If you just want a transcript, it's overkill.</p>
@@ -852,7 +852,7 @@ COMPARISON_PAGES = {
 
 <h3>Notta — middle-of-the-road multi-source</h3>
 <p>Notta sits between Otter and TranscriptX functionally: multi-source transcription (including YouTube URLs), some live meeting support, solid export options. Accuracy hovers around 89% on clear audio. The free tier is stingy at 120 minutes total (not per month), so it's more of a "try before you buy" than a usable free plan.</p>
-<p><strong>Use it when:</strong> you want a single tool that does both meetings and URL-based transcription moderately well, and Otter's meeting-centric UX feels wrong.</p>
+<p><strong>Use it when:</strong> you want a single tool that does both meetings and transcribing from a link moderately well, and Otter's meeting-centric UX feels wrong.</p>
 
 <h3>Rev — human transcription, 99% accurate</h3>
 <p>Rev is the only tool on this list where human-verified accuracy is the default. At $0.25/min you submit audio and get a human-transcribed result in 12-24 hours, with documented quality guarantees suitable for legal depositions, medical records, and published journalism. Rev also has an AI tier at $14.99/mo that's comparable to other AI tools on this list.</p>
@@ -881,7 +881,7 @@ COMPARISON_PAGES = {
 <p>For most readers of this page, the answer is one of three:</p>
 <ol>
 <li><strong>YouTube CC + your eyes</strong> if this is a one-off, you'll read it once, and you don't care about downstream usage.</li>
-<li><strong>TranscriptX</strong> if you transcribe URL-based content across multiple platforms and want cheap, fast, exportable output. (Yes we're biased.)</li>
+<li><strong>TranscriptX</strong> if you transcribe public videos and podcasts across multiple platforms and want cheap, fast, exportable output. (Yes we're biased.)</li>
 <li><strong>Otter</strong> if most of your content is live meetings and you want notes dropped into your team's workspace automatically.</li>
 </ol>
 <p>Everything else on this list is a specialist tool that's the right answer for a narrow use case. If you're in that narrow use case, you already know it. If you're not, pick from the three above.</p>
@@ -890,7 +890,7 @@ COMPARISON_PAGES = {
             "Pick by use case, not marketing copy. Every tool on this list is 'best' for someone — the question is whether that someone is you.",
             "Don't over-index on accuracy percentages. The difference between 89% and 92% matters less than whether the tool supports your platform and workflow.",
             "For anything legal or compliance-related, pay for human transcription. AI tools at 95% still produce 5 errors per hundred words — in a 10,000-word deposition that's 500 mistakes.",
-            "If your bottleneck is 'I transcribe from 8 different platforms', stop trying to make meeting-centric tools work for URL-based content. That's what we built TranscriptX to solve.",
+            "If your bottleneck is 'I transcribe from 8 different platforms', stop trying to make meeting-centric tools work for public videos and podcasts. That's what we built TranscriptX to solve.",
             "Try the free tiers before paying. Every tool on this list produces different output on the same audio — what looks best in a demo may not match your actual content.",
         ],
         "faq": [
@@ -908,11 +908,11 @@ COMPARISON_PAGES = {
             },
             {
                 "q": "Do any of these tools work on Instagram Reels or TikTok?",
-                "a": "TranscriptX handles all three (and 1000+ more platforms) via URL paste. Otter, Notta, and Happy Scribe require you to download the video first and upload the file — which is fine but adds friction. YouTube CC only works on YouTube. Descript requires file upload.",
+                "a": "TranscriptX handles all three (and 1000+ more platforms) by pasting a link. Otter, Notta, and Happy Scribe require you to download the video first and upload the file — which is fine but adds friction. YouTube CC only works on YouTube. Descript requires file upload.",
             },
             {
                 "q": "Which tool has the best free tier?",
-                "a": "Otter's 300 minutes/month free is the most generous for live meetings. For URL-based transcription, TranscriptX's 3/month free tier plus YouTube's native CC cover most one-off use cases together.",
+                "a": "Otter's 300 minutes/month free is the most generous for live meetings. For transcribing from a link, TranscriptX's 3/month free tier plus YouTube's native CC cover most one-off use cases together.",
             },
             {
                 "q": "Which tool has the best API?",
@@ -920,7 +920,7 @@ COMPARISON_PAGES = {
             },
             {
                 "q": "How do I pick between TranscriptX and Otter?",
-                "a": "If your content is URL-based (YouTube, TikTok, Instagram, etc.), TranscriptX. If your content is live meetings (Zoom, Meet, Teams), Otter. If both, either works as a starting point — add the second tool when you hit the first tool's limits.",
+                "a": "If your content is link-based (YouTube, TikTok, Instagram, etc.), TranscriptX. If your content is live meetings (Zoom, Meet, Teams), Otter. If both, either works as a starting point — add the second tool when you hit the first tool's limits.",
             },
             {
                 "q": "What about Google Drive / Dropbox transcription?",
@@ -940,15 +940,15 @@ COMPARISON_PAGES = {
         "slug": "transcriptx-vs-otter",
         "title": "TranscriptX vs Otter.ai",
         "meta_title": "TranscriptX vs Otter.ai — Which Transcription Tool Wins? (2026)",
-        "meta_description": "Otter is built for live meetings. TranscriptX is built for URL-based video transcription. A direct comparison of both — pricing, accuracy, workflows, and which one you should actually pay for.",
-        "summary": "Otter and TranscriptX solve different problems but buyers keep comparing them. Here's a direct side-by-side — where Otter clearly wins (meetings, team workflows, integrations) and where TranscriptX does (URL-based video, platform breadth, pricing per transcription).",
+        "meta_description": "Otter is built for live meetings. TranscriptX is built for transcribing videos from a link. A direct comparison of both — pricing, accuracy, workflows, and which one you should actually pay for.",
+        "summary": "Otter and TranscriptX solve different problems but buyers keep comparing them. Here's a direct side-by-side — where Otter clearly wins (meetings, team workflows, integrations) and where TranscriptX does (videos from a link, the number of sites we cover, pricing per transcription).",
         "verdict": "If your bottleneck is live meetings, buy Otter. If your bottleneck is transcribing videos from YouTube, TikTok, Instagram, Vimeo, Zoom recordings, and other URL sources, buy TranscriptX. If it's both — buy both. They're cheap and solve genuinely different problems.",
         "method_note": "Both tools were tested on the same 15 inputs: 5 Zoom recordings, 5 YouTube videos, 5 TikTok/Instagram clips. For Otter, files were uploaded; for TranscriptX, URLs were pasted. Pricing and limits reflect April 2026 public tiers.",
         "matrix_columns": [
             "Starting price",
             "Accuracy",
             "Live meeting capture",
-            "URL paste (YouTube, TikTok, etc.)",
+            "Paste a YouTube, TikTok, or other link",
             "Speaker separation",
             "Free tier",
             "Team / shared workspace",
@@ -990,7 +990,7 @@ COMPARISON_PAGES = {
             },
             {
                 "persona": "Your work is transcribing YouTube / TikTok / Instagram videos for content or research",
-                "pick": "TranscriptX. Otter can technically handle YouTube on paid tiers but you upload the audio or paste links one at a time — it's not the path of least resistance. We built the URL paste flow as the core use case.",
+                "pick": "TranscriptX. Otter can technically handle YouTube on paid tiers but you upload the audio or paste links one at a time — it's not the path of least resistance. We built the paste-a-link flow as the core use case.",
             },
             {
                 "persona": "You record podcast interviews, then want transcripts for show notes",
@@ -1029,10 +1029,10 @@ COMPARISON_PAGES = {
 <p>We don't have these integrations yet. JSON/CSV export + your own Zapier setup is the current workaround.</p>
 
 <h2>Where TranscriptX clearly wins</h2>
-<h3>URL-based video transcription</h3>
+<h3>Transcribing videos from a link</h3>
 <p>Paste a YouTube URL, TikTok link, Instagram Reel, Vimeo video, LinkedIn post with video, Reddit-hosted clip, SoundCloud track, or any of 1000+ other sources. We extract the audio and transcribe it in one step. No download, no upload, no "first export this to an MP4, then..."</p>
 <p>Otter can handle YouTube URLs on paid tiers, but the workflow is slower (you paste the URL in a dialog, Otter pulls the audio, transcribes, then the result sits in your workspace). For other platforms like TikTok or Instagram, you generally download the video yourself first, then upload the file — adding 2-3 steps to what should be one.</p>
-<p>If the bulk of your transcription is URL-based public video content, TranscriptX is the right-shaped tool. It's what we built it for.</p>
+<p>If the bulk of your transcription is link-based public video content, TranscriptX is the right-shaped tool. It's what we built it for.</p>
 
 <h3>Platform breadth</h3>
 <p>We handle 1000+ platforms. Otter handles "anything you can upload as a file" plus YouTube on paid tiers. That breadth matters less if you work in YouTube only — but matters a lot if you're a journalist researching an interview that was posted on some obscure streaming service, a marketer transcribing competitor TikToks, or an academic pulling content from a regional video platform.</p>
@@ -1071,9 +1071,9 @@ COMPARISON_PAGES = {
 <p>Live meetings → Otter. URL video transcription → TranscriptX. Podcast show notes or interview research → either works; we're cheaper, Otter has speaker labels. Team workspace with CRM integrations → Otter. Multi-platform URL pipeline → TranscriptX. Both at $3.99-8.33/mo → you can buy both if that's the real answer.</p>
 """,
         "recommendations": [
-            "Don't force-fit Otter onto URL-based content workflows. You'll keep hitting 'this is the wrong shape' friction.",
+            "Don't force-fit Otter onto public videos and podcasts workflows. You'll keep hitting 'this is the wrong shape' friction.",
             "Don't force-fit TranscriptX onto live meetings. Record the Zoom file and send it somewhere we can reach, or just use Otter.",
-            "For podcasts published to YouTube/SoundCloud, TranscriptX via URL paste is the fastest path to show notes.",
+            "For podcasts published to YouTube/SoundCloud, TranscriptX by pasting a link is the fastest path to show notes.",
             "Speaker labels matter for multi-person recordings. If that's your workflow and we don't have them yet, Otter wins.",
         ],
         "faq": [
@@ -1091,7 +1091,7 @@ COMPARISON_PAGES = {
             },
             {
                 "q": "Which one has a better free tier?",
-                "a": "Otter's 300 min/mo is more generous than our 3 transcripts/mo if your use case is meetings. Ours makes more sense if you're evaluating URL-based transcription and want to try a few different platforms.",
+                "a": "Otter's 300 min/mo is more generous than our 3 transcripts/mo if your use case is meetings. Ours makes more sense if you're evaluating transcribing from a link and want to try a few different platforms.",
             },
             {
                 "q": "Can I use both?",
@@ -1118,7 +1118,7 @@ COMPARISON_PAGES = {
         "matrix_columns": [
             "Starting price",
             "Accuracy",
-            "URL paste (YouTube, TikTok, etc.)",
+            "Paste a YouTube, TikTok, or other link",
             "Edit video by editing text",
             "Voice cloning (Overdub)",
             "Export formats",
@@ -1199,7 +1199,7 @@ COMPARISON_PAGES = {
 <p>We output SRT/VTT text you can feed into any video editor. Burning in is downstream.</p>
 
 <h2>Where TranscriptX clearly wins</h2>
-<h3>URL paste for 1000+ platforms</h3>
+<h3>Paste a link from 1000+ platforms</h3>
 <p>Descript requires file upload. If you want to transcribe a YouTube video with Descript, you download the video yourself first, then upload the file to Descript, then wait for it to process. TranscriptX: paste URL, get transcript. For any workflow where the source is already online, this matters.</p>
 
 <h3>Price per transcription</h3>
@@ -1209,7 +1209,7 @@ COMPARISON_PAGES = {
 <p>Descript is Electron-based and processes media locally. A 30-minute podcast takes 5-10 minutes to transcribe. TranscriptX processes cloud-side and completes the same file in ~60 seconds. If you need 20 transcripts fast, this compounds.</p>
 
 <h3>Bulk / batch workflows</h3>
-<p>TranscriptX supports batch URL paste natively. Descript's batch workflow involves queuing projects which takes longer.</p>
+<p>TranscriptX supports batch link pasting natively. Descript's batch workflow involves queuing projects which takes longer.</p>
 
 <h2>When to use both</h2>
 <p>A real workflow we've seen from customers: use TranscriptX to get a fast transcript of a research interview from a YouTube URL, then use Descript to edit the video version for publication. Two tools, two jobs, ~$16/mo combined.</p>
@@ -1233,7 +1233,7 @@ COMPARISON_PAGES = {
         "recommendations": [
             "If 'editing' isn't in your workflow, don't pay for Descript. You're buying features you'll never use.",
             "If editing IS your workflow, Descript earns its price quickly — transcription-only tools can't compete.",
-            "For URL-based content at scale, Descript's upload step is genuine friction. TranscriptX is faster end-to-end.",
+            "For public videos and podcasts at scale, Descript's upload step is genuine friction. TranscriptX is faster end-to-end.",
             "Voice cloning is real and useful. If you're a podcaster who records weekly, the Creator tier pays for itself in re-record hours saved.",
         ],
         "faq": [
@@ -1259,7 +1259,7 @@ COMPARISON_PAGES = {
             },
             {
                 "q": "Which tool is better for podcasters?",
-                "a": "Depends on scope. Recording + editing + publishing → Descript is unrivaled. 'Just show notes from an episode I already published' → TranscriptX via URL paste is 3× cheaper and faster.",
+                "a": "Depends on scope. Recording + editing + publishing → Descript is unrivaled. 'Just show notes from an episode I already published' → TranscriptX by pasting a link is 3× cheaper and faster.",
             },
         ],
     },
@@ -1267,8 +1267,8 @@ COMPARISON_PAGES = {
         "slug": "transcriptx-vs-notta",
         "title": "TranscriptX vs Notta",
         "meta_title": "TranscriptX vs Notta — Which Transcription Tool Fits Your Workflow? (2026)",
-        "meta_description": "Notta and TranscriptX both do URL-based transcription. Honest comparison of pricing, accuracy, platform coverage, and which one wins for which use case.",
-        "summary": "Notta and TranscriptX are the most directly overlapping tools in our comparison set — both handle URL-based video transcription at similar price points. The differences come down to platform breadth, free-tier generosity, and accuracy on edge cases.",
+        "meta_description": "Notta and TranscriptX both do transcribing from a link. Honest comparison of pricing, accuracy, platform coverage, and which one wins for which use case.",
+        "summary": "Notta and TranscriptX are the most directly overlapping tools in our comparison set — both handle transcribing videos from a link at similar price points. The differences come down to the number of sites we cover, free-tier generosity, and accuracy on edge cases.",
         "verdict": "For a user who transcribes primarily YouTube and a handful of common sources and wants decent free minutes to evaluate, Notta is competitive. For wider platform coverage (1000+ vs their handful), cheaper unlimited, and slightly higher accuracy on noisy content, TranscriptX wins. Neither is clearly wrong — test both.",
         "method_note": "Tested on 20 identical inputs across YouTube, Zoom recordings, and uploaded MP4 files. April 2026 pricing.",
         "matrix_columns": [
@@ -1312,7 +1312,7 @@ COMPARISON_PAGES = {
         ],
         "personas": [
             {
-                "persona": "You want the cheapest unlimited option for URL-based video",
+                "persona": "You want the cheapest unlimited option for videos from a link",
                 "pick": "TranscriptX Pro at $3.99/mo. Notta's unlimited is on Business at $16.66/mo — 4× more.",
             },
             {
@@ -1336,16 +1336,16 @@ COMPARISON_PAGES = {
 <h2>These tools are genuinely similar</h2>
 <p>Unlike the Otter and Descript comparisons where the products are shaped differently, Notta and TranscriptX are the closest head-to-head. Both:</p>
 <ul>
-<li>Accept URL paste for video transcription</li>
+<li>Accept a pasted link for video transcription</li>
 <li>Produce transcripts with timestamps</li>
 <li>Export to common formats</li>
 <li>Price in the $5-15/mo consumer range</li>
 </ul>
-<p>The differences are in the specifics: platform breadth, free-tier generosity, accuracy on noisy audio, and pricing tiers.</p>
+<p>The differences are in the specifics: the number of sites we cover, free-tier generosity, accuracy on noisy audio, and pricing tiers.</p>
 
 <h2>Where TranscriptX wins</h2>
 <h3>Platform breadth (1000+ vs a handful)</h3>
-<p>Notta officially supports YouTube, Zoom, Google Meet, Teams, and a "general upload" path. If you paste a TikTok URL, Instagram Reel, Reddit video, Vimeo link, SoundCloud track, or any of the 1000+ long-tail platforms we support, Notta's answer is "download it yourself and upload the file."</p>
+<p>Notta officially supports YouTube, Zoom, Google Meet, Teams, and a "general upload" path. If you paste a TikTok URL, Instagram Reel, Reddit video, Vimeo link, SoundCloud track, or any of the 1000+ smaller sites we support, Notta's answer is "download it yourself and upload the file."</p>
 <p>If your workflow is YouTube-only, Notta's breadth is sufficient. If you touch multiple platforms in a given week, TranscriptX is significantly less friction.</p>
 
 <h3>Unlimited pricing</h3>
@@ -1359,7 +1359,7 @@ COMPARISON_PAGES = {
 
 <h2>Where Notta wins</h2>
 <h3>Live meeting capture</h3>
-<p>Notta has a meeting bot that auto-joins Zoom, Google Meet, and Teams, similar to Otter. We don't. If live capture matters, Notta's versatility is real — one tool does both URL-based transcription AND meeting capture, which is a coherent offering.</p>
+<p>Notta has a meeting bot that auto-joins Zoom, Google Meet, and Teams, similar to Otter. We don't. If live capture matters, Notta's versatility is real — one tool does both transcribing from a link AND meeting capture, which is a coherent offering.</p>
 
 <h3>Free tier (for long-form content)</h3>
 <p>Notta's free tier is 120 minutes total lifetime. Ours is 3 transcripts/month. If you want to transcribe a handful of long videos to evaluate, Notta's 120 minutes gives more real content than our 3 transcripts. If you want to test many short clips, ours gives you 3 × 12 = 36 transcripts/year at the free tier.</p>
@@ -1399,7 +1399,7 @@ COMPARISON_PAGES = {
             },
             {
                 "q": "Does Notta support TikTok or Instagram URLs?",
-                "a": "Not natively as of April 2026. You download the video yourself, then upload the file. TranscriptX handles both as URL paste.",
+                "a": "Not natively as of April 2026. You download the video yourself, then upload the file. TranscriptX handles both — just paste the link.",
             },
             {
                 "q": "Which has more languages?",
@@ -1427,7 +1427,7 @@ COMPARISON_PAGES = {
             "Starting price",
             "Accuracy (guaranteed)",
             "Turnaround",
-            "URL paste",
+            "Paste a link",
             "Best use case",
             "Free tier",
         ],
@@ -1822,12 +1822,12 @@ HELP_PAGES = {
         "slug": "upload-audio-file-transcript",
         "title": "How to Transcribe an Audio or Video File You Have Locally",
         "meta_title": "Transcribe Local MP3 / MP4 / WAV File with TranscriptX",
-        "meta_description": "TranscriptX is URL-based — if your audio/video is on your laptop, here's the fastest way to get it transcribed without installing anything.",
-        "intent": "User has a local MP3, MP4, or WAV file and wants to transcribe it, but TranscriptX is URL-based.",
+        "meta_description": "TranscriptX is link-based — if your audio/video is on your laptop, here's the fastest way to get it transcribed without installing anything.",
+        "intent": "User has a local MP3, MP4, or WAV file and wants to transcribe it, but TranscriptX is link-based.",
         "tldr": "Upload the file to Google Drive or Dropbox with 'Anyone with the link' sharing, then paste the file URL into TranscriptX. Drive is fastest if you're already signed into Google. Keep files under ~100 MB — we extract audio internally and cap the transcription pass at 25 MB of audio.",
         "body_html": """
-<h2>Why we're URL-based (and what it means for you)</h2>
-<p>TranscriptX accepts URLs, not file uploads. This trade-off exists because URL-based workflows are much faster when your content is already online — paste link, get transcript — and because we didn't want to build/maintain upload infrastructure for the first release.</p>
+<h2>Why we're link-based (and what it means for you)</h2>
+<p>TranscriptX accepts URLs, not file uploads. This trade-off exists because link-based workflows are much faster when your content is already online — paste link, get transcript — and because we didn't want to build/maintain upload infrastructure for the first release.</p>
 <p>The cost is exactly this page: if your file is on your laptop, you need to upload it somewhere reachable first. The good news is this takes about 60 seconds on Google Drive.</p>
 
 <h2>Fastest path: Google Drive</h2>
@@ -2077,8 +2077,8 @@ PERSONA_PAGES = {
 </div>
 
 <h2>Which podcast-specific features matter</h2>
-<h3>URL paste (instead of upload)</h3>
-<p>Your episode is already on YouTube or Spotify. Why re-upload the audio file to a transcription tool? We handle URL paste for both, so you're transcribing from the public episode 60 seconds after it drops.</p>
+<h3>Paste a link (instead of uploading)</h3>
+<p>Your episode is already on YouTube or Spotify. Why re-upload the audio file to a transcription tool? We handle a link paste for both, so you're transcribing from the public episode 60 seconds after it drops.</p>
 
 <h3>Word-level timestamps</h3>
 <p>Critical for clip production. If your guest says something interesting at 23:14, word-level timestamps let you start a clip at exactly that word, not at the nearest 5-second caption boundary. This is the difference between a clip that starts mid-sentence (looks amateur) and one that starts on a beat (gets shared).</p>
@@ -2208,7 +2208,7 @@ PERSONA_PAGES = {
             },
             {
                 "q": "Do you have a Chrome extension for YouTube?",
-                "a": "Not yet. The URL paste flow works fast enough that we haven't prioritized it. If you'd use an extension regularly, email us — it bumps the priority.",
+                "a": "Not yet. The paste-a-link flow works fast enough that we haven't prioritized it. If you'd use an extension regularly, email us — it bumps the priority.",
             },
             {
                 "q": "What about YouTube Shorts?",
@@ -2321,7 +2321,7 @@ PERSONA_PAGES = {
         "body_html": """
 <h2>The marketing team's content problem</h2>
 <p>Modern marketing teams produce a lot of video content: webinars, customer interviews, product demos, founder talks, panel discussions. That content performs fine in its native format — but the repurposing pipeline (blog posts, social, newsletters, sales enablement docs) is usually bottlenecked by transcription.</p>
-<p>When transcription is fast and cheap, every long-form video asset becomes 5-8 other pieces of content. When it's slow and manual, most teams produce the video, publish it, and the long-tail value decays.</p>
+<p>When transcription is fast and cheap, every long-form video asset becomes 5-8 other pieces of content. When it's slow and manual, most teams produce the video, publish it, and the reach decays.</p>
 
 <h2>Core marketing use cases</h2>
 <h3>1. Webinar → blog + newsletter + social</h3>
@@ -2413,7 +2413,7 @@ PERSONA_PAGES = {
             },
             {
                 "q": "Which tool is better for customer call transcription — TranscriptX or Otter?",
-                "a": "Otter, for live calls and CRM-integrated workflows. TranscriptX is better if you already have the recording and want URL-based transcription at scale for content work.",
+                "a": "Otter, for live calls and CRM-integrated workflows. TranscriptX is better if you already have the recording and want transcribing from a link at scale for content work.",
             },
             {
                 "q": "Can we use the API to automate our content pipeline?",
@@ -2519,7 +2519,7 @@ PERSONA_PAGES = {
             },
             {
                 "q": "How does this compare to Otter for journalism?",
-                "a": "Otter is better for live interview capture (auto-joining a call). TranscriptX is better for URL-based content (published videos, podcasts, archive research). Many journalists use both depending on workflow.",
+                "a": "Otter is better for live interview capture (auto-joining a call). TranscriptX is better for public videos and podcasts (published videos, podcasts, archive research). Many journalists use both depending on workflow.",
             },
         ],
     },
@@ -2661,30 +2661,30 @@ RESEARCH_PAGES = {
     },
     "platform-support-index": {
         "slug": "platform-support-index",
-        "title": "Platform Support Index — 1000+ Sources TranscriptX Covers",
-        "meta_title": "Platform Support Index — 1000+ Video Sources | TranscriptX",
-        "meta_description": "Searchable index of every video platform TranscriptX supports — YouTube, TikTok, Instagram, Vimeo, and 1000+ more long-tail sources. Updated weekly.",
-        "summary": "The complete, searchable list of video platforms TranscriptX can transcribe. Use this as a reference when checking whether a URL is supported before you paste it.",
+        "title": "Every site we can transcribe a video from",
+        "meta_title": "Sites We Support — 1000+ Video Sources | TranscriptX",
+        "meta_description": "The full list of sites we can transcribe videos from — YouTube, TikTok, Instagram, Vimeo, and 1000+ more. Search to check if yours is on it before pasting a link.",
+        "summary": "If you're not sure whether we support a particular site, search below. This list updates automatically whenever we add or remove a site.",
         "faq": [
             {
-                "q": "Is this list really updated weekly?",
-                "a": "Yes — it's generated live from our extractor catalog. When a new platform is added or removed, the list updates automatically. The 'Updated' date at the top reflects the last catalog sync.",
+                "q": "How often does this list change?",
+                "a": "It updates live — whenever we add or remove support for a site, this page reflects it. The \"Updated\" date at the top shows when the list was last synced.",
             },
             {
-                "q": "Why do some platforms have multiple entries (e.g. YouTube, YouTube-Playlist, YouTube-Shorts)?",
-                "a": "Platforms with structurally different URL types get separate extractors. A YouTube playlist URL and a single YouTube video URL go through different code paths. For most users this is invisible — paste any supported URL and it just works.",
+                "q": "Why do I see YouTube listed more than once (YouTube, YouTube Shorts, YouTube Playlist)?",
+                "a": "Different URL types (a single video vs. a playlist vs. a Short) are handled slightly differently under the hood. You don't need to care — paste any YouTube link and it just works.",
             },
             {
-                "q": "Will you add new platforms on request?",
-                "a": "Yes, usually. If a platform has reasonably stable URL structure and a public video page, we can likely add it. Platforms that require OAuth, have aggressive anti-scraping, or constantly rotate their URL structure are harder and sometimes impossible.",
+                "q": "Can you add a site that's not on the list?",
+                "a": "Usually yes. If a site has public videos and reasonably normal URLs, we can probably support it. Sites that require login, aggressively block automation, or change their URLs constantly are harder. Drop us a line with the site you need.",
             },
             {
-                "q": "What if a platform on this list doesn't work for me?",
-                "a": "Platforms break sometimes when they change their site structure. If a listed platform fails, email us — we prioritize fixes for anything in the index because it's what we advertise.",
+                "q": "A site on the list isn't working for me — what do I do?",
+                "a": "Sites change, and sometimes things break. Email us with the specific link that failed — if it's on our list, we treat fixes as a priority.",
             },
             {
-                "q": "Do you support adult-content platforms?",
-                "a": "Some are in the extractor catalog by default and show up here. We don't actively curate these lists beyond excluding spam domains — they're inherited from the open-source extraction library we build on.",
+                "q": "Are adult sites supported?",
+                "a": "Some are in the list by default. We don't actively curate that part beyond removing obvious spam domains.",
             },
         ],
     },
@@ -2779,7 +2779,7 @@ RESEARCH_PAGES = {
 
 <h2>Tools for each pattern</h2>
 <ul>
-<li><strong>Transcription:</strong> TranscriptX (URL-based, 1000+ platforms) or Otter (live meetings).</li>
+<li><strong>Transcription:</strong> TranscriptX (link-based, 1000+ platforms) or Otter (live meetings).</li>
 <li><strong>Storage / search:</strong> Notion, Airtable, or a Google Drive folder with consistent naming.</li>
 <li><strong>Content transformation:</strong> Claude, ChatGPT, or similar — feed the transcript in, ask for the specific output format.</li>
 <li><strong>Publishing:</strong> whatever CMS you already use — WordPress, Ghost, Substack, LinkedIn.</li>
@@ -2910,98 +2910,98 @@ def get_platform_pages():
 PLATFORM_CATEGORIES = {
     "video-streaming": {
         "slug": "video-streaming",
-        "title": "Video Streaming Platforms — Transcribe Any Streaming Source",
-        "meta_title": "Streaming Video Transcript Tool — YouTube, Vimeo, Dailymotion + 50 More | TranscriptX",
-        "meta_description": "Transcribe video from major streaming platforms — YouTube, Vimeo, Dailymotion, Bilibili, Niconico, Rumble, Odysee, and 50+ more. One URL paste, structured transcript output.",
-        "lede": "The big platforms most people think of when they think \"online video.\" YouTube alone accounts for the bulk of video transcription requests we see, but the long tail of streaming platforms — regional services, alternative platforms, archive sites — adds up to real volume.",
+        "title": "Videos from YouTube, Vimeo, and other streaming sites",
+        "meta_title": "Transcribe YouTube, Vimeo, Rumble Videos — 80+ Sites | TranscriptX",
+        "meta_description": "Paste a link from YouTube, Vimeo, Dailymotion, Rumble, Bilibili, or dozens of other streaming sites. We'll turn it into text in under a minute.",
+        "lede": "The big video sites. YouTube does most of the heavy lifting here, but we also handle Vimeo, Dailymotion, Rumble, and a long list of smaller streaming sites — paste any link and you get a transcript.",
         "match_keywords": ["youtube", "vimeo", "dailymotion", "bilibili", "niconico", "rumble", "odysee", "bitchute", "veoh", "metacafe", "viddler", "vbox", "dtube", "peertube"],
     },
     "social-media": {
         "slug": "social-media",
-        "title": "Social Media Video Transcript Tool",
-        "meta_title": "Social Media Video Transcripts — TikTok, Instagram, X, Facebook | TranscriptX",
-        "meta_description": "Transcribe video from social platforms — TikTok, Instagram Reels, X (Twitter), Facebook, Reddit, LinkedIn, Snapchat, Threads. Built for creators and competitive research.",
-        "lede": "Short-form social video has eaten content marketing. Transcribing what your competitors and customers post lets you mine for messaging, monitor brand mentions, and repurpose viral moments. We support every major social platform via direct URL paste.",
+        "title": "Videos from TikTok, Instagram, X, and other social apps",
+        "meta_title": "Transcribe TikTok, Instagram, X Videos — Paste Link | TranscriptX",
+        "meta_description": "Grab the transcript of any TikTok, Instagram Reel, X video, Facebook post, or LinkedIn video. Paste the link, get text in seconds — no downloads needed.",
+        "lede": "Transcribing short-form social video used to mean downloading it yourself, then uploading it somewhere. We skip both steps — paste a TikTok, Reel, X, or LinkedIn video link and you get the text back fast.",
         "match_keywords": ["tiktok", "instagram", "twitter", "x-twitter", "facebook", "reddit", "linkedin", "snapchat", "threads", "tumblr", "weibo", "kuaishou", "pinterest", "bluesky", "substack"],
     },
     "podcasts-audio": {
         "slug": "podcasts-audio",
-        "title": "Podcast & Audio Transcript Tool",
-        "meta_title": "Podcast Transcript Tool — Apple, Spotify, SoundCloud + 30 More | TranscriptX",
-        "meta_description": "Transcribe podcast episodes from Apple Podcasts, Spotify, SoundCloud, Bandcamp, Mixcloud, and dozens more audio platforms. Show notes, episode SEO, quote extraction.",
-        "lede": "Podcast transcription used to be a separate workflow with separate tools. We handle podcast hosts the same way we handle video platforms — paste the episode URL, get a transcript with timestamps. See our <a href=\"/for/podcasters\">podcaster page</a> for workflow ideas.",
+        "title": "Podcast episodes and other audio",
+        "meta_title": "Podcast Transcription — Apple, Spotify, SoundCloud | TranscriptX",
+        "meta_description": "Paste a podcast episode link from Apple, Spotify, SoundCloud, or any RSS feed. Get a clean transcript with timestamps — perfect for show notes, clips, and quotes.",
+        "lede": "Drop in a link to any podcast episode — Apple, Spotify, SoundCloud, your own RSS — and get a clean transcript back with timestamps. Great for show notes, pulling clips, or finding the moment your guest said something quotable. See <a href=\"/for/podcasters\">our page for podcasters</a> for the full workflow.",
         "match_keywords": ["soundcloud", "podcast", "applepodcasts", "spotify", "bandcamp", "mixcloud", "audible", "audiomack", "iheart", "stitcher", "podchaser", "podomatic", "anchor", "buzzsprout", "transistor", "castos", "simplecast", "megaphone"],
     },
     "live-streaming": {
         "slug": "live-streaming",
-        "title": "Live Stream Transcript Tool",
-        "meta_title": "Live Stream Transcripts — Twitch, Kick, YouTube Live + 20 More | TranscriptX",
-        "meta_description": "Transcribe live streams and VODs from Twitch, Kick, YouTube Live, Facebook Live, and more. After-the-fact transcripts of recorded streams for clipping, recap, and reference.",
-        "lede": "We transcribe streams after they've ended (the recorded VOD), not in real time. For live capture as it's happening, look at Otter or Tactiq. For everything else — recap content, clip extraction, transcript-driven highlight reels — paste the VOD URL.",
+        "title": "Twitch streams, YouTube Lives, and other replays",
+        "meta_title": "Transcribe Twitch & Live Stream Replays | TranscriptX",
+        "meta_description": "Get the transcript of any Twitch VOD, YouTube Live replay, Kick stream, or other recorded livestream. Paste the link and get text — great for clipping highlights.",
+        "lede": "We transcribe streams after they're over — Twitch VODs, YouTube Live replays, Kick streams, the lot. Great for finding highlight moments and pulling clips. For live captions as things are happening, you'd want Otter or a built-in stream tool instead.",
         "match_keywords": ["twitch", "kick", "youtube-live", "facebook-live", "instagram-live", "tiktok-live", "huya", "douyu", "afreeca", "bigo", "trovo", "dlive", "streamable", "livestream", "ustream", "periscope"],
     },
     "education": {
         "slug": "education",
-        "title": "Educational Video Transcript Tool",
-        "meta_title": "Education Video Transcripts — MOOCs, Lectures, Khan Academy + 30 More | TranscriptX",
-        "meta_description": "Transcribe educational video from Coursera, edX, Khan Academy, MIT OCW, Udemy, Skillshare, and dozens more. Built for students, researchers, and lifelong learners.",
-        "lede": "Educational content is high-value transcription territory — long-form, scripted, dense with terminology you want to search. Lectures and MOOC modules transcribe with very high accuracy because the audio is usually clean.",
+        "title": "Online courses and lectures",
+        "meta_title": "Transcribe Coursera, Khan Academy, TED & Course Videos | TranscriptX",
+        "meta_description": "Turn online courses and lectures into searchable notes. Works with Coursera, edX, Khan Academy, TED, Udemy, and plenty more. Great for studying or referencing later.",
+        "lede": "Lectures and course videos are some of the easiest content to transcribe — usually clean audio, one speaker, structured content. Drop in a Coursera, Khan Academy, TED, edX, or Udemy link and you have searchable notes in a minute.",
         "match_keywords": ["khanacademy", "coursera", "edx", "udemy", "skillshare", "ocw", "udacity", "lynda", "linkedin-learning", "pluralsight", "domestika", "masterclass", "ted", "tedx", "academic", "lecture"],
     },
     "news-media": {
         "slug": "news-media",
-        "title": "News & Media Video Transcript Tool",
-        "meta_title": "News Video Transcripts — BBC, CNN, Reuters + 50 More | TranscriptX",
-        "meta_description": "Transcribe news video from BBC, CNN, Reuters, AP, Bloomberg, and 50+ international broadcasters. Built for journalists, researchers, and political accountability work.",
-        "lede": "News organizations publish a huge volume of video that's not always easy to search or quote. We support most major broadcasters and many regional outlets. See our <a href=\"/for/journalists\">journalist page</a> for workflow ideas.",
+        "title": "News clips and broadcast segments",
+        "meta_title": "Transcribe News Videos — BBC, CNN, Reuters, AP | TranscriptX",
+        "meta_description": "Turn a news clip, press briefing, or broadcast segment into text you can quote and cite. BBC, CNN, Reuters, and loads of smaller outlets supported.",
+        "lede": "Whether you're fact-checking a politician, pulling a quote for an article, or just want to read instead of watch — paste a news clip link (BBC, CNN, Reuters, or hundreds of regional outlets) and get the transcript. For the full reporter workflow, see <a href=\"/for/journalists\">our page for journalists</a>.",
         "match_keywords": ["bbc", "cnn", "reuters", "bloomberg", "aljazeera", "cbsnews", "abcnews", "nbcnews", "foxnews", "msnbc", "wsj", "ny-times", "washingtonpost", "guardian", "spiegel", "lemonde", "huffpost", "vice", "nbc", "abc", "cbs", "fox", "ap", "axs", "newsy", "news"],
     },
     "regional-asia": {
         "slug": "regional-asia",
-        "title": "Asian Video Platform Transcripts",
-        "meta_title": "Asian Video Transcripts — Bilibili, Youku, NicoNico + 30 More | TranscriptX",
-        "meta_description": "Transcribe video from Asian platforms — Bilibili, Youku, NicoNico, Niconico, Tudou, AcFun, MangoTV, iQiyi, and more. 90+ language support.",
-        "lede": "If you do business in Asia or research Asian content, region-specific platforms matter. We support the major Chinese, Japanese, and Korean platforms with full transcription in their native languages.",
+        "title": "Videos from Bilibili, Douyin, Niconico, and other Asian sites",
+        "meta_title": "Transcribe Bilibili, Douyin, Niconico, Naver Videos | TranscriptX",
+        "meta_description": "Chinese, Japanese, and Korean video sites are fully supported — paste a link and we transcribe in the original language. Perfect for research or international work.",
+        "lede": "Working with content from China, Japan, Korea, or elsewhere in Asia? Bilibili, Douyin, Niconico, Naver, Kakao — paste any link and get a transcript in the original language. 90+ languages supported.",
         "match_keywords": ["bilibili", "youku", "tudou", "iqiyi", "qqmusic", "kuwo", "netease", "douyin", "kuaishou", "weibo", "weibovideo", "xiaohongshu", "nicovideo", "niconico", "fc2", "showroom", "mirrativ", "openrec", "naver", "kakao", "afreeca", "vlive", "weverse"],
     },
     "regional-europe": {
         "slug": "regional-europe",
-        "title": "European Video Platform Transcripts",
-        "meta_title": "European Video Transcripts — BBC iPlayer, ARD, France TV + 40 More | TranscriptX",
-        "meta_description": "Transcribe video from European broadcasters and platforms — BBC iPlayer, ARD, ZDF, France Télévisions, Rai, RTVE, NPO, NRK, SVT, and more.",
-        "lede": "European public broadcasters and streaming services. Most are region-locked outside their home country (see our <a href=\"/help/region-locked-video-transcript\">region lock help</a>) but if you're inside the right region, we transcribe these reliably.",
+        "title": "Videos from BBC iPlayer, ARD, France TV, and other European sites",
+        "meta_title": "Transcribe BBC iPlayer, ARD, France TV, RAI Videos | TranscriptX",
+        "meta_description": "European broadcasters and streaming services — BBC iPlayer, ARD, ZDF, France Télévisions, RAI, RTVE, SVT, NRK, and more. Paste a link and get the transcript.",
+        "lede": "Most European broadcasters only let you watch from inside their country. If you're there, paste away — BBC iPlayer, ARD, ZDF, France Télévisions, RAI, or whichever you need. If you hit a \"not available in your region\" message, <a href=\"/help/region-locked-video-transcript\">here's how to get around it</a>.",
         "match_keywords": ["bbc", "iplayer", "arte", "ard", "zdf", "francetv", "francetvinfo", "rai", "rtve", "npo", "nrk", "svtplay", "svt", "yle", "drtv", "kommunetv", "rtbf", "vrt", "ceskatelevize", "rt", "tv2", "tv4", "lcp", "europa", "europarl", "bundestag", "ndr", "wdr", "mdr", "br", "swr", "rbb", "hr", "sr", "sat1"],
     },
     "creators-paid": {
         "slug": "creators-paid",
-        "title": "Creator Platform Transcripts (Patreon, Substack, Memberful)",
-        "meta_title": "Creator Platform Transcripts — Patreon, Substack, Nebula | TranscriptX",
-        "meta_description": "Transcribe video from creator platforms — Patreon, Substack, Nebula, Memberful, Floatplane, and more. Useful for creators repurposing their own content.",
-        "lede": "If you're a creator who publishes paywalled video on Patreon, Nebula, Floatplane, or similar, transcribing your own content for show notes, repurposing, or cross-platform publishing is a high-leverage workflow. Public-tier content transcribes via direct URL; gated content requires the workarounds in our <a href=\"/help/private-video-transcript\">private content help</a>.",
+        "title": "Your own Patreon, Substack, or Nebula videos",
+        "meta_title": "Transcribe Patreon, Substack, Nebula Videos | TranscriptX",
+        "meta_description": "Repurpose your own paid content — Patreon, Substack, Nebula, Floatplane — into show notes, articles, and clips. Public posts paste directly; paywalled ones need a workaround.",
+        "lede": "If you publish paid content on Patreon, Substack, Nebula, or Floatplane, transcribing your own videos turns them into show notes, blog posts, or social clips fast. Your public-tier posts paste directly; paywalled ones need an extra step — <a href=\"/help/private-video-transcript\">here's how</a>.",
         "match_keywords": ["patreon", "substack", "nebula", "memberful", "floatplane", "ko-fi", "podia", "teachable", "thinkific", "kajabi", "skool", "circle", "discord", "twitch-subscriber"],
     },
     "cloud-storage": {
         "slug": "cloud-storage",
-        "title": "Cloud Storage Video Transcripts (Drive, Dropbox, Box)",
-        "meta_title": "Cloud Storage Video Transcripts — Google Drive, Dropbox, Box | TranscriptX",
-        "meta_description": "Transcribe video stored in Google Drive, Dropbox, OneDrive, and Box. Just paste the file URL with public sharing enabled. Common gotchas covered.",
-        "lede": "If your video is in cloud storage rather than on a video platform, transcription works the same way — paste the file URL. But there's a common Drive folder-vs-file mistake we see constantly. See our <a href=\"/help/google-drive-transcript-link\">Drive link help</a> and <a href=\"/help/upload-audio-file-transcript\">file upload guide</a>.",
+        "title": "Files on Google Drive, Dropbox, or OneDrive",
+        "meta_title": "Transcribe Videos on Google Drive, Dropbox, OneDrive | TranscriptX",
+        "meta_description": "Got a video on Drive, Dropbox, or OneDrive? Paste the file link (not the folder link — that's the most common mistake). Full guide inside.",
+        "lede": "Have a video sitting in your Drive, Dropbox, or OneDrive? Paste the file link and we'll transcribe it. The #1 mistake people make is pasting the <em>folder</em> link instead of the <em>file</em> link — <a href=\"/help/google-drive-transcript-link\">here's exactly how to get the right one</a>. Full file-upload guide <a href=\"/help/upload-audio-file-transcript\">here</a>.",
         "match_keywords": ["googledrive", "dropbox", "onedrive", "box", "icloud", "mega", "wetransfer", "pcloud", "sync", "owncloud", "nextcloud"],
     },
     "enterprise-meetings": {
         "slug": "enterprise-meetings",
-        "title": "Enterprise & Meeting Video Transcripts",
-        "meta_title": "Enterprise Video Transcripts — Zoom, Webex, Loom, Wistia | TranscriptX",
-        "meta_description": "Transcribe video from enterprise platforms — Zoom recordings, Webex, Loom, Vidyard, Wistia, Brightcove, Kaltura, Panopto. Built for B2B teams.",
-        "lede": "For recorded enterprise content (Loom, Wistia, Vidyard, Panopto), paste the public viewer URL. For Zoom recordings, upload the file to Drive with public sharing first. For live meeting capture, use Otter — we handle the post-recording transcription.",
+        "title": "Zoom recordings, Loom videos, and other work stuff",
+        "meta_title": "Transcribe Zoom Recordings, Loom, Wistia, Webex | TranscriptX",
+        "meta_description": "Transcribe Zoom recordings, Loom videos, Webex sessions, Wistia-hosted explainers, and more. Perfect for turning meetings into searchable notes after the fact.",
+        "lede": "Meeting recorded on Zoom or Teams? Explainer on Loom or Wistia? Training video on Panopto? Paste the link (or upload the Zoom recording to Drive first) and get the transcript. For live meetings as they happen, Otter is the better tool — we handle the ones you've already recorded.",
         "match_keywords": ["zoom", "webex", "teams", "loom", "wistia", "vidyard", "brightcove", "kaltura", "panopto", "vimeo-pro", "vimeo-business", "vimeo-enterprise", "ringcentral", "gotomeeting", "bluejeans", "jitsi", "8x8"],
     },
     "music-audio-podcast": {
         "slug": "music-audio-podcast",
-        "title": "Music Platform Video Transcripts",
-        "meta_title": "Music Video Transcripts — YouTube Music, Spotify, Apple Music | TranscriptX",
-        "meta_description": "Transcribe music videos and music podcast content from YouTube Music, Spotify, Apple Music, SoundCloud, and more. Note: lyric transcription has lower accuracy than speech.",
-        "lede": "Music platforms host both songs (where lyrics-as-transcript has lower accuracy because our model is tuned for speech) and music-related video/podcast content (where standard transcription works well). For lyric transcription specifically, dedicated lyric tools usually do better.",
+        "title": "Music videos and audio from Spotify, Apple Music, and more",
+        "meta_title": "Transcribe Music & Music Podcast Content | TranscriptX",
+        "meta_description": "Music-related video and podcast content from Spotify, Apple Music, SoundCloud, YouTube Music, and more. Note: we're built for speech — song lyrics get less accurate results.",
+        "lede": "For music-related videos, podcasts, and interviews hosted on music platforms — we handle those well. Pure song-lyric transcription is tougher because our engine is trained on speech, not singing. For lyrics specifically, a dedicated lyric tool will do better.",
         "match_keywords": ["youtube-music", "spotify", "apple-music", "tidal", "deezer", "audius", "qobuz", "qq-music", "netease-music", "yandexmusic", "soundcloud", "bandcamp", "jamendo", "monstercat", "mixcloud", "pandora"],
     },
 }
