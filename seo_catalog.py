@@ -1327,6 +1327,372 @@ HELP_PAGES = {
             },
         ],
     },
+    "private-video-transcript": {
+        "slug": "private-video-transcript",
+        "title": "Why Private YouTube Videos Can't Be Transcribed (and What to Do)",
+        "meta_title": "Transcribe Private YouTube Video — Why It Fails & Fixes | TranscriptX",
+        "meta_description": "If TranscriptX says 'This video is private,' we genuinely can't reach it — no tool can transcribe a private URL without being logged in. Here's what works instead.",
+        "intent": "User pasted a private or unlisted YouTube URL and got a 'private video' error.",
+        "tldr": "Private videos require a logged-in session that only has permission on accounts you've shared with. No external tool (ours or any competitor) can transcribe a truly private video — it'd have to impersonate you. If you own the video, change visibility to Unlisted (still unlisted to strangers, but reachable via link). If someone else owns it, ask them to make it Unlisted or download it for you.",
+        "body_html": """
+<h2>What counts as "private"</h2>
+<p>YouTube has three visibility levels and the word "private" means something specific:</p>
+<ul>
+<li><strong>Public</strong> — anyone can find and watch. Transcribable.</li>
+<li><strong>Unlisted</strong> — not findable in search or recommendations, but anyone with the link can watch. <strong>Transcribable.</strong></li>
+<li><strong>Private</strong> — only explicitly invited Google accounts can watch. Requires login. <strong>Not transcribable.</strong></li>
+</ul>
+<p>"Unlisted" is often what people mean when they say "private." If the video is Unlisted, we handle it normally — paste the link and it works.</p>
+
+<h2>Why private videos are unreachable</h2>
+<p>When you watch a private video, YouTube verifies your Google account was explicitly invited. TranscriptX fetches videos anonymously, the same way a logged-out browser would — and a logged-out browser hits a sign-in wall on private videos. No amount of retrying gets past this. Same thing happens with Otter, Descript, Notta, or any other tool that doesn't authenticate against your Google account.</p>
+<p>The only tools that can transcribe private videos are either (a) YouTube itself, because you're logged in, or (b) something you run locally after downloading the video while signed in.</p>
+
+<h2>Fixes, ranked by effort</h2>
+
+<h3>1. Change the video to Unlisted (if you own it)</h3>
+<p>This is the fix in 90% of cases. Unlisted videos are still hidden from YouTube search, recommendations, and your channel homepage — only people with the direct link can watch. But the link works without login, so TranscriptX (or any tool) can reach the video.</p>
+<ol>
+<li>Open YouTube Studio</li>
+<li>Go to Content → find your video</li>
+<li>Click Visibility → change Private to Unlisted</li>
+<li>Save</li>
+<li>Paste the video URL into TranscriptX</li>
+<li>(Optional) Change it back to Private after you're done</li>
+</ol>
+<p>For anything that isn't sensitive (client work, public-facing content that just isn't ready yet), Unlisted is what you want anyway.</p>
+
+<h3>2. Ask the video owner to make it Unlisted or download it for you</h3>
+<p>If the video is on someone else's channel, you have no way to authenticate against their video. Your options:</p>
+<ul>
+<li>Ask them to change it to Unlisted temporarily (a minute of their time)</li>
+<li>Ask them to download the video and send you the file (a few minutes)</li>
+<li>Ask them for a transcript directly if they have one</li>
+</ul>
+
+<h3>3. Download the video yourself if you have viewing access</h3>
+<p>If you've been invited to a private video, you can watch it in your browser. You can also download it via tools like yt-dlp while signed in to YouTube, which gets around the authentication requirement. Then upload the file somewhere we can reach — or use a local transcription tool like Buzz (free, open-source).</p>
+<p>This is more steps than we'd like but it's the only path when you can't change the video's visibility.</p>
+
+<h3>4. Share via Google Drive or Dropbox instead</h3>
+<p>If you own the video file locally, upload it to Google Drive with "Anyone with the link" sharing, then paste the Drive file URL into TranscriptX. We have a <a href="/help/google-drive-transcript-link">separate page on the Drive file-vs-folder link gotcha</a> — that's the most common mistake when taking this path.</p>
+
+<h2>What about age-restricted videos?</h2>
+<p>YouTube's "age-restricted" flag is a weaker form of the same problem — the video requires sign-in to confirm you're over 18 before it'll play. TranscriptX can't authenticate, so age-restricted videos error out similar to private ones. Fix is the same: the video owner can turn off the age restriction (if it was manually applied) or you can download the video while signed in and upload the file.</p>
+
+<h2>What about "unlisted" that still fails?</h2>
+<p>Rare but real. Some channels or enterprise YouTube setups apply additional access rules on top of YouTube's visibility flags — typically in YouTube for Workspace or in education accounts. These can look Unlisted but still require authentication. If you see this happen, the underlying account probably has additional restrictions; the fix is the same as Private (download while signed in).</p>
+""",
+        "faq": [
+            {
+                "q": "Can any transcription tool access private YouTube videos?",
+                "a": "Not without authentication. Tools that appear to transcribe 'private' videos are either (a) actually handling Unlisted videos, or (b) running locally after you've downloaded the video while signed in. There's no magic bypass; the entire point of Private is that it requires a valid session.",
+            },
+            {
+                "q": "Is Unlisted safe for sensitive content?",
+                "a": "It's 'security through obscurity.' Unlisted videos aren't findable through search or the recommendation algorithm, but anyone who gets the URL can watch. If the content is genuinely sensitive, either transcribe before uploading, use Drive with explicit email access, or keep it Private and download yourself.",
+            },
+            {
+                "q": "Why can YouTube transcribe private videos when I'm logged in?",
+                "a": "Because you're logged in. YouTube knows you have access and can serve you the transcript. External tools like TranscriptX don't have your session cookies; we can't impersonate you against YouTube. Giving a tool your Google credentials would be a huge security risk.",
+            },
+            {
+                "q": "Does signing into YouTube in my browser help TranscriptX?",
+                "a": "No. Your YouTube session is in your browser; TranscriptX runs on our servers and doesn't see your cookies. Authentication would require an OAuth flow, which we haven't built because the 'just change to Unlisted' workaround covers 95% of cases.",
+            },
+            {
+                "q": "What about unlisted videos on Vimeo or other platforms?",
+                "a": "Same principle applies. Vimeo's 'Unlisted' is reachable via link (we can transcribe). Vimeo's 'Password-protected' and 'Private' require authentication (we can't). Check the exact visibility setting on whatever platform — the wording varies but the underlying behavior is the same.",
+            },
+        ],
+    },
+    "region-locked-video-transcript": {
+        "slug": "region-locked-video-transcript",
+        "title": "Transcribing Region-Locked or Geo-Blocked Videos",
+        "meta_title": "Region-Locked Video Transcript — Why It Fails & Fixes | TranscriptX",
+        "meta_description": "Some videos only play in certain countries. If TranscriptX hits a region block, here's exactly what's happening and the workarounds that actually work.",
+        "intent": "User tried to transcribe a video only available in a specific country and got an error or empty audio.",
+        "tldr": "Region blocks are enforced by the video platform based on the viewer's IP. TranscriptX hits the block because our servers are in one region and can't pretend to be in yours. Workarounds: download the video yourself from your country + upload, use a VPN at download time, or transcribe the same content from a mirror that isn't region-locked.",
+        "body_html": """
+<h2>How region locks work</h2>
+<p>Region locking (also called geo-blocking) is the platform's decision — not ours. When you try to watch a BBC iPlayer video from outside the UK, a Hulu show from outside the US, or a music video licensed only in certain countries, the platform checks your IP address against the allowed region list and either plays the video or shows you a "not available in your region" message.</p>
+<p>TranscriptX servers are in a fixed region. When we try to fetch a video, we hit the same wall a regular user from that region would hit. If the video isn't available to our servers, we get back an error — sometimes an explicit "region-blocked" message, sometimes an empty file or a 403, depending on how the platform handles it.</p>
+
+<h2>The error you'll see</h2>
+<p>Depending on the platform, region-blocked videos produce different errors in TranscriptX:</p>
+<ul>
+<li><strong>YouTube:</strong> "Video unavailable" or "This video isn't available in your country"</li>
+<li><strong>BBC iPlayer / ITV Hub:</strong> "This content is unavailable at this time"</li>
+<li><strong>Spotify / Apple / music platforms:</strong> Often a 404 or empty response</li>
+<li><strong>Licensed news clips:</strong> A generic "fetch failed"</li>
+</ul>
+<p>If you see any of these and the video plays fine in your own browser, region locking is almost certainly the cause.</p>
+
+<h2>Fixes that actually work</h2>
+
+<h3>1. Download the video yourself, then transcribe the file</h3>
+<p>Since your browser is in the allowed region, you can download the video from your own machine, then upload it to somewhere TranscriptX can reach (Google Drive, Dropbox, etc.) and paste that URL.</p>
+<p>Tools to download in-browser: yt-dlp (command-line, handles most platforms), browser extensions like Video DownloadHelper (works on many sites), or the platform's own "download for offline viewing" if available.</p>
+
+<h3>2. Upload to Google Drive with "Anyone with the link"</h3>
+<p>After downloading, the fastest path is: upload file to Drive → right-click → Share → "Anyone with the link" → copy the file URL → paste into TranscriptX. See our <a href="/help/google-drive-transcript-link">Drive link guide</a> to avoid the folder-URL mistake.</p>
+
+<h3>3. Find a mirror that isn't region-locked</h3>
+<p>For news clips and interviews, the same content is often republished on YouTube, Facebook, Twitter/X, or the broadcaster's international edition. A BBC iPlayer clip that's UK-only might have been re-uploaded to BBC News' public YouTube channel without the geo-restriction. Worth a quick search before more complex workarounds.</p>
+
+<h3>4. Use a VPN during download (with caveats)</h3>
+<p>If you have a VPN that can place you in the allowed region, you can download the video using the VPN, then transcribe the file. Note: some platforms actively detect and block common VPN IP ranges (Netflix, Hulu, BBC) — your mileage will vary.</p>
+<p>This is increasingly how licensed content distribution works, and there's no clean way around it via a transcription service — the restriction is by design.</p>
+
+<h2>Platforms where region locks are common</h2>
+<ul>
+<li><strong>Music videos</strong> on YouTube (record label licensing varies by country)</li>
+<li><strong>News broadcasts</strong> on BBC, ITV, Channel 4, ZDF, ARD, France Télévisions</li>
+<li><strong>Streaming services</strong> — Hulu (US), iPlayer (UK), Crunchyroll (per-region catalogs), etc.</li>
+<li><strong>Sports content</strong> — most leagues have region-specific broadcast rights</li>
+<li><strong>Educational platforms</strong> — some university and MOOC content is restricted to students/institutions</li>
+</ul>
+
+<h2>What we don't do</h2>
+<p>We don't proxy via different regions or operate multiple egress IPs. This is deliberate: bypassing region locks at scale violates most platform ToS and gets IP ranges blocked fast. A transcription tool that does this would be a short-lived transcription tool.</p>
+<p>The "download yourself, upload the file" path is slightly more work but works reliably and doesn't ask you or us to bypass legitimate licensing boundaries.</p>
+""",
+        "faq": [
+            {
+                "q": "Why doesn't TranscriptX use a VPN to bypass region locks?",
+                "a": "Because it would violate most platform ToS, and bypassed IP ranges get flagged and blocked fast. A single 'bypass tool' would stop working within months. The download-yourself workflow is slightly more effort but actually durable.",
+            },
+            {
+                "q": "How do I tell if a video is region-locked?",
+                "a": "If it plays in your own browser but TranscriptX returns 'video unavailable,' region locking is the most likely cause. Platforms usually show a 'not available in your country' message if you try to watch from outside the allowed region — do that test in a private/incognito browser window.",
+            },
+            {
+                "q": "Does this apply to my own YouTube videos?",
+                "a": "Only if you've manually set geo-restrictions in YouTube Studio. By default, your videos are global. Check Studio → Content → [your video] → Restrictions. Turn off any country blocks and TranscriptX will work.",
+            },
+            {
+                "q": "Will this change if TranscriptX adds servers in more regions?",
+                "a": "Marginally. Multi-region would help for specific platforms where our current region is excluded but another common region (US/UK/EU) is allowed. It wouldn't help for strict single-country restrictions. Not on the immediate roadmap; for now the download-yourself path is the reliable answer.",
+            },
+        ],
+    },
+    "upload-audio-file-transcript": {
+        "slug": "upload-audio-file-transcript",
+        "title": "How to Transcribe an Audio or Video File You Have Locally",
+        "meta_title": "Transcribe Local MP3 / MP4 / WAV File with TranscriptX",
+        "meta_description": "TranscriptX is URL-based — if your audio/video is on your laptop, here's the fastest way to get it transcribed without installing anything.",
+        "intent": "User has a local MP3, MP4, or WAV file and wants to transcribe it, but TranscriptX is URL-based.",
+        "tldr": "Upload the file to Google Drive or Dropbox with 'Anyone with the link' sharing, then paste the file URL into TranscriptX. Drive is fastest if you're already signed into Google. Keep files under ~100 MB — we extract audio internally and cap the transcription pass at 25 MB of audio.",
+        "body_html": """
+<h2>Why we're URL-based (and what it means for you)</h2>
+<p>TranscriptX accepts URLs, not file uploads. This trade-off exists because URL-based workflows are much faster when your content is already online — paste link, get transcript — and because we didn't want to build/maintain upload infrastructure for the first release.</p>
+<p>The cost is exactly this page: if your file is on your laptop, you need to upload it somewhere reachable first. The good news is this takes about 60 seconds on Google Drive.</p>
+
+<h2>Fastest path: Google Drive</h2>
+<ol>
+<li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">drive.google.com</a> and sign in.</li>
+<li>Drag your file into the Drive window (or click New → File upload).</li>
+<li>Wait for upload to finish.</li>
+<li>Right-click the file → <strong>Share</strong>.</li>
+<li>Under "General access," change "Restricted" to <strong>"Anyone with the link"</strong> (role: Viewer).</li>
+<li>Click <strong>Copy link</strong>.</li>
+<li>Paste that URL into TranscriptX.</li>
+</ol>
+<p>The Drive URL should look like <code>https://drive.google.com/file/d/abc123.../view?usp=sharing</code>. If yours looks like <code>/drive/folders/</code>, you copied the folder instead of the file — see <a href="/help/google-drive-transcript-link">the Drive link guide</a>.</p>
+
+<h2>Alternative: Dropbox</h2>
+<ol>
+<li>Upload the file to Dropbox.</li>
+<li>Right-click → <strong>Copy Dropbox link</strong>.</li>
+<li>Modify the URL so the end is <code>?dl=1</code> instead of <code>?dl=0</code>. This forces a direct download.</li>
+<li>Paste the modified URL into TranscriptX.</li>
+</ol>
+<p>Without the <code>?dl=1</code> change, Dropbox redirects through an HTML page and we can't grab the file. The parameter tells Dropbox to serve the file directly.</p>
+
+<h2>Alternative: Any public HTTPS URL</h2>
+<p>If you already run a website, file host, or CDN, you can put the file there and paste the direct URL. Requirements:</p>
+<ul>
+<li>HTTPS (we don't accept plain HTTP)</li>
+<li>No authentication required (no Basic Auth, no login wall)</li>
+<li>The URL returns the file bytes directly, not an HTML preview page</li>
+</ul>
+
+<h2>File size limits</h2>
+<p>Our transcription pipeline caps audio at 25 MB for a single pass. This usually works out to about 90-120 minutes of audio at standard speech bitrate. Practical implications:</p>
+<ul>
+<li>A typical MP3 (audiobook, podcast) stays under 25 MB for up to ~2 hours.</li>
+<li>A typical MP4 (video) is much larger than just its audio — we extract audio internally, so a 2 GB 4K video with 30 minutes of speech transcribes fine; it's the audio portion that matters.</li>
+<li>Very long (3+ hour) or very high-bitrate audio may exceed the cap. For these, splitting the file is the current workaround.</li>
+</ul>
+
+<h2>Why not just let me upload?</h2>
+<p>Native file upload is on the roadmap — we know it's friction, we just haven't prioritized it yet. The URL-paste flow covers most workflows because most content is already online somewhere (YouTube, Drive, Dropbox, company CMS). If your workflow is mostly local files and upload friction matters to you, email us — it bumps the priority.</p>
+""",
+        "faq": [
+            {
+                "q": "Do I need a paid Google Drive account?",
+                "a": "No. Free Google accounts include 15 GB of Drive storage which is enough for most audio/video files. Just sign in with any Google account.",
+            },
+            {
+                "q": "Can I delete the file from Drive after transcribing?",
+                "a": "Yes. Once the transcript is generated, our copy is done with the file. You can delete it from Drive immediately.",
+            },
+            {
+                "q": "What audio/video formats work?",
+                "a": "Common ones: MP3, MP4, WAV, M4A, MOV, WebM, OGG. If it plays in VLC, it probably works with us. Very obscure codecs may fail — convert to MP3 or MP4 if needed.",
+            },
+            {
+                "q": "Is my file private if I use Anyone-with-the-link sharing?",
+                "a": "Unlisted, not private. Google doesn't index these files in search. Random strangers can't find them. But anyone with the actual URL can access — treat the URL like a password.",
+            },
+            {
+                "q": "What's the longest audio I can transcribe?",
+                "a": "Roughly 2 hours at standard speech bitrate before the 25 MB internal cap kicks in. For longer content, split the file into chunks or use an offline tool like Buzz.",
+            },
+            {
+                "q": "Can I paste a OneDrive or Box link?",
+                "a": "Maybe. OneDrive's 'anyone with link' shares usually work but sometimes route through auth pages we can't follow. Box shares vary by enterprise settings. Drive and Dropbox are most reliable.",
+            },
+        ],
+    },
+    "instagram-story-transcript": {
+        "slug": "instagram-story-transcript",
+        "title": "Why Instagram Stories Usually Can't Be Transcribed",
+        "meta_title": "Transcribe Instagram Story — Why It Fails & Fixes | TranscriptX",
+        "meta_description": "Instagram Stories disappear after 24 hours and often require login. If TranscriptX fails on a Story URL, here's what's happening and what to do instead.",
+        "intent": "User pasted an Instagram Story URL and got an error or empty transcript.",
+        "tldr": "Stories are temporary (24 hours) and often login-gated. By the time TranscriptX tries to reach the URL, the Story is frequently gone or behind auth. Workarounds: screen-record the Story while it's live, save it as a Highlight (makes it permanent and public), or download via a third-party Story downloader then upload the file.",
+        "body_html": """
+<h2>Why Stories are hard</h2>
+<p>Three things about Instagram Stories make them different from regular posts, reels, or IGTV:</p>
+<ol>
+<li><strong>They're ephemeral.</strong> Stories auto-delete after 24 hours. If you paste the URL 25 hours later, there's nothing to fetch.</li>
+<li><strong>Many require login.</strong> Instagram often gates Story access behind an authenticated session, especially on private accounts or after the poster has blocked non-logged-in viewers.</li>
+<li><strong>The URL format is unstable.</strong> Story URLs contain session tokens and user IDs that can expire, change, or reflect permissions only valid for your browser.</li>
+</ol>
+<p>Put together: when you paste a Story URL into TranscriptX, there's a real chance the URL is no longer valid, or our server can't authenticate the way your browser did.</p>
+
+<h2>What actually works</h2>
+
+<h3>1. Save the Story as a Highlight first (if you own it)</h3>
+<p>Highlights are saved versions of your Stories that stay on your profile permanently and are publicly viewable (if your profile is public). If you want to transcribe your own Story, save it as a Highlight, then paste the Highlight URL into TranscriptX. Highlights have stable, public URLs that work reliably.</p>
+<p>Steps: on the Story → "Save to Highlight" → create a new Highlight or add to an existing one. Then from your profile, click the Highlight → copy URL from the address bar (or the three-dot menu).</p>
+
+<h3>2. Screen-record while it's live</h3>
+<p>If the Story is currently viewable in your browser/app, the fastest path is to record your screen. Mac: Cmd+Shift+5 → Record Selected Portion. Windows: Win+G → Capture. Phone: built-in screen recorder.</p>
+<p>The result is a video file on your device. Upload it to Google Drive with "Anyone with the link" sharing and paste the file URL into TranscriptX. See our <a href="/help/upload-audio-file-transcript">local file guide</a> for the details.</p>
+
+<h3>3. Use a Story downloader, then upload the file</h3>
+<p>Several third-party tools (Inflact, StoriesIG, SaveInsta, etc.) let you paste a Story URL and download the video. Their reliability varies week-to-week as Instagram changes their API. If one works for you, great — but we can't guarantee any specific tool. Once you have the file downloaded, upload to Drive/Dropbox and paste that URL into us.</p>
+
+<h3>4. Ask the poster to DM you the original video</h3>
+<p>If it's someone you know, just ask. They can send the original video file in a DM, which you then upload and transcribe. Lower-tech solution but often the fastest.</p>
+
+<h2>What about Reels and regular Instagram posts?</h2>
+<p>Reels and regular video posts work fine — they're permanent and publicly viewable. Paste the URL into TranscriptX normally. The issues on this page apply specifically to Stories.</p>
+
+<h2>Private accounts</h2>
+<p>If the Instagram account is private, even Reels and regular posts will fail because they're behind the follower wall. There's no workaround here — the content is genuinely only accessible to approved followers, and TranscriptX is not one of them. Ask the account owner to either make the content public or send you the video directly.</p>
+""",
+        "faq": [
+            {
+                "q": "Can TranscriptX handle Instagram Reels?",
+                "a": "Yes, Reels work reliably when the account is public. The issues on this page are specific to Stories (which are temporary) and private accounts (which require follower approval).",
+            },
+            {
+                "q": "Why do some Story URLs work and others don't?",
+                "a": "Stories that are currently live, on public accounts, without additional privacy settings, sometimes work. Our success rate for Stories hovers around 40% because of the auth and TTL issues — much lower than our ~99% for regular Reels.",
+            },
+            {
+                "q": "Can I just use the Story viewer's 'copy link' option?",
+                "a": "That link sometimes contains your session token, which expires or doesn't work for external tools. Even when it's a 'share' link, it may still require login. If the URL works for you but not for us, authentication is the likely cause.",
+            },
+            {
+                "q": "Does saving a Story to Archive help?",
+                "a": "No, Archive is private to you. Save to Highlight instead — that makes it publicly viewable via a stable URL.",
+            },
+            {
+                "q": "What about Instagram Live recordings?",
+                "a": "Instagram Live is similar to Stories — ephemeral, sometimes saved to Live Archive but inconsistently public. Your best bet is to save the Live as a regular video post after it ends (Instagram prompts you to do this), then use that URL.",
+            },
+        ],
+    },
+    "wrong-transcript-timestamps": {
+        "slug": "wrong-transcript-timestamps",
+        "title": "Transcript Timestamps Look Wrong — Common Causes and Fixes",
+        "meta_title": "Transcript Timestamps Wrong? Common Causes | TranscriptX",
+        "meta_description": "If your TranscriptX timestamps are offset, duplicated, or nonsensical, here are the real reasons it happens and what you can check.",
+        "intent": "User has a transcript where timestamps don't match the video they're hearing.",
+        "tldr": "The #1 cause is a video with silent intro padding or ads that shifted the audio start. The #2 cause is a transcript from a different file than you think (e.g. retry produced a new output). Rare: segment boundaries from our AI splitting mid-sentence. Word-level timestamps are always accurate if segments look wrong.",
+        "body_html": """
+<h2>The usual suspects</h2>
+<p>When a TranscriptX transcript timestamp doesn't match the video, one of these four things is almost always happening:</p>
+<ol>
+<li>The video has a silent intro, title card, or ad that shifted the audio start</li>
+<li>You're comparing the transcript against a different version of the file</li>
+<li>You're looking at segment-level timestamps where segment boundaries feel wrong</li>
+<li>The video's audio and visual tracks are out of sync at the source</li>
+</ol>
+
+<h3>1. Silent intros and ad rolls</h3>
+<p>If your video starts with a 5-second title card, a logo animation, or a pre-roll ad, the actual speech begins later than timestamp 00:00. Our transcript's 00:00 is "when the audio file starts," not "when the first word is spoken." On YouTube specifically, pre-roll ads are NOT part of the audio we download — so our 00:00 usually matches the video's 00:00 for public videos. But Instagram Reels, TikToks, and uploaded files often include title cards that push the first speech well into the timeline.</p>
+<p>Check: open the video, note when the first word is actually said. If our transcript's first timestamp matches that, everything's fine — you just had expected 00:00 to be the first word.</p>
+
+<h3>2. Mismatched files</h3>
+<p>If you retranscribed the same URL at a different time, or if the video has been re-uploaded since your last transcript, our output is tied to the audio we saw at transcribe time. A transcript from three months ago won't line up with the current video if the creator edited it since. The fix is to retranscribe.</p>
+<p>This also happens when you transcribe an "edited" version of a YouTube video that was re-encoded — timestamps shift by fractions of seconds.</p>
+
+<h3>3. Segment boundaries that don't feel natural</h3>
+<p>Our segment-level timestamps reflect where our AI decided to break the transcript into chunks. Sometimes these breaks happen mid-sentence or after a short utterance. This isn't wrong per se — it's how the underlying model groups audio — but it can feel jarring if you're expecting one timestamp per sentence.</p>
+<p>For precise alignment, use word-level timestamps (available in our JSON export). Each word has its own start/end time, which is always accurate to the millisecond even if the segment boundaries feel arbitrary.</p>
+
+<h3>4. A/V drift at the source</h3>
+<p>Some videos have audio that's slightly out of sync with the visuals to start with. This is most common in:</p>
+<ul>
+<li>Streamed recordings (Twitch VODs, Zoom recordings saved to cloud)</li>
+<li>Re-uploaded videos that were encoded multiple times</li>
+<li>Very old videos (pre-2015) that used variable frame rates</li>
+</ul>
+<p>Our timestamps reflect the audio track. If the audio is slightly offset from the visuals, our transcript will feel "ahead" or "behind" what you see on screen. There's nothing we can do about this — the audio is what it is.</p>
+
+<h2>Debugging steps</h2>
+<ol>
+<li>Open the transcript's JSON export (Pro tier) and check word-level timestamps instead of segment-level.</li>
+<li>Play the video and note when the first word is actually spoken. Does it match the first word's start time in JSON?</li>
+<li>If yes: your timestamps are correct; something in your expectation was different.</li>
+<li>If no: the video may have been re-uploaded since. Click "Retry" (if available) or just rerun the transcription.</li>
+<li>If the gap is consistent (every timestamp is off by X seconds), the video probably has a fixed pre-roll we didn't skip. Adjust your downstream workflow by subtracting X seconds.</li>
+</ol>
+
+<h2>Word-level timestamps vs segment-level</h2>
+<p>If you've only ever looked at segment-level timestamps, it's worth exporting JSON and looking at word-level. Word timestamps are always more accurate because they reflect the exact millisecond each word was spoken. Segments are useful for display but the underlying word data is what you want for precise clipping or citation.</p>
+
+<h2>What we can't fix</h2>
+<p>If the audio file we process genuinely has drift compared to the video, our transcript will reflect the audio — which won't match your video visually. This is a source-file problem, not a transcription problem. You'd see the same mismatch in any tool that processes the audio track. The fix is at the video editing layer, not ours.</p>
+""",
+        "faq": [
+            {
+                "q": "Why do my segment timestamps look random?",
+                "a": "Segments are grouped by our AI based on pauses and sentence structure. They're not always sentence boundaries. For precise alignment, use word-level timestamps from the JSON export.",
+            },
+            {
+                "q": "Is 00:00 in the transcript the same as 00:00 on YouTube?",
+                "a": "For YouTube public videos, yes — we download the actual video file, not the ad-prepended stream. For Reels/TikToks/uploads with title cards, 00:00 is when the audio file starts, which may be after your title card.",
+            },
+            {
+                "q": "How do I get word-level timestamps?",
+                "a": "Available in JSON export (Pro plan). Each word has start/end in seconds. For programmatic use, the JSON shape is designed to feed directly into subtitle or clip-editing tools.",
+            },
+            {
+                "q": "Can I fix a transcript with wrong timestamps after the fact?",
+                "a": "If the issue is a consistent offset (every timestamp off by X seconds), you can subtract X from every value in your downstream tool. Most subtitle editors support this as a bulk shift operation. If the issue is inconsistent, retranscribe.",
+            },
+            {
+                "q": "Why do timestamps matter beyond reading the transcript?",
+                "a": "For citing specific moments in writing, clipping video segments by highlight, subtitle production, or searching transcripts for when a phrase was said. If you just read the transcript, timestamps don't matter. If you repurpose it, word-level timestamps unlock clipping and citation.",
+            },
+        ],
+    },
 }
 
 
