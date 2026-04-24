@@ -2035,6 +2035,70 @@ HELP_PAGES = {
             },
         ],
     },
+    "wrong-language-transcript": {
+        "slug": "wrong-language-transcript",
+        "title": "Transcript in the Wrong Language? Use the Free Retry",
+        "meta_title": "Transcript Came Back in Wrong Language — How to Fix | TranscriptX",
+        "meta_description": "If your transcript came back in a language you didn't speak in the video, auto-detect guessed wrong. Use the free language retry on the result card — no credit charge.",
+        "intent": "User got a transcript in a different language than the one actually spoken in the video — usually Portuguese mis-detected as Spanish, accented English detected as the speaker's native language, or a short clip that didn't give auto-detect enough signal.",
+        "tldr": "By default, we let Whisper auto-detect the language. When it guesses wrong, the whole transcript comes back in the wrong language — often gibberish or a very short block. The fix: on the result card, use the <strong>\"Detected [X]. Wrong language?\"</strong> dropdown, pick the correct language, click <strong>Retry free</strong>. The retry doesn't cost a credit. One retry per transcript. To prevent it next time, set the language explicitly in the Language dropdown before you hit Transcribe.",
+        "body_html": """
+<h2>What's actually happening</h2>
+<p>When you paste a URL without picking a language, TranscriptX sends the audio to Whisper with no hint. Whisper runs its own language detection on the first chunk of audio and then transcribes everything in that guessed language. Most of the time it's right. When it's wrong, the whole transcript comes back in the wrong language — every word forced into a phonetic mapping for a language that isn't being spoken. You end up with something that's either gibberish, a very short truncated block, or words that vaguely sound like what was said but aren't real.</p>
+
+<h2>The fix (right now, on the result card)</h2>
+<p>Every successful transcript shows a banner at the top of the result card that looks like:</p>
+<pre style="background:rgba(255,255,255,0.4);padding:.8rem;border-radius:6px;font-size:.72rem;">Detected <strong>Spanish</strong>. Wrong language?   [ Pick language ▾ ]   [ Retry free ]</pre>
+<p>Pick the correct language from the dropdown and click <strong>Retry free</strong>. We rerun the transcript with your chosen language — no credit charge. This is by design: mis-detection is the most common kind of user-visible failure, and making you pay to fix it would be unfair.</p>
+<p>One retry per transcript, ever. If even the retry comes back wrong, you'd need to start fresh with a new transcription (which does cost a credit).</p>
+
+<h2>Why auto-detect gets it wrong</h2>
+<p>Four common causes, in order of frequency:</p>
+<ul>
+<li><strong>Similar-sounding language pairs.</strong> Whisper mixes these up the most: Portuguese ↔ Spanish, Norwegian ↔ Danish ↔ Swedish, Urdu ↔ Hindi, Mandarin ↔ Cantonese, Ukrainian ↔ Russian. Short clips make this worse because there's less signal for the detector to lock onto.</li>
+<li><strong>Strongly accented English.</strong> Heavy non-native accents on English occasionally register as the speaker's native language instead.</li>
+<li><strong>Code-switching (mixed languages).</strong> Common in interviews, bilingual lectures, or music-plus-talk content. Whisper picks whichever language dominates the opening seconds and commits for the entire transcript.</li>
+<li><strong>Short or low-SNR audio.</strong> Under 30 seconds, or with lots of background noise, auto-detect has less to work with and picks wrong more often.</li>
+</ul>
+
+<h2>Preventing it next time</h2>
+<p>Before you transcribe, use the <strong>Language</strong> dropdown on the homepage (next to the URL input) and pick the actual spoken language instead of leaving it on Auto-detect. Whisper will use that exact language directly, skipping the detection step. Your choice is remembered across sessions, so if you always transcribe the same language, set it once.</p>
+<p>Setting language explicitly is also slightly faster — we skip the detection pass entirely.</p>
+
+<h2>When the retry also comes back wrong</h2>
+<p>Rare, but possible on genuinely difficult audio — very heavy accents, severe background noise, or speakers that overlap constantly. A few things to try:</p>
+<ul>
+<li><strong>Transcribe a cleaner copy.</strong> If the original has the ad intro attached, try cutting to a clean segment — a re-uploaded clean version of the same talk usually transcribes better.</li>
+<li><strong>Use the larger model.</strong> Switch the Model dropdown from TURBO to LARGE-V3. It's slower but substantially better on accented or noisy speech.</li>
+<li><strong>Split multilingual content.</strong> If the speaker genuinely switches languages, transcribing each section separately (e.g., submit the URL with different start/end ranges) usually works better than forcing one language across the whole thing.</li>
+</ul>
+
+<h2>What we'd rather not do (and why)</h2>
+<p>We could silently auto-retry in the user's browser language when a transcript looks empty. We don't, because sometimes an empty transcript is correct — music-only videos, for instance. A silent auto-retry would burn processing on valid results, and "why is my music-only video showing a long spurious transcript" is a worse complaint than "the retry button is right there."</p>
+""",
+        "faq": [
+            {
+                "q": "Is the language retry really free?",
+                "a": "Yes. The retry doesn't decrement your credit balance. One retry per successful transcript, regardless of plan.",
+            },
+            {
+                "q": "Why doesn't auto-detect just always get it right?",
+                "a": "Whisper's language detection runs on a short chunk of audio at the start of the file. Short clips, mixed languages, accented speech, and similar-sounding language pairs all reduce accuracy. Forcing a language with the picker skips detection entirely and is more reliable when you know what you're dealing with.",
+            },
+            {
+                "q": "Can I set a default language for all my transcriptions?",
+                "a": "Yes. The Language dropdown on the homepage remembers your last choice across sessions. Set it once to the language you usually transcribe and auto-detect won't run again until you switch it back to Auto-detect.",
+            },
+            {
+                "q": "What happens if I retry and the retry also comes back wrong?",
+                "a": "You'd need to start fresh with a new transcription (which does cost a credit). The retry slot is one-shot per log, so after one use it's gone. In practice this is rare — the retry with the correct language almost always produces a clean transcript.",
+            },
+            {
+                "q": "Does this affect the original transcript I already have?",
+                "a": "Yes — the retry replaces the visible transcript in place. The previously-visible transcript is overwritten with the new one. Copy anything you wanted to keep from the original before hitting retry.",
+            },
+        ],
+    },
 }
 
 

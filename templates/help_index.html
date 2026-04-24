@@ -25,8 +25,15 @@
         .article-grid { display:grid; gap:.8rem; }
         .article-card { background:rgba(255,255,255,0.3); padding:1rem 1.2rem; border-radius:12px; border:var(--bw) solid rgba(10,10,10,0.18); text-decoration:none; color:var(--ink); transition:.15s; }
         .article-card:hover { background:rgba(255,255,255,0.5); }
+        .article-card.hidden { display:none; }
         .article-card h2 { font-family:var(--f-wide); font-size:.8rem; text-transform:uppercase; margin-bottom:.35rem; }
         .article-card p { font-size:.78rem; opacity:0.85; margin:0; }
+        .help-search { display:flex; align-items:center; gap:.6rem; margin-bottom:1.2rem; padding:.7rem 1rem; background:rgba(255,255,255,0.3); border:var(--bw) solid rgba(10,10,10,0.18); border-radius:12px; }
+        .help-search input { flex:1; background:transparent; border:none; outline:none; font-family:var(--f-tech); font-size:.85rem; color:var(--ink); }
+        .help-search input::placeholder { color:rgba(10,10,10,0.5); }
+        .help-search-icon { opacity:0.55; font-size:.9rem; }
+        .help-empty { display:none; padding:1rem 1.2rem; font-size:.78rem; opacity:0.7; font-style:italic; }
+        .help-empty.on { display:block; }
         @media (max-width:760px) { nav { padding:.8rem 1rem; border-radius:1.2rem; } .panel { padding:1.3rem 1.2rem; } }
     </style>
 </head>
@@ -37,16 +44,44 @@
         <span class="kicker">Help &amp; Troubleshooting</span>
         <h1>When TranscriptX doesn't behave</h1>
         <p class="lead">If the tool errored or the transcript came back wrong, one of these is almost certainly why. We keep this list updated as new edge cases come in.</p>
-        <div class="article-grid">
+        <label class="help-search" for="helpSearch">
+            <span class="help-search-icon" aria-hidden="true">⌕</span>
+            <input id="helpSearch" type="search" placeholder="Search help — try “wrong language”, “private”, “drive”…" autocomplete="off" aria-label="Search help articles">
+        </label>
+        <div class="article-grid" id="helpGrid">
             {% for slug, page in articles.items() %}
-            <a class="article-card" href="/help/{{ slug }}">
+            <a class="article-card" href="/help/{{ slug }}" data-search="{{ (page.title ~ ' ' ~ page.meta_description ~ ' ' ~ (page.intent or '') ~ ' ' ~ slug) | lower }}">
                 <h2>{{ page.title }}</h2>
                 <p>{{ page.meta_description }}</p>
             </a>
             {% endfor %}
         </div>
+        <div class="help-empty" id="helpEmpty">No help articles match that. Try a broader term, or <a href="mailto:help@transcriptx.xyz">send us the question</a>.</div>
     </section>
 </main>
+<script>
+    (function () {
+        var input = document.getElementById('helpSearch');
+        var cards = document.querySelectorAll('#helpGrid .article-card');
+        var empty = document.getElementById('helpEmpty');
+        if (!input || !cards.length) return;
+        function apply() {
+            var q = (input.value || '').trim().toLowerCase();
+            var shown = 0;
+            cards.forEach(function (c) {
+                var hay = c.getAttribute('data-search') || '';
+                var match = !q || hay.indexOf(q) !== -1;
+                c.classList.toggle('hidden', !match);
+                if (match) shown++;
+            });
+            if (empty) empty.classList.toggle('on', shown === 0);
+        }
+        input.addEventListener('input', apply);
+        // Deep-link: /help?q=... pre-fills the search.
+        var urlQ = new URLSearchParams(window.location.search).get('q');
+        if (urlQ) { input.value = urlQ; apply(); }
+    })();
+</script>
 {% include "_site_footer.html" %}
 </body>
 </html>
