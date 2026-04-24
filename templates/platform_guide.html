@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ guide.meta_title }}</title>
+    <meta name="description" content="{{ guide.meta_description }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:title" content="{{ guide.title }}">
+    <meta property="og:description" content="{{ guide.meta_description }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ guide.title }}">
+    <meta name="twitter:description" content="{{ guide.meta_description }}">
+    <script type="application/ld+json">{{ article_schema_json | safe }}</script>
+    {% if faq_schema_json %}<script type="application/ld+json">{{ faq_schema_json | safe }}</script>{% endif %}
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f5;
+            --card: #ffffff;
+            --ink: #141414;
+            --text: #141414;
+            --muted: #3f3f46;
+            --accent: #b84b3f;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #050505; --card: #c4c5c7; --ink: #0a0a0a; --text: #c4c5c7; --muted: #b3b3bb; --accent: #b84b3f; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Mono", monospace; line-height: 1.6; }
+        main { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .topnav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
+        .topnav a { color:var(--text); text-decoration:none; font-size:0.8rem; font-weight:700; }
+        .topnav a:hover { color:var(--accent); }
+        .topnav .logo { font-size:1rem; letter-spacing:0.02em; }
+        .topnav .links { display:flex; gap:1rem; align-items:center; }
+        .panel { background: var(--card); color: var(--ink); border-radius: 18px; padding: 1.2rem 1.4rem; margin: 1rem 0 1.25rem; }
+        h1, h2, h3 { line-height: 1.25; }
+        h1 { margin-bottom: 0.7rem; }
+        h2 { margin-top: 1.6rem; }
+        h3 { margin-top: 1rem; }
+        p, li { color: var(--muted); }
+        a { color: var(--accent); }
+        code { background: rgba(127,127,127,0.15); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+        .screenshot-note { font-style: italic; opacity: 0.7; font-size: 0.82em; }
+        .breaks-list li { margin-bottom: 0.6rem; }
+        .sticky-cta { position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--muted); padding:0.8rem 1rem; text-align:center; margin:2rem -1rem 0; }
+        .sticky-cta a { color:var(--accent); font-weight:700; text-decoration:none; font-size:0.85rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="topnav">
+            <a href="/" class="logo">TranscriptX</a>
+            <div class="links">
+                <a href="/">Transcribe</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/guides">Guides</a>
+            </div>
+        </nav>
+
+        <h1>{{ guide.h1 }}</h1>
+        {% if last_updated %}<p style="font-size:0.75rem; opacity:0.6; margin:-.3rem 0 1rem;">Updated {{ last_updated }} &middot; TranscriptX editorial</p>{% endif %}
+
+        <div class="panel"><strong>Quick answer:</strong> {{ guide.quick_answer }}</div>
+
+        <h2>Step-by-step</h2>
+        {% for step in guide.steps %}
+        <h3>{{ loop.index }}) {{ step.heading }}</h3>
+        <p>{{ step.body | safe }}</p>
+        {% if step.screenshot %}<p class="screenshot-note">[Screenshot: {{ step.screenshot }}]</p>{% endif %}
+        {% endfor %}
+
+        <h2>Common things that break</h2>
+        <ul class="breaks-list">
+        {% for brk in guide.breaks %}
+            <li><strong>{{ brk.title }}.</strong> {{ brk.body }}</li>
+        {% endfor %}
+        </ul>
+
+        {% if related_guides %}
+        <h2>Related guides</h2>
+        <ul>
+        {% for rel in related_guides %}
+            <li><a href="{{ rel.href }}">{{ rel.title }}</a></li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h2>Try it</h2>
+        <p>3 free transcripts a month, no signup for the first one. <a href="/">Paste your {{ guide.display }} link</a> and go. <a href="/pricing">Pricing</a> if you need more.</p>
+
+        {% if guide.faqs %}
+        <h2>FAQ</h2>
+        {% for faq in guide.faqs %}
+        <h3>{{ faq.q }}</h3>
+        <p>{{ faq.a }}</p>
+        {% endfor %}
+        {% endif %}
+
+        <div class="sticky-cta">
+            <a href="/">Try TranscriptX free &rarr;</a>
+        </div>
+    </main>
+    {% include "_site_footer.html" %}
+</body>
+</html>

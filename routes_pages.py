@@ -9,6 +9,7 @@ from seo_catalog import (
     HELP_PAGES,
     PERSONA_PAGES,
     PLATFORM_CATEGORIES,
+    PLATFORM_GUIDES,
     RESEARCH_PAGES,
     current_lastmod,
     get_platform_pages,
@@ -400,6 +401,62 @@ def register_page_routes(
             primary_tool_path=GUIDE_TOOL_MAP.get(slug, "/youtube-transcript-generator"),
             article_schema_json=json.dumps(article_schema),
             faq_schema_json=json.dumps(faq_schema),
+            last_updated=last_updated_display,
+        )
+
+    @app.route("/how-to-transcribe/<platform>")
+    def platform_guide_page(platform):
+        guide = PLATFORM_GUIDES.get(platform)
+        if not guide:
+            return ("Guide not found", 404)
+
+        canonical_url = f"https://transcriptx.xyz/how-to-transcribe/{platform}"
+        last_updated_iso = current_lastmod()
+        last_updated_display = _format_last_updated(last_updated_iso)
+
+        # Resolve related hand-written guides so we render real titles + links.
+        related_guides = []
+        for rel_slug in guide.get("related_slugs", []):
+            rel = guides_content.get(rel_slug)
+            if rel:
+                related_guides.append({
+                    "href": f"/guides/{rel_slug}",
+                    "title": rel["title"],
+                })
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": guide["title"],
+            "description": guide["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+        faq_schema = None
+        if guide.get("faqs"):
+            faq_schema = {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+                    }
+                    for item in guide["faqs"]
+                ],
+            }
+
+        return render_template(
+            "platform_guide.html",
+            guide=guide,
+            canonical_url=canonical_url,
+            related_guides=related_guides,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(faq_schema) if faq_schema else None,
             last_updated=last_updated_display,
         )
 
