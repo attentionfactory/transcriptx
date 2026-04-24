@@ -12,6 +12,7 @@ import tempfile
 import time
 import re
 from groq import Groq
+from error_classifier import classify_user_error
 
 log = logging.getLogger(__name__)
 
@@ -223,20 +224,28 @@ def download_audio(url):
         return None, str(e)
 
 
-def transcribe(filepath, model="whisper-large-v3-turbo"):
-    """Transcribe audio file with Groq Whisper."""
+def transcribe(filepath, model="whisper-large-v3-turbo", language=None):
+    """Transcribe audio file with Groq Whisper.
+
+    ``language`` is an optional ISO-639-1 code (e.g. "en"). When set, Whisper's
+    language detection is skipped and the model decodes as that language —
+    useful for fixing auto-detect misidentifications.
+    """
     client = _get_client()
     size_mb = os.path.getsize(filepath) / (1024 * 1024)
-    log.info("[transcribe] start file=%s size=%.1fMB model=%s", os.path.basename(filepath), size_mb, model)
+    log.info("[transcribe] start file=%s size=%.1fMB model=%s lang=%s", os.path.basename(filepath), size_mb, model, language or "auto")
     t0 = time.time()
     try:
         with open(filepath, "rb") as f:
-            result = client.audio.transcriptions.create(
-                file=f,
-                model=model,
-                response_format="verbose_json",
-                timestamp_granularities=["word", "segment"],
-            )
+            kwargs = {
+                "file": f,
+                "model": model,
+                "response_format": "verbose_json",
+                "timestamp_granularities": ["word", "segment"],
+            }
+            if language:
+                kwargs["language"] = language
+            result = client.audio.transcriptions.create(**kwargs)
         elapsed = time.time() - t0
         lang = getattr(result, "language", "unknown")
         log.info("[transcribe] done in %.1fs lang=%s chars=%d", elapsed, lang, len(result.text))
@@ -264,9 +273,13 @@ def transcribe(filepath, model="whisper-large-v3-turbo"):
         return {"transcript": "", "error": str(e)}
 
 
-def process_url(url, model="whisper-large-v3-turbo"):
-    """Full pipeline: URL → metadata + transcript."""
-    log.info("[pipeline] start url=%s model=%s", url, model)
+def process_url(url, model="whisper-large-v3-turbo", language=None):
+    """Full pipeline: URL → metadata + transcript.
+
+    ``language`` is an optional ISO-639-1 code passed to Whisper when the user
+    wants to skip auto-detection (e.g. "en" for English).
+    """
+    log.info("[pipeline] start url=%s model=%s lang=%s", url, model, language or "auto")
     t_total = time.time()
 
     metadata_error = None
@@ -278,27 +291,35 @@ def process_url(url, model="whisper-large-v3-turbo"):
             meta = {}
         else:
             log.warning("[pipeline] metadata error: %s", metadata_error)
+            user_error = classify_user_error(metadata_error, "metadata fetch")
             return {
                 "url": url,
                 "status": "error",
-                "error": metadata_error,
+                "error": user_error["message"],
+                "action": user_error["action"],
+                "help_url": user_error["help_url"],
                 "error_kind": classify_error(metadata_error),
+                "retry_after": user_error.get("retry_after", 0),
             }
 
     # Download
     filepath, err = download_audio(url)
     if err:
+        user_error = classify_user_error(err, "audio download")
         return {
             "url": url,
             "status": "error",
-            "error": err,
+            "error": user_error["message"],
+            "action": user_error["action"],
+            "help_url": user_error["help_url"],
             "error_kind": classify_error(err),
+            "retry_after": user_error.get("retry_after", 0),
             "metadata_error": metadata_error,
             **{k: meta.get(k, 0) for k in ["views", "likes", "comments", "duration"]},
         }
 
     try:
-        result = transcribe(filepath, model)
+        result = transcribe(filepath, model, language=language)
     finally:
         try:
             os.remove(filepath)
@@ -334,7 +355,14 @@ def process_url(url, model="whisper-large-v3-turbo"):
     if status == "error":
         # Transcription stage errors (Groq) are upstream by default — operator
         # problem, not the user's. classify_error handles this conservatively.
-        payload["error_kind"] = classify_error(result.get("error"))
+        raw_error = result.get("error")
+        user_error = classify_user_error(raw_error, "transcription")
+        payload["error"] = user_error["message"]
+        payload["action"] = user_error["action"]
+        payload["help_url"] = user_error["help_url"]
+        payload["error_kind"] = classify_error(raw_error)
+        if user_error.get("retry_after", 0) > 0:
+            payload["retry_after"] = user_error["retry_after"]
     return payload
 
 

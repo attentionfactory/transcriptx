@@ -51,6 +51,7 @@
     <section class="panel">
         <span class="kicker">Comparison</span>
         <h1>{{ page.title }}</h1>
+        {% if last_updated %}<p style="font-size:0.7rem;opacity:0.55;margin:-.3rem 0 .6rem;">Updated {{ last_updated }} &middot; TranscriptX editorial</p>{% endif %}
         <p>{{ page.summary }}</p>
         {% if page.verdict %}
         <div class="subpanel">
@@ -64,10 +65,33 @@
             <p style="margin:0;">{{ page.method_note }}</p>
         </div>
         {% endif %}
+
+        {# Multi-competitor mode: page.competitors is a list of dicts with name + per-metric data.
+           Falls back to the simple "TranscriptX vs one alternative" table when only page.criteria exists. #}
+        {% if page.competitors %}
+        <div style="overflow-x:auto;margin-top:1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        {% for col in page.matrix_columns or [] %}<th>{{ col }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in page.competitors %}
+                    <tr>
+                        <td style="font-weight:700;">{{ c.name }}{% if c.is_us %} <span style="font-size:0.6rem;opacity:0.7;">(this tool)</span>{% endif %}</td>
+                        {% for cell in c.cells %}<td>{{ cell }}</td>{% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif page.criteria %}
         <table>
             <thead><tr><th>Metric</th><th>TranscriptX</th><th>Typical alternative</th></tr></thead>
             <tbody>
-                {% for row in page.criteria or [] %}
+                {% for row in page.criteria %}
                 <tr>
                     <td>{{ row.metric }}</td>
                     <td>{{ row.transcriptx }}</td>
@@ -76,6 +100,27 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+
+        {# Free-form long-form body for richer comparison pages. #}
+        {% if page.body_html %}
+        <div class="subpanel" style="background:rgba(255,255,255,0.22);">
+            {{ page.body_html | safe }}
+        </div>
+        {% endif %}
+
+        {# Optional persona recommendations: which product for whom. #}
+        {% if page.personas %}
+        <div class="subpanel">
+            <h2>Which should you pick?</h2>
+            <ul>
+                {% for row in page.personas %}
+                <li><strong>{{ row.persona }}:</strong> {{ row.pick }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         {% if page.recommendations %}
         <div class="subpanel">
             <h2>Buying Notes</h2>
@@ -101,7 +146,7 @@
         {% endif %}
         <div class="cta">
             <a class="main" href="/youtube-transcript-generator">Try transcript workflow</a>
-            <a href="/research/platform-support-index">View platform support index</a>
+            <a href="/research/platform-support-index">See every site we support</a>
         </div>
     </section>
 </main>

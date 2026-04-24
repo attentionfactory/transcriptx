@@ -152,11 +152,14 @@
         .input-footer { margin-top:1rem; display:flex; gap:1rem; align-items:center; }
 
         /* ── Controls row ── */
-        .controls { display:flex; align-items:center; justify-content:space-between; margin-top:0.8rem; flex-wrap:wrap; gap:0.5rem; }
+        .controls { display:flex; justify-content:space-between; margin-top:0.8rem; flex-wrap:wrap; gap:12px; }
         .controls select {
             background:transparent; border:var(--bw) solid var(--ink); color:var(--ink);
             padding:0.4rem 0.6rem; font-family:var(--f-tech); font-size:0.65rem;
         }
+        .ctrl-field { display:flex; flex-direction:column; gap:4px; }
+        .ctrl-field .label { margin:0; font-size:0.55rem; opacity:0.55; }
+        .ctrl-group { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
         .toggle-wrap {
             display:flex; align-items:center; gap:6px; font-size:0.65rem;
             text-transform:uppercase; letter-spacing:0.05em; cursor:pointer; opacity:0.7;
@@ -367,6 +370,28 @@
         .rate-btn.up.on { background:var(--green); color:#fff; border-color:var(--green); opacity:1; }
         .rate-btn.down.on { background:var(--red); color:#fff; border-color:var(--red); opacity:1; }
         .rate-thanks { font-size:0.55rem; font-family:var(--f-tech); text-transform:uppercase; opacity:0.6; margin-left:4px; }
+        .lang-retry {
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+            margin-bottom:1rem; padding:.75rem 1rem; border:var(--bw) solid var(--orange);
+            background:rgba(240,168,96,0.12); border-radius:8px;
+            font-size:0.78rem; flex-wrap:wrap;
+        }
+        .lang-retry strong { font-weight:700; }
+        .lang-retry button {
+            background:var(--ink); color:var(--orange); border:none; cursor:pointer;
+            padding:.5rem 1rem; font-size:0.7rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:0.04em; border-radius:4px; transition:0.2s;
+        }
+        .lang-retry button:hover:not(:disabled) { background:#333; }
+        .lang-retry button:disabled { opacity:0.5; cursor:default; }
+        .lang-retry-select {
+            background:var(--ink); color:var(--orange); border:var(--bw) solid var(--orange);
+            padding:.4rem .5rem; font-size:0.7rem; font-weight:600; text-transform:uppercase;
+            letter-spacing:0.04em; border-radius:4px; cursor:pointer;
+        }
+        .lang-retry-select:disabled { opacity:0.5; cursor:default; }
+        .lang-retry-select.nudge { outline:2px solid var(--red); outline-offset:1px; }
+        .lang-retry-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
         .transcript-text.hidden { display:none; }
         .view-btn {
@@ -527,10 +552,41 @@
                             <div class="toggle-track"></div>
                             Batch {% if not user.batch %}(paid){% endif %}
                         </label>
-                        <select id="modelSel">
-                            <option value="whisper-large-v3-turbo">TURBO (FAST)</option>
-                            <option value="whisper-large-v3">LARGE-V3 (BEST)</option>
-                        </select>
+                        <div class="ctrl-group">
+                            <div class="ctrl-field">
+                                <span class="label">Language</span>
+                                <select id="langSel" title="Language — leave on Auto unless auto-detect is getting it wrong">
+                                    <option value="">AUTO-DETECT</option>
+                                    <option value="en">ENGLISH</option>
+                                    <option value="es">SPANISH</option>
+                                    <option value="fr">FRENCH</option>
+                                    <option value="de">GERMAN</option>
+                                    <option value="pt">PORTUGUESE</option>
+                                    <option value="it">ITALIAN</option>
+                                    <option value="ja">JAPANESE</option>
+                                    <option value="ko">KOREAN</option>
+                                    <option value="zh">CHINESE</option>
+                                    <option value="ru">RUSSIAN</option>
+                                    <option value="ar">ARABIC</option>
+                                    <option value="hi">HINDI</option>
+                                    <option value="nl">DUTCH</option>
+                                    <option value="pl">POLISH</option>
+                                    <option value="tr">TURKISH</option>
+                                    <option value="id">INDONESIAN</option>
+                                    <option value="ms">MALAY</option>
+                                    <option value="vi">VIETNAMESE</option>
+                                    <option value="th">THAI</option>
+                                    <option value="sv">SWEDISH</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-field">
+                                <span class="label">Model</span>
+                                <select id="modelSel">
+                                    <option value="whisper-large-v3-turbo">TURBO (FAST)</option>
+                                    <option value="whisper-large-v3">LARGE-V3 (BEST)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="batch-area" id="batchArea">
                         <textarea id="batchUrls" placeholder="One URL per line..."></textarea>
@@ -865,6 +921,15 @@
                 if (raw) localStorage.setItem('tx_ref', raw.slice(0, 16));
             } catch (e) {}
         })();
+        // Restore last-used language choice so it survives navigation.
+        (function restoreLang(){
+            try {
+                const stored = localStorage.getItem('tx_lang');
+                if (!stored) return;
+                const sel = document.getElementById('langSel');
+                if (sel && Array.from(sel.options).some(o => o.value === stored)) sel.value = stored;
+            } catch (e) {}
+        })();
         // Show the referral welcome bar if a ref code is present and user isn't logged in.
         (function showRefBar(){
             try {
@@ -922,6 +987,10 @@
             const msg = document.getElementById('statusMsg');
             const prog = document.getElementById('prog');
             const model = document.getElementById('modelSel').value;
+            const language = (document.getElementById('langSel') || {}).value || '';
+            if (language) {
+                try { localStorage.setItem('tx_lang', language); } catch (e) {}
+            }
 
             btn.disabled = true;
             btn.classList.add('loading');
@@ -957,10 +1026,12 @@
 
                 var result = null, isErr = false;
                 try {
+                    const extractBody = {url: urls[i], model};
+                    if (language) extractBody.language = language;
                     const r = await fetch('/api/extract', {
                         method: 'POST',
                         headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({url: urls[i], model})
+                        body: JSON.stringify(extractBody)
                     });
                     const d = await r.json();
 
@@ -1109,10 +1180,22 @@
                 const keptMsg = d.credit_kept
                     ? `<div style="font-size:0.7rem;opacity:0.7;margin-top:6px;">This used 1 credit because we still processed the link. <a href="/pricing#refund-policy" style="color:var(--ink);text-decoration:underline;">Why?</a></div>`
                     : '';
+                const actionMsg = d.action
+                    ? `<div style="font-size:0.8rem;opacity:0.85;margin-top:4px;">${d.action}</div>`
+                    : '';
+                const retryMsg = d.retry_after
+                    ? `<div style="font-size:0.75rem;opacity:0.7;margin-top:4px;">Try again in ${d.retry_after}s</div>`
+                    : '';
+                const helpLink = d.help_url
+                    ? `<div style="font-size:0.75rem;margin-top:6px;"><a href="${d.help_url}" style="color:var(--ink);text-decoration:underline;">See how to fix this →</a></div>`
+                    : '';
                 c.insertAdjacentHTML('afterbegin', `
                     <div class="result-card err">
                         <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
                         <div style="color:var(--red);font-size:0.85rem;">${d.error||'Unknown error'}</div>
+                        ${actionMsg}
+                        ${retryMsg}
+                        ${helpLink}
                         ${keptMsg}
                     </div>`);
                 return;
@@ -1125,8 +1208,41 @@
                 ? `${fmtSec(firstSeg.start)}–${fmtSec(firstSeg.end)}`
                 : 'none';
             const timed = segmentsHtml(id, segments);
+            // F8: every successful transcript gets a free language-retry affordance.
+            // Whisper's auto-detect is wrong often enough that gating this behind the
+            // browser-language heuristic hid the feature from non-English users.
+            const detectedLang = (d.language || '').toLowerCase();
+            const userIsEnglish = (navigator.language || '').toLowerCase().startsWith('en');
+            const defaultRetryLang = (userIsEnglish && detectedLang && detectedLang !== 'en' && detectedLang !== 'english')
+                ? 'en'
+                : '';
+            const retryLangOptions = [
+                ['en','English'],['es','Spanish'],['fr','French'],['de','German'],
+                ['pt','Portuguese'],['it','Italian'],['ja','Japanese'],['ko','Korean'],
+                ['zh','Chinese'],['ru','Russian'],['ar','Arabic'],['hi','Hindi'],
+                ['nl','Dutch'],['pl','Polish'],['tr','Turkish'],['id','Indonesian'],
+                ['ms','Malay'],['vi','Vietnamese'],['th','Thai'],['sv','Swedish']
+            ];
+            const retryLangOptionsHtml = retryLangOptions
+                .filter(([code]) => code !== detectedLang)
+                .map(([code,name]) => `<option value="${code}"${code === defaultRetryLang ? ' selected' : ''}>${name}</option>`)
+                .join('');
+            const showLangRetry = !!d.log_id && !d.retried;
+            const detectedLabel = d.language ? esc(d.language) : 'auto';
+            const retryBanner = showLangRetry
+                ? `<div class="lang-retry" id="${id}-retry">
+                     <span title="Whisper guessed — if that's wrong, retry once free.">Detected <strong>${detectedLabel}</strong>. Wrong language?</span>
+                     <span class="lang-retry-actions">
+                       <select id="${id}-retry-lang" class="lang-retry-select" title="Pick the correct language">
+                         <option value="">Pick language</option>
+                         ${retryLangOptionsHtml}
+                       </select>
+                       <button onclick="retryTranscript(${d.log_id}, '${id}')">Retry free</button>
+                     </span>
+                   </div>`
+                : '';
             c.insertAdjacentHTML('afterbegin', `
-                <div class="result-card">
+                <div class="result-card" id="${id}-card" data-log-id="${d.log_id || ''}">
                     <div class="result-url"><a href="${d.url}" target="_blank">${d.url}</a></div>
                     <div class="spec-grid cols-4">
                         <div class="spec-cell"><div class="spec-val">${fmt(d.views)}</div><div class="spec-lbl">Views</div></div>
@@ -1134,10 +1250,11 @@
                         <div class="spec-cell"><div class="spec-val">${fmt(d.comments)}</div><div class="spec-lbl">Comments</div></div>
                         <div class="spec-cell"><div class="spec-val">${d.duration_formatted||'N/A'}</div><div class="spec-lbl">Duration</div></div>
                     </div>
+                    ${retryBanner}
                     <div class="transcript-box">
                         <div class="transcript-head">
                             <div class="head-meta">
-                                <span class="label" style="margin:0">${d.language||'auto'}</span>
+                                <span class="label" style="margin:0" id="${id}-lang">${d.language||'auto'}</span>
                                 <span class="label" style="margin:0;opacity:0.7;">TS ${segments.length}/${words.length} · ${tsLabel}</span>
                             </div>
                             <div class="head-actions">
@@ -1184,6 +1301,47 @@
             } catch (e) {
                 if (up) up.disabled = false;
                 if (down) down.disabled = false;
+            }
+        }
+
+        // Retry a transcript with a forced language. Free (no credit charge),
+        // one retry per log_id ever. Reads the chosen language from the inline
+        // picker, nudges if empty, then swaps transcript + language label in place.
+        async function retryTranscript(logId, cardId) {
+            const banner = document.getElementById(cardId + '-retry');
+            const select = document.getElementById(cardId + '-retry-lang');
+            const btn = banner ? banner.querySelector('button') : null;
+            const language = select ? select.value : '';
+            if (!language) {
+                if (select) {
+                    select.classList.add('nudge');
+                    select.focus();
+                    setTimeout(() => select.classList.remove('nudge'), 1200);
+                }
+                return;
+            }
+            if (btn) { btn.disabled = true; btn.textContent = 'Retrying…'; }
+            if (select) select.disabled = true;
+            try {
+                const r = await fetch('/api/retranscribe', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({log_id: logId, language})
+                });
+                const d = await r.json();
+                if (!r.ok || d.status === 'error') {
+                    throw new Error(d.error || 'retry failed');
+                }
+                // Swap the transcript text + language label in place.
+                const plain = document.getElementById(cardId + '-plain');
+                const langEl = document.getElementById(cardId + '-lang');
+                if (plain) plain.textContent = d.transcript || '';
+                if (langEl) langEl.textContent = d.language || language;
+                if (banner) banner.remove();
+            } catch (e) {
+                if (btn) { btn.disabled = false; btn.textContent = 'Retry free'; }
+                if (select) select.disabled = false;
+                if (banner) banner.insertAdjacentHTML('beforeend', `<span style="font-size:0.7rem;opacity:0.7;margin-left:8px;">${e.message}</span>`);
             }
         }
 

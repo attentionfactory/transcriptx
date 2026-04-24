@@ -36,12 +36,22 @@
 
     <section class="panel">
         <h1>{{ page.title }}</h1>
+        {% if last_updated %}<p style="font-size:0.7rem;opacity:0.55;margin:-.3rem 0 .6rem;">Updated {{ last_updated }} &middot; TranscriptX editorial</p>{% endif %}
         <p>{{ page.summary }}</p>
-        <ul>
-            <li>Clear methodology notes for reproducibility</li>
-            <li>Structured data points suitable for editorial references</li>
-            <li>Internal links to related tool and comparison pages</li>
-        </ul>
+        {% if page.body_html %}
+        {{ page.body_html | safe }}
+        {% endif %}
+        {% if page.faq %}
+        <h2 style="font-family:var(--f-wide); font-size:.9rem; text-transform:uppercase; margin:1.5rem 0 .6rem;">FAQ</h2>
+        <div style="display:grid; gap:8px;">
+        {% for row in page.faq %}
+            <details style="border:var(--bw) solid rgba(10,10,10,0.25); border-radius:10px; background:rgba(255,255,255,0.35);">
+                <summary style="cursor:pointer; list-style:none; padding:.75rem .9rem; font-size:.78rem; font-weight:700;">{{ row.q }}</summary>
+                <div style="padding:0 .9rem .9rem; font-size:.78rem; line-height:1.55; opacity:0.88;">{{ row.a }}</div>
+            </details>
+        {% endfor %}
+        </div>
+        {% endif %}
         <div class="cta">
             <a class="main" href="/youtube-transcript-generator">Open transcript workflow</a>
             <a href="/compare/best-youtube-transcript-tools">See tool comparison</a>

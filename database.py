@@ -103,9 +103,16 @@ def init_db():
 
 
 def _migrate_transcript_logs(db):
-    """Add rating columns to transcript_logs if missing."""
+    """Add rating + language columns to transcript_logs if missing."""
     existing = {row[1] for row in db.execute("PRAGMA table_info(transcript_logs)").fetchall()}
-    for col, col_type in (("rating", "INTEGER"), ("rated_at", "TEXT")):
+    new_cols = (
+        ("rating", "INTEGER"),
+        ("rated_at", "TEXT"),
+        ("requested_language", "TEXT"),
+        ("detected_language", "TEXT"),
+        ("retried_at", "TEXT"),
+    )
+    for col, col_type in new_cols:
         if col not in existing:
             try:
                 db.execute(f"ALTER TABLE transcript_logs ADD COLUMN {col} {col_type}")
@@ -654,21 +661,73 @@ def set_user_password(user_id, password_hash):
         )
 
 
-def log_transcript_attempt(user_id, email, url, status, credits_used=0):
-    """Write one transcript attempt row for audit/ops visibility. Returns inserted row id."""
+def log_transcript_attempt(
+    user_id,
+    email,
+    url,
+    status,
+    credits_used=0,
+    requested_language=None,
+    detected_language=None,
+):
+    """Write one transcript attempt row for audit/ops visibility. Returns inserted row id.
+
+    ``requested_language`` is what the user asked for (NULL = auto-detect).
+    ``detected_language`` is what Whisper returned. Tracking both lets us measure
+    how often auto-detect is wrong per platform.
+    """
     with get_db() as db:
         cur = db.execute(
-            """INSERT INTO transcript_logs (user_id, email, url, status, credits_used)
-               VALUES (?, ?, ?, ?, ?)""",
+            """INSERT INTO transcript_logs
+                 (user_id, email, url, status, credits_used, requested_language, detected_language)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (
                 user_id,
                 (email or "").strip().lower() or None,
                 (url or "").strip(),
                 (status or "").strip().lower() or "unknown",
                 int(credits_used or 0),
+                (requested_language or None) or None,
+                (detected_language or None) or None,
             ),
         )
         return cur.lastrowid
+
+
+def get_transcript_log(log_id, user_id):
+    """Return a transcript_logs row if it belongs to user_id, else None."""
+    try:
+        log_id = int(log_id)
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+    with get_db() as db:
+        row = db.execute(
+            "SELECT * FROM transcript_logs WHERE id = ? AND user_id = ?",
+            (log_id, user_id),
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def mark_transcript_retried(log_id, user_id, detected_language=None):
+    """Mark a transcript_logs row as retried. One retry per log, ever.
+
+    Returns True if the claim succeeded (row belonged to user and hadn't been
+    retried). Callers should gate the actual re-transcribe on this.
+    """
+    try:
+        log_id = int(log_id)
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            """UPDATE transcript_logs
+                  SET retried_at = ?, detected_language = COALESCE(?, detected_language)
+                WHERE id = ? AND user_id = ? AND retried_at IS NULL""",
+            (datetime.utcnow().isoformat(), detected_language, log_id, user_id),
+        )
+        return cur.rowcount > 0
 
 
 def set_transcript_rating(log_id, user_id, rating):

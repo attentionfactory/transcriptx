@@ -1,13 +1,171 @@
 import json
-from flask import render_template
+from datetime import datetime
+from flask import redirect, render_template
 from seo_catalog import (
     COMPARISON_PAGES,
     CURATED_PLATFORM_OVERRIDES,
     GUIDE_TOOL_MAP,
     HEAD_TERM_PAGES,
+    HELP_PAGES,
+    PERSONA_PAGES,
+    PLATFORM_CATEGORIES,
+    PLATFORM_GUIDES,
     RESEARCH_PAGES,
+    current_lastmod,
     get_platform_pages,
+    get_platforms_by_category,
 )
+
+
+def _format_last_updated(iso_date):
+    """Convert ISO (YYYY-MM-DD) to human-readable ('23 Apr 2026')."""
+    try:
+        return datetime.strptime(iso_date, "%Y-%m-%d").strftime("%d %b %Y")
+    except (ValueError, TypeError):
+        return iso_date or ""
+
+
+def _build_platform_index_html(platform_pages):
+    """Render the 1000+ supported platforms as a searchable HTML table.
+
+    Groups pages alphabetically and wraps in a client-side filter input. Kept in
+    this module (not the template) so the existing research.html stays generic.
+    """
+    from html import escape as h
+
+    rows = sorted(platform_pages.values(), key=lambda p: p.get("display_name", "").lower())
+    total = len(rows)
+
+    # Group into A-Z buckets plus "0-9 / other".
+    buckets = {}
+    for page in rows:
+        name = (page.get("display_name") or "").strip()
+        if not name:
+            continue
+        first = name[0].upper()
+        key = first if first.isalpha() else "0-9"
+        buckets.setdefault(key, []).append(page)
+
+    letters = sorted(k for k in buckets if k != "0-9")
+    if "0-9" in buckets:
+        letters.append("0-9")
+
+    parts = []
+    parts.append(
+        '<div class="platform-index-wrap" style="background:rgba(255,255,255,0.22);'
+        'padding:1.2rem 1.4rem;border-radius:14px;margin:1rem 0;">'
+    )
+    parts.append(
+        f'<p style="font-size:.85rem;opacity:.9;margin-bottom:1rem;">'
+        f"<strong>{total:,} sites and counting.</strong> Not sure if yours is on the list? "
+        f"Search below. And even if you don't find it, paste the link anyway — we can "
+        f"often handle sites we haven't officially listed.</p>"
+    )
+    parts.append(
+        '<input type="text" id="platform-filter" placeholder="Filter — type a platform name..." '
+        'oninput="filterPlatforms()" '
+        'style="width:100%;padding:.7rem 1rem;font-family:inherit;font-size:.8rem;'
+        'border:var(--bw) solid rgba(0,0,0,.3);border-radius:8px;'
+        'background:rgba(255,255,255,.5);margin-bottom:1rem;">'
+    )
+    parts.append(
+        '<div class="platform-letter-nav" style="display:flex;gap:4px;flex-wrap:wrap;'
+        'margin-bottom:1rem;font-size:.7rem;">'
+    )
+    for L in letters:
+        parts.append(
+            f'<a href="#letter-{h(L)}" style="padding:.25rem .45rem;border:var(--bw) solid '
+            f'rgba(0,0,0,.25);border-radius:4px;text-decoration:none;color:var(--ink);'
+            f'background:rgba(255,255,255,.4);">{h(L)}</a>'
+        )
+    parts.append("</div>")
+    parts.append('<div id="platform-sections">')
+    for L in letters:
+        entries = buckets[L]
+        parts.append(
+            f'<section class="platform-letter-section" data-letter="{h(L)}" '
+            f'id="letter-{h(L)}" style="margin-top:1.4rem;">'
+        )
+        parts.append(
+            f'<h3 style="font-family:var(--f-wide);font-size:.9rem;text-transform:uppercase;'
+            f'margin-bottom:.5rem;border-bottom:var(--bw) solid rgba(0,0,0,.25);'
+            f'padding-bottom:.25rem;">{h(L)}</h3>'
+        )
+        parts.append(
+            '<ul class="platform-list" style="list-style:none;padding:0;'
+            'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));'
+            'gap:.25rem .8rem;margin:0;">'
+        )
+        for page in entries:
+            name = h(page.get("display_name") or page.get("slug", ""))
+            path = h(page.get("path", "#"))
+            slug = h(page.get("slug", ""))
+            parts.append(
+                f'<li class="platform-item" data-name="{name.lower()}" '
+                f'data-slug="{slug}" style="font-size:.78rem;padding:.2rem 0;">'
+                f'<a href="{path}" style="color:var(--ink);text-decoration:none;">{name}</a>'
+                f'</li>'
+            )
+        parts.append("</ul>")
+        parts.append("</section>")
+    parts.append("</div>")
+    parts.append("""
+<script>
+(function(){
+  var input = document.getElementById('platform-filter');
+  if (!input) return;
+  window.filterPlatforms = function(){
+    var q = (input.value || '').trim().toLowerCase();
+    var items = document.querySelectorAll('.platform-item');
+    var sections = document.querySelectorAll('.platform-letter-section');
+    if (!q) {
+      items.forEach(function(el){ el.style.display=''; });
+      sections.forEach(function(s){ s.style.display=''; });
+      return;
+    }
+    sections.forEach(function(s){
+      var anyVisible = false;
+      s.querySelectorAll('.platform-item').forEach(function(el){
+        var match = (el.dataset.name || '').indexOf(q) !== -1 ||
+                    (el.dataset.slug || '').indexOf(q) !== -1;
+        el.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      });
+      s.style.display = anyVisible ? '' : 'none';
+    });
+  };
+})();
+</script>
+""")
+    parts.append("</div>")
+
+    # Add context around the index.
+    preamble = """
+<h2>How to use this</h2>
+<p>If you're wondering whether we can transcribe a video from a specific site, check here first. The list below stays in sync with what we actually support — when we add a new site, it shows up automatically.</p>
+<p>Each site name links to its own page with a bit more detail, in case you want to read up before pasting a link.</p>
+<h2>Where most people actually transcribe from</h2>
+<p>The list is long, but most of the time people are pulling videos from 8 or 9 familiar spots: YouTube, TikTok, Instagram, X (Twitter), Facebook, Reddit, Vimeo, LinkedIn, Twitch, SoundCloud. The rest is the long list of everything else — regional news, niche streaming, educational sites, and so on — so you've got options when the video you need isn't on a mainstream site.</p>
+"""
+
+    appendix = """
+<h2>Don't see your site?</h2>
+<p>A few things to try:</p>
+<ul>
+<li><strong>Paste the link anyway.</strong> We can often handle sites we haven't officially listed. If the video plays in a normal browser without a login, there's a good chance it'll work.</li>
+<li><strong>Is it behind a login?</strong> Discord calls, private Zoom rooms, internal Slack — we can't reach those without being logged in. <a href="/help/private-video-transcript">Here's the workaround</a>.</li>
+<li><strong>Is it a brand-new site?</strong> We add new ones fairly regularly. Email us with the site you need and we'll take a look.</li>
+<li><strong>Some enterprise video tools are funny.</strong> Panopto, Kaltura, Brightcove — we support them, but you need the link to the viewer page (the one where you watch), not the raw media URL.</li>
+</ul>
+<h2>Also worth a look</h2>
+<ul>
+<li><a href="/compare/best-youtube-transcript-tools">How we compare to other transcript tools</a></li>
+<li><a href="/help">Help &amp; troubleshooting</a> — if something's not working, the fix is probably here</li>
+<li><a href="/research/transcription-accuracy-benchmark">How accurate is this really?</a> — honest numbers against 4 other tools</li>
+</ul>
+"""
+
+    return preamble + "".join(parts) + appendix
 
 
 def register_page_routes(
@@ -100,7 +258,7 @@ def register_page_routes(
         primary = "/youtube-transcript-generator" if "youtube" in platform else "/video-to-transcript"
         return [
             {"href": primary, "label": "Main transcript workflow"},
-            {"href": "/research/platform-support-index", "label": "Platform support index"},
+            {"href": "/research/platform-support-index", "label": "Sites we support"},
             {"href": "/compare/best-youtube-transcript-tools", "label": "Tool comparison"},
         ]
 
@@ -188,11 +346,29 @@ def register_page_routes(
         ]
         return render_template("guides_index.html", guides=guides)
 
+    # Retired guide slugs — 301 to the closest live equivalent so search equity
+    # and existing backlinks don't land on a 404.
+    _RETIRED_GUIDES = {
+        "repurpose-video-into-seo-post": "/guides/youtube-video-to-show-notes",
+        "manual-vs-ai-transcription": "/guides",
+        "youtube-transcript-generator": "/youtube-transcript-generator",
+        "video-to-transcript": "/video-to-transcript",
+        "download-youtube-transcript": "/download-youtube-transcript",
+        "audio-to-transcript": "/audio-to-transcript",
+        "youtube-video-to-transcript": "/youtube-to-transcript",
+    }
+
     @app.route("/guides/<slug>")
     def guide_page(slug):
+        if slug in _RETIRED_GUIDES:
+            return redirect(_RETIRED_GUIDES[slug], code=301)
+
         guide = guides_content.get(slug)
         if not guide:
             return ("Guide not found", 404)
+
+        last_updated_iso = current_lastmod()
+        last_updated_display = _format_last_updated(last_updated_iso)
 
         article_schema = {
             "@context": "https://schema.org",
@@ -202,6 +378,8 @@ def register_page_routes(
             "author": {"@type": "Organization", "name": "TranscriptX"},
             "publisher": {"@type": "Organization", "name": "TranscriptX"},
             "mainEntityOfPage": f"https://transcriptx.xyz/guides/{slug}",
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
         }
         faq_schema = {
             "@context": "https://schema.org",
@@ -223,6 +401,63 @@ def register_page_routes(
             primary_tool_path=GUIDE_TOOL_MAP.get(slug, "/youtube-transcript-generator"),
             article_schema_json=json.dumps(article_schema),
             faq_schema_json=json.dumps(faq_schema),
+            last_updated=last_updated_display,
+        )
+
+    @app.route("/how-to-transcribe/<platform>")
+    def platform_guide_page(platform):
+        guide = PLATFORM_GUIDES.get(platform)
+        if not guide:
+            return ("Guide not found", 404)
+
+        canonical_url = f"https://transcriptx.xyz/how-to-transcribe/{platform}"
+        last_updated_iso = current_lastmod()
+        last_updated_display = _format_last_updated(last_updated_iso)
+
+        # Resolve related hand-written guides so we render real titles + links.
+        related_guides = []
+        for rel_slug in guide.get("related_slugs", []):
+            rel = guides_content.get(rel_slug)
+            if rel:
+                related_guides.append({
+                    "href": f"/guides/{rel_slug}",
+                    "title": rel["title"],
+                })
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": guide["title"],
+            "description": guide["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+        faq_schema = None
+        if guide.get("faqs"):
+            faq_schema = {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+                    }
+                    for item in guide["faqs"]
+                ],
+            }
+
+        return render_template(
+            "platform_guide.html",
+            guide=guide,
+            canonical_url=canonical_url,
+            related_guides=related_guides,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(faq_schema) if faq_schema else None,
+            last_updated=last_updated_display,
         )
 
     for page in HEAD_TERM_PAGES.values():
@@ -300,6 +535,7 @@ def register_page_routes(
             page=page,
             canonical_url=canonical_url,
             faq_schema_json=json.dumps(_faq_schema(page)),
+            last_updated=_format_last_updated(current_lastmod()),
         )
 
     @app.route("/research/<slug>")
@@ -308,10 +544,111 @@ def register_page_routes(
         if not page:
             return ("Research page not found", 404)
         canonical_url = f"https://transcriptx.xyz/research/{slug}"
+
+        # Special case: platform-support-index renders the live list of platforms.
+        # We build the body HTML here so the catalog entry stays small and the
+        # data source (get_platform_pages) stays the single source of truth.
+        if slug == "platform-support-index":
+            page = dict(page)
+            page["body_html"] = _build_platform_index_html(get_platform_pages())
+
+        last_updated_iso = current_lastmod()
         return render_template(
             "research.html",
             page=page,
             canonical_url=canonical_url,
+            last_updated=_format_last_updated(last_updated_iso),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
+        )
+
+    @app.route("/help")
+    def help_index():
+        return render_template(
+            "help_index.html",
+            articles=HELP_PAGES,
+        )
+
+    @app.route("/help/<slug>")
+    def help_page(slug):
+        page = HELP_PAGES.get(slug)
+        if not page:
+            return ("Help article not found", 404)
+        canonical_url = f"https://transcriptx.xyz/help/{slug}"
+        last_updated_iso = current_lastmod()
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": page["title"],
+            "description": page["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+
+        return render_template(
+            "help.html",
+            page=page,
+            canonical_url=canonical_url,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
+            last_updated=_format_last_updated(last_updated_iso),
+        )
+
+    @app.route("/for/<slug>")
+    def persona_page(slug):
+        page = PERSONA_PAGES.get(slug)
+        if not page:
+            return ("Persona page not found", 404)
+        canonical_url = f"https://transcriptx.xyz/for/{slug}"
+        last_updated_iso = current_lastmod()
+
+        article_schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": page["title"],
+            "description": page["meta_description"],
+            "author": {"@type": "Organization", "name": "TranscriptX"},
+            "publisher": {"@type": "Organization", "name": "TranscriptX"},
+            "mainEntityOfPage": canonical_url,
+            "datePublished": last_updated_iso,
+            "dateModified": last_updated_iso,
+        }
+
+        return render_template(
+            "persona.html",
+            page=page,
+            canonical_url=canonical_url,
+            article_schema_json=json.dumps(article_schema),
+            faq_schema_json=json.dumps(_faq_schema(page)) if page.get("faq") else None,
+            last_updated=_format_last_updated(last_updated_iso),
+        )
+
+    @app.route("/categories")
+    def categories_index():
+        # Pre-compute platform counts per category so the index can show them.
+        counts = {slug: len(get_platforms_by_category(slug)) for slug in PLATFORM_CATEGORIES}
+        return render_template(
+            "categories_index.html",
+            categories=PLATFORM_CATEGORIES,
+            counts=counts,
+        )
+
+    @app.route("/category/<slug>")
+    def category_page(slug):
+        category = PLATFORM_CATEGORIES.get(slug)
+        if not category:
+            return ("Category not found", 404)
+        platforms = get_platforms_by_category(slug)
+        canonical_url = f"https://transcriptx.xyz/category/{slug}"
+        return render_template(
+            "category.html",
+            category=category,
+            platforms=platforms,
+            canonical_url=canonical_url,
+            last_updated=_format_last_updated(current_lastmod()),
         )
 
     @app.route("/press-kit")

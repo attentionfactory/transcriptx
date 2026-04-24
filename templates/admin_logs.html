@@ -166,13 +166,14 @@
                             <th>Platform</th>
                             <th>Status</th>
                             <th>Rating</th>
+                            <th>Lang</th>
                             <th>Credits</th>
                             <th>URL</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if not rows %}
-                        <tr><td colspan="9" style="text-align:center;opacity:.55;padding:1rem;">No logs for current filters.</td></tr>
+                        <tr><td colspan="10" style="text-align:center;opacity:.55;padding:1rem;">No logs for current filters.</td></tr>
                         {% endif %}
                         {% for row in rows %}
                         <tr>
@@ -193,6 +194,20 @@
                             </td>
                             <td class="mono">
                                 {% if row.rating == 1 %}{{ icons.thumbs_up(14) }}{% elif row.rating == -1 %}{{ icons.thumbs_down(14) }}{% else %}—{% endif %}
+                            </td>
+                            <td class="mono" title="requested → detected{% if row.retried_at %} (retried){% endif %}">
+                                {% set req = row.requested_language or 'auto' %}
+                                {% set det = row.detected_language or '?' %}
+                                {% if row.requested_language and row.detected_language and row.requested_language != row.detected_language %}
+                                <span style="color:var(--red);font-weight:700;">{{ req }} → {{ det }}</span>
+                                {% elif row.requested_language %}
+                                {{ req }}
+                                {% elif row.detected_language %}
+                                <span style="opacity:.7;">auto · {{ det }}</span>
+                                {% else %}
+                                —
+                                {% endif %}
+                                {% if row.retried_at %}<span style="opacity:.6;"> ↻</span>{% endif %}
                             </td>
                             <td class="mono">{{ row.credits_used }}</td>
                             <td class="url-cell">

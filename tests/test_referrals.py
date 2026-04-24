@@ -167,7 +167,7 @@ class ReferralPayoutTests(unittest.TestCase):
         self.database.set_referred_by(self.referee_id, self.referrer_id)
 
         # Stub process_url to return a successful transcription.
-        self.app_module.process_url = lambda url, model="": {
+        self.app_module.process_url = lambda url, model="", language=None: {
             "url": url,
             "status": "success",
             "transcript": "hello",

@@ -117,7 +117,7 @@ class RefundBranchTests(unittest.TestCase):
     def test_user_input_error_keeps_credit(self):
         """Private/unsupported video: charged 1 credit, log = error_user_input."""
         self._login()
-        self.app_module.process_url = lambda url, model="": {
+        self.app_module.process_url = lambda url, model="", language=None: {
             "url": url,
             "status": "error",
             "error": "This video is private",
@@ -135,7 +135,7 @@ class RefundBranchTests(unittest.TestCase):
     def test_upstream_error_refunds_credit(self):
         """Network/Groq failure: refunded, log = error, no credit_kept flag."""
         self._login()
-        self.app_module.process_url = lambda url, model="": {
+        self.app_module.process_url = lambda url, model="", language=None: {
             "url": url,
             "status": "error",
             "error": "Audio download failed: HTTP 500",
@@ -153,7 +153,7 @@ class RefundBranchTests(unittest.TestCase):
     def test_unknown_error_kind_treated_as_upstream(self):
         """Defensive: missing error_kind should refund (err on the user's side)."""
         self._login()
-        self.app_module.process_url = lambda url, model="": {
+        self.app_module.process_url = lambda url, model="", language=None: {
             "url": url,
             "status": "error",
             "error": "Something went wrong",
