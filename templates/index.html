@@ -384,6 +384,14 @@
         }
         .lang-retry button:hover:not(:disabled) { background:#333; }
         .lang-retry button:disabled { opacity:0.5; cursor:default; }
+        .lang-retry-select {
+            background:var(--ink); color:var(--orange); border:var(--bw) solid var(--orange);
+            padding:.4rem .5rem; font-size:0.7rem; font-weight:600; text-transform:uppercase;
+            letter-spacing:0.04em; border-radius:4px; cursor:pointer;
+        }
+        .lang-retry-select:disabled { opacity:0.5; cursor:default; }
+        .lang-retry-select.nudge { outline:2px solid var(--red); outline-offset:1px; }
+        .lang-retry-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
         .transcript-text { font-size:0.82rem; line-height:1.7; opacity:0.8; }
         .transcript-text.hidden { display:none; }
         .view-btn {
@@ -1200,20 +1208,37 @@
                 ? `${fmtSec(firstSeg.start)}–${fmtSec(firstSeg.end)}`
                 : 'none';
             const timed = segmentsHtml(id, segments);
-            // Smart-recovery: if user is browsing in English and Whisper returned a non-English
-            // language, offer a one-click retry as English (free, doesn't use a credit).
-            const userIsEnglish = (navigator.language || '').toLowerCase().startsWith('en');
+            // F8: every successful transcript gets a free language-retry affordance.
+            // Whisper's auto-detect is wrong often enough that gating this behind the
+            // browser-language heuristic hid the feature from non-English users.
             const detectedLang = (d.language || '').toLowerCase();
-            const showRetryAsEnglish = !!d.log_id
-                && detectedLang
-                && detectedLang !== 'en'
-                && detectedLang !== 'english'
-                && userIsEnglish
-                && !d.retried;
-            const retryBanner = showRetryAsEnglish
+            const userIsEnglish = (navigator.language || '').toLowerCase().startsWith('en');
+            const defaultRetryLang = (userIsEnglish && detectedLang && detectedLang !== 'en' && detectedLang !== 'english')
+                ? 'en'
+                : '';
+            const retryLangOptions = [
+                ['en','English'],['es','Spanish'],['fr','French'],['de','German'],
+                ['pt','Portuguese'],['it','Italian'],['ja','Japanese'],['ko','Korean'],
+                ['zh','Chinese'],['ru','Russian'],['ar','Arabic'],['hi','Hindi'],
+                ['nl','Dutch'],['pl','Polish'],['tr','Turkish'],['id','Indonesian'],
+                ['ms','Malay'],['vi','Vietnamese'],['th','Thai'],['sv','Swedish']
+            ];
+            const retryLangOptionsHtml = retryLangOptions
+                .filter(([code]) => code !== detectedLang)
+                .map(([code,name]) => `<option value="${code}"${code === defaultRetryLang ? ' selected' : ''}>${name}</option>`)
+                .join('');
+            const showLangRetry = !!d.log_id && !d.retried;
+            const detectedLabel = d.language ? esc(d.language) : 'auto';
+            const retryBanner = showLangRetry
                 ? `<div class="lang-retry" id="${id}-retry">
-                     <span>Detected <strong>${esc(d.language)}</strong>. Not what you expected?</span>
-                     <button onclick="retryTranscript(${d.log_id}, 'en', '${id}')">Retry as English (free)</button>
+                     <span title="Whisper guessed — if that's wrong, retry once free.">Detected <strong>${detectedLabel}</strong>. Wrong language?</span>
+                     <span class="lang-retry-actions">
+                       <select id="${id}-retry-lang" class="lang-retry-select" title="Pick the correct language">
+                         <option value="">Pick language</option>
+                         ${retryLangOptionsHtml}
+                       </select>
+                       <button onclick="retryTranscript(${d.log_id}, '${id}')">Retry free</button>
+                     </span>
                    </div>`
                 : '';
             c.insertAdjacentHTML('afterbegin', `
@@ -1280,11 +1305,23 @@
         }
 
         // Retry a transcript with a forced language. Free (no credit charge),
-        // one retry per log_id ever. Replaces the visible transcript + hides the banner.
-        async function retryTranscript(logId, language, cardId) {
+        // one retry per log_id ever. Reads the chosen language from the inline
+        // picker, nudges if empty, then swaps transcript + language label in place.
+        async function retryTranscript(logId, cardId) {
             const banner = document.getElementById(cardId + '-retry');
+            const select = document.getElementById(cardId + '-retry-lang');
             const btn = banner ? banner.querySelector('button') : null;
+            const language = select ? select.value : '';
+            if (!language) {
+                if (select) {
+                    select.classList.add('nudge');
+                    select.focus();
+                    setTimeout(() => select.classList.remove('nudge'), 1200);
+                }
+                return;
+            }
             if (btn) { btn.disabled = true; btn.textContent = 'Retrying…'; }
+            if (select) select.disabled = true;
             try {
                 const r = await fetch('/api/retranscribe', {
                     method:'POST',
@@ -1302,7 +1339,8 @@
                 if (langEl) langEl.textContent = d.language || language;
                 if (banner) banner.remove();
             } catch (e) {
-                if (btn) { btn.disabled = false; btn.textContent = 'Retry as English (free)'; }
+                if (btn) { btn.disabled = false; btn.textContent = 'Retry free'; }
+                if (select) select.disabled = false;
                 if (banner) banner.insertAdjacentHTML('beforeend', `<span style="font-size:0.7rem;opacity:0.7;margin-left:8px;">${e.message}</span>`);
             }
         }
