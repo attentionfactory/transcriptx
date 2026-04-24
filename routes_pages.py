@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from flask import render_template
+from flask import redirect, render_template
 from seo_catalog import (
     COMPARISON_PAGES,
     CURATED_PLATFORM_OVERRIDES,
@@ -345,8 +345,23 @@ def register_page_routes(
         ]
         return render_template("guides_index.html", guides=guides)
 
+    # Retired guide slugs — 301 to the closest live equivalent so search equity
+    # and existing backlinks don't land on a 404.
+    _RETIRED_GUIDES = {
+        "repurpose-video-into-seo-post": "/guides/youtube-video-to-show-notes",
+        "manual-vs-ai-transcription": "/guides",
+        "youtube-transcript-generator": "/youtube-transcript-generator",
+        "video-to-transcript": "/video-to-transcript",
+        "download-youtube-transcript": "/download-youtube-transcript",
+        "audio-to-transcript": "/audio-to-transcript",
+        "youtube-video-to-transcript": "/youtube-to-transcript",
+    }
+
     @app.route("/guides/<slug>")
     def guide_page(slug):
+        if slug in _RETIRED_GUIDES:
+            return redirect(_RETIRED_GUIDES[slug], code=301)
+
         guide = guides_content.get(slug)
         if not guide:
             return ("Guide not found", 404)

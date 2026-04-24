@@ -2298,647 +2298,1382 @@ ADMIN_TEMPLATE = """
 # ── UI ──────────────────────────────────────────────────────
 
 GUIDES_CONTENT = {
-    "repurpose-video-into-seo-post": {
-        "title": "Repurpose Video Content Into SEO Posts (Using TranscriptX)",
-        "description": "Use TranscriptX to extract a transcript, edit it into an article, and publish SEO-ready content with a repeatable workflow.",
-        "keywords": "repurpose video content, video to blog post, transcript to article, content repurposing workflow",
-        "h1": "Repurpose Video Content Into SEO Posts (Using TranscriptX)",
-        "quick_answer": "Use TranscriptX to pull a transcript from your video URL, edit it into a clean article structure, optimize for one keyword, and publish.",
+    "transcribe-google-drive-video": {
+        "title": "How to Transcribe a Google Drive Video (Without Downloading It)",
+        "description": "Got a video sitting in Google Drive — a Zoom recording, a meeting export, a screen grab? Get a clean transcript in about 30 seconds without downloading anything.",
+        "keywords": "transcribe google drive video, google drive transcript, zoom recording in drive transcript",
+        "h1": "How to Transcribe a Google Drive Video (Without Downloading It)",
+        "quick_answer": "Open the video in Drive, click Share, switch access to “Anyone with the link”, copy the link, paste it into TranscriptX. Done in about 30 seconds. No download, no plugin, no Drive permissions for us.",
         "faq": [
             {
-                "q": "Can I publish the raw transcript directly?",
-                "a": "You can, but an edited transcript performs better for readability and SEO."
+                "q": "Do I have to make the video public?",
+                "a": "No. “Anyone with the link” means only people who have the link can open it — and nobody at TranscriptX keeps the link after the transcript is generated. If you’re nervous, flip it back to Restricted once your transcript is done."
             },
             {
-                "q": "How long should the repurposed post be?",
-                "a": "Typically 800 to 1500 words, depending on query intent and topic depth."
+                "q": "Will this work on a Shared Drive?",
+                "a": "Usually, yes — as long as the Shared Drive allows external link sharing. Some company Shared Drives force domain-only access; in that case the link won’t open from our servers. You’ll need to download the file and reupload it to your personal Drive."
             },
             {
-                "q": "Should one video become one article?",
-                "a": "Start with one article, then split high-value videos into multiple intent-specific posts."
+                "q": "Does this work for Zoom cloud recordings that auto-save to Drive?",
+                "a": "Yes. That’s actually the most common use of this guide — Zoom drops the .mp4 into Drive, you share the link, and you get a transcript without paying for Zoom AI Companion."
             },
             {
-                "q": "What if the transcript has minor errors?",
-                "a": "Do a fast editorial pass for names, technical terms, and context before publishing."
-            },
+                "q": "How large a file can I transcribe?",
+                "a": "TranscriptX handles anything Drive can store. Very long recordings (multi-hour) will take longer to transcribe, but there’s no hard file-size cap from our side on link-based transcription."
+            }
         ],
         "body_html": """
-<p>If you already publish videos, you are sitting on SEO content. The fastest workflow is simple: get transcript, edit into article, publish.</p>
-<h2>Quick answer</h2>
-<p>Use TranscriptX to pull a transcript from your video URL, clean the text into an article structure, optimize for one keyword, and publish.</p>
-<h2>Step-by-step workflow</h2>
-<h3>1) Get the transcript with TranscriptX</h3>
+<p>If your video is already in Google Drive, you don’t need to download it, convert it, or install anything. Just share the link and paste it.</p>
+<h2>The 30-second answer</h2>
+<p>Open the video in Drive. Click <strong>Share</strong>. Change access to <strong>Anyone with the link</strong>. Copy the link. Paste it into <a href=\"/\">TranscriptX</a>. That’s it.</p>
+<h2>Step-by-step</h2>
+<h3>1) Open the video in Drive</h3>
+<p>Go to <a href=\"https://drive.google.com\" rel=\"nofollow\">drive.google.com</a> and click the video. Doesn’t matter if it’s in My Drive, a Shared Drive, or a folder someone shared with you — as long as you can play it, you can transcribe it.</p>
+<p><em>[Screenshot: Drive file preview with the Share button visible top-right]</em></p>
+<h3>2) Click Share and set “Anyone with the link”</h3>
+<p>This is the one step people get stuck on. Click <strong>Share</strong> (top right). Under “General access”, change <strong>Restricted</strong> to <strong>Anyone with the link</strong>. You don’t need to add any email addresses. Viewer access is fine — we only need to read the file.</p>
+<p><em>[Screenshot: Share dialog with General access dropdown open, “Anyone with the link” highlighted]</em></p>
+<h3>3) Copy the link and paste it into TranscriptX</h3>
+<p>Click <strong>Copy link</strong>, then paste it on <a href=\"/\">transcriptx.xyz</a>. Hit Transcribe. You’ll have a full transcript in under a minute for most videos.</p>
+<p><em>[Screenshot: TranscriptX homepage input with a Drive link pasted and the Transcribe button highlighted]</em></p>
+<p>Once you’ve got your transcript, you can flip the Drive link back to Restricted if you want. We don’t keep the link.</p>
+<h2>Common things that break</h2>
 <ul>
-  <li>Paste your video URL into TranscriptX.</li>
-  <li>Run transcription and copy the transcript output.</li>
+  <li><strong>“You need access” or “Not allowed to access this video.”</strong> Your share setting is still Restricted. Go back to Share and set it to Anyone with the link.</li>
+  <li><strong>Shared Drive won’t open externally.</strong> Some company Shared Drives force domain-only sharing and block external link access. We can’t get past that. Download the file to your laptop, reupload it to your personal Drive, and share from there.</li>
+  <li><strong>The video is actually a Google Doc / Slides / Form.</strong> Drive shows videos, but “video” has to mean a real video file (.mp4, .mov, .webm, .m4a for audio). Recorded Meet sessions and exported Zoom recordings are fine. Presentations aren’t.</li>
+  <li><strong>Video has a Google-level DRM flag.</strong> Rare, but some company-uploaded videos are flagged and can’t be streamed from a share link. If a colleague uploaded it with restrictions, ask them to export and send the raw file instead.</li>
 </ul>
-<h3>2) Clean the transcript</h3>
+<h2>Related guides</h2>
 <ul>
-  <li>Remove filler words and repeated phrases.</li>
-  <li>Split long blocks into short readable sections.</li>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a> — the most common Drive use case.</li>
+  <li><a href=\"/guides/transcribe-microsoft-teams-recording\">How to transcribe a Microsoft Teams meeting</a> — same pattern, different host.</li>
+  <li><a href=\"/guides/transcribe-loom-video\">How to transcribe a Loom video</a> — for the share-link flow with Loom.</li>
 </ul>
-<h3>3) Turn transcript into article structure</h3>
-<ul>
-  <li>Intro with problem + promise</li>
-  <li>Quick answer</li>
-  <li>Steps/checklist</li>
-  <li>Common mistakes</li>
-  <li>FAQ + CTA</li>
-</ul>
-<h3>4) Optimize for SEO before publishing</h3>
-<ul>
-  <li>Put keyword in title, H1, slug, and first paragraph.</li>
-  <li>Add internal links to <a href="/">home</a>, <a href="/pricing">pricing</a>, and <a href="/guides/manual-vs-ai-transcription">manual vs AI</a>.</li>
-  <li>Add an FAQ to catch the smaller, more specific searches.</li>
-</ul>
-<h3>5) Publish and interlink</h3>
-<ul>
-  <li>Publish the page and link related guides to it.</li>
-  <li>Submit updated sitemap in Search Console.</li>
-</ul>
-<h2>Why this works</h2>
-<p>Transcript-first writing increases speed and consistency. Every published video becomes a new ranking attempt.</p>
-<h2>Common mistakes to avoid</h2>
-<ul>
-  <li>Publishing raw transcript without editing</li>
-  <li>Targeting multiple unrelated keywords on one page</li>
-  <li>Skipping FAQ and internal links</li>
-  <li>No clear CTA</li>
-</ul>
-<h2>FAQ</h2>
-<h3>Can I publish the raw transcript directly?</h3>
-<p>You can, but an edited transcript performs better for readability and SEO.</p>
-<h3>How long should the repurposed post be?</h3>
-<p>Typically 800 to 1500 words, depending on query intent and topic depth.</p>
-<h3>Should one video become one article?</h3>
-<p>Start with one article, then split high-value videos into multiple intent-specific posts.</p>
-<h3>What if the transcript has minor errors?</h3>
-<p>Do a fast editorial pass for names, technical terms, and context before publishing.</p>
-<h2>Final take</h2>
-<p>Treat TranscriptX as your repurposing engine: every video should become a search-optimized page.</p>
+<h2>Try it</h2>
+<p>You get 3 free transcripts a month on TranscriptX. No signup needed for the first one — <a href=\"/\">paste your Drive link and go</a>. Pricing is on <a href=\"/pricing\">the pricing page</a> if you want more.</p>
 """,
     },
-    "manual-vs-ai-transcription": {
-        "title": "Stop Typing Manually \u2014 Why Fast Teams Use AI Transcription",
-        "description": "Manual transcription costs you time and publishing speed. See why teams are switching to AI-powered transcription with TranscriptX.",
-        "keywords": "manual transcription vs ai transcription, ai transcription tool, transcription workflow, transcriptx guide",
-        "h1": "Stop Typing Manually \u2014 Why Fast Teams Use AI Transcription",
-        "quick_answer": "AI transcription with TranscriptX turns hours of manual typing into minutes of clean, editable text \u2014 so your team publishes faster without losing quality.",
+    "transcribe-zoom-recording": {
+        "title": "How to Transcribe a Zoom Recording (Without Paying for Zoom AI Companion)",
+        "description": "Got a Zoom recording in the cloud or on your laptop? Get a clean transcript in under a minute — no Zoom AI Companion subscription needed.",
+        "keywords": "transcribe zoom recording, zoom transcript free, zoom recording to text, zoom cloud recording transcript",
+        "h1": "How to Transcribe a Zoom Recording (Without Paying for Zoom AI Companion)",
+        "quick_answer": "If your Zoom recording is in the cloud, share the link and paste it on TranscriptX. If it’s on your laptop, drop it into Google Drive, share the Drive link, and paste that. Either way, no Zoom AI Companion needed.",
         "faq": [
             {
-                "q": "Is AI transcription accurate enough to publish?",
-                "a": "Yes. For clear audio, TranscriptX produces highly accurate output. A quick editorial pass handles the rest."
+                "q": "Can TranscriptX open a Zoom Cloud link directly?",
+                "a": "Yes, if the recording has a shareable link with no passcode (or the passcode removed). Most paid Zoom tiers give you this. Copy from zoom.us → Recordings → Share."
             },
             {
-                "q": "When does manual transcription still make sense?",
-                "a": "Strict legal or compliance recordings where every syllable matters and volume is low."
+                "q": "What about a local recording on my laptop?",
+                "a": "The cleanest path today is to drop the .mp4 into Google Drive, share the link publicly, and paste that link here."
             },
             {
-                "q": "Will AI transcription make my content sound robotic?",
-                "a": "No. TranscriptX produces the draft. Your team controls tone, voice, and final quality."
+                "q": "Doesn’t Zoom AI Companion already do this?",
+                "a": "If you’re on a paid Zoom tier with AI Companion enabled, yes — but it’s priced per seat per month. TranscriptX is a flat $3.99/mo no matter how many recordings you run."
             },
             {
-                "q": "How much faster is AI transcription than manual?",
-                "a": "Most videos are transcribed in minutes instead of hours. Editing adds a short pass on top."
-            },
-            {
-                "q": "What does TranscriptX cost compared to hiring a transcriptionist?",
-                "a": "TranscriptX starts at $2/month for 50 transcripts. A single freelance transcript can cost $20-50+."
-            },
+                "q": "Will it label speaker names?",
+                "a": "Not by default — you get a clean transcript without diarization. For multi-person meetings, see the speaker-labeling guide."
+            }
         ],
         "body_html": """
-<p>There was a time when transcription meant headphones, a foot pedal, and hours of rewind-type-rewind. For some teams, that is still the default. But the math has changed dramatically, and teams that have not caught up are losing publishing speed every week.</p>
-
-<p>Manual transcription is not bad work. It is thorough, controllable, and precise when done well. The problem is throughput. A skilled typist working from audio needs roughly four hours to transcribe one hour of speech. That means a single 20-minute video eats nearly 90 minutes of focused human effort before a single word is edited, structured, or published. Multiply that by a weekly publishing cadence and you have a full-time bottleneck disguised as a routine task.</p>
-
-<p>AI transcription does not eliminate humans from the process. It changes where humans spend their time. Instead of converting sound to words, your team spends time on structure, voice, and intent \u2014 the parts that actually determine whether content performs. TranscriptX handles the conversion layer: paste a URL, get a clean transcript, then shape it into whatever you need.</p>
-
-<h2>The real cost of manual transcription</h2>
-
-<p>Cost is not just money. It is time, opportunity, and consistency. Manual transcription introduces three hidden costs that most teams underestimate.</p>
-
-<p>First, there is the calendar cost. Every hour spent typing is an hour not spent writing, editing, or distributing. Teams with manual workflows publish less frequently, which means fewer pages indexed, fewer ranking opportunities, and slower compounding growth.</p>
-
-<p>Second, there is the consistency cost. Manual work is subject to energy, availability, and human variability. Miss one week and your publishing rhythm breaks. Miss three and your content pipeline stalls. AI transcription runs on demand regardless of team capacity.</p>
-
-<p>Third, there is the scaling cost. Manual transcription does not scale linearly. Doubling your video output means doubling transcription labor. With AI, doubling video output means doubling API calls \u2014 no new hires, no new processes.</p>
-
-<h2>What AI transcription actually delivers</h2>
-
-<p>Modern speech-recognition engines are trained on hundreds of thousands of hours of diverse, multilingual audio from the real web \u2014 not clean studio recordings. That training breadth is why they handle accents, background noise, and overlapping speech far better than earlier systems. The practical result: you get a usable first draft from imperfect real-world recordings, not just laboratory audio.</p>
-
-<p>TranscriptX uses this technology to give you transcript output in minutes. The workflow is simple: paste the video URL, TranscriptX extracts audio and runs transcription, and you get structured text ready for editing. No file management, no software installs, no waiting for freelancers.</p>
-
-<h2>When manual still wins</h2>
-
-<p>There are legitimate cases where manual transcription is the right call. Legal depositions, compliance-heavy recordings, and highly specialized technical content with dense jargon sometimes need human attention from the first word. If your volume is low and precision requirements are unusually strict, manual work can still justify itself.</p>
-
-<p>But those cases are narrow. For creators, marketers, agencies, and product teams producing content regularly, AI transcription is not just faster \u2014 it is the only way to maintain a sustainable publishing pace without burning out your team.</p>
-
-<h2>How TranscriptX fits your workflow</h2>
-
-<p>TranscriptX is designed for teams that need to move from video to published content quickly. Here is how it works in practice:</p>
-
-<p>You paste a video URL from YouTube, TikTok, Instagram, or any of 1000+ supported sources. TranscriptX extracts the audio automatically \u2014 no downloads, no file conversions on your end. The audio runs through high-accuracy AI transcription and you receive clean, structured text output within minutes.</p>
-
-<p>From there, your team does what humans do best: edit for tone, restructure for the target format, and publish. The entire cycle \u2014 from video URL to published page \u2014 can happen in a single sitting instead of spanning days.</p>
-
-<h2>The publishing speed advantage</h2>
-
-<p>Publishing weekly beats publishing monthly. Every new page is another door into your site from search, and the more doors you have, the more people walk in. Teams that transcribe faster publish faster. Teams that publish faster grow faster.</p>
-
-<p>TranscriptX exists to remove the bottleneck between having content and publishing content. Your videos already contain the substance. TranscriptX turns that substance into text you can use today.</p>
-
-<h2>FAQ</h2>
-<h3>Is AI transcription accurate enough to publish?</h3>
-<p>Yes. For clear audio, TranscriptX produces highly accurate output. A quick editorial pass handles the rest.</p>
-<h3>When does manual transcription still make sense?</h3>
-<p>Strict legal or compliance recordings where every syllable matters and volume is low.</p>
-<h3>Will AI transcription make my content sound robotic?</h3>
-<p>No. TranscriptX produces the draft. Your team controls tone, voice, and final quality.</p>
-<h3>How much faster is AI transcription than manual?</h3>
-<p>Most videos are transcribed in minutes instead of hours. Editing adds a short pass on top.</p>
-<h3>What does TranscriptX cost compared to hiring a transcriptionist?</h3>
-<p>TranscriptX starts at $2/month for 50 transcripts. A single freelance transcript can cost $20\u201350+.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Ready to stop typing and start publishing?</strong></p>
-  <a href="/pricing" style="color:#F0A860;font-weight:700;">See TranscriptX pricing \u2192</a>
-</div>
+<p>Zoom has its own transcription now, but it’s tied to a paid AI Companion seat. If you already have the recording, you don’t need it.</p>
+<h2>The 30-second answer</h2>
+<p>Zoom recording in the cloud? Grab the share link and paste it. Recording on your laptop? Upload to Google Drive, share the link, paste that.</p>
+<h2>Step-by-step — Zoom Cloud recording</h2>
+<h3>1) Go to zoom.us → Recordings</h3>
+<p>Sign in, click <strong>Recordings</strong> in the left nav, and find the meeting you want.</p>
+<p><em>[Screenshot: Zoom Recordings page with one meeting highlighted]</em></p>
+<h3>2) Share it publicly (no passcode)</h3>
+<p>Click <strong>Share</strong>. Turn on <strong>Share this recording publicly</strong>. Turn off <strong>Passcode</strong> — our servers can’t type passcodes for you. Copy the link.</p>
+<p><em>[Screenshot: Zoom Share dialog with public sharing on and passcode off]</em></p>
+<h3>3) Paste into TranscriptX</h3>
+<p>Drop the link on <a href=\"/\">transcriptx.xyz</a>, hit Transcribe. Done.</p>
+<h2>Step-by-step — local recording (.mp4 on your laptop)</h2>
+<p>Zoom saves local recordings to <code>~/Documents/Zoom/</code>. The cleanest path is to <a href=\"/guides/transcribe-google-drive-video\">drop it into Google Drive and share from there</a>.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Passcode on the cloud recording.</strong> We can’t type passcodes into Zoom. Remove the passcode, or host the file elsewhere.</li>
+  <li><strong>“Only authenticated users can view.”</strong> Same problem — forces a Zoom login. Turn it off.</li>
+  <li><strong>Expired recording.</strong> Free Zoom plans delete cloud recordings after a short retention window. If the link 404s, it’s gone.</li>
+  <li><strong>Separate audio tracks.</strong> If you recorded with speaker-separated tracks, Zoom still exports one merged video by default. That’s what we transcribe.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-google-drive-video\">How to transcribe a Google Drive video</a> — for your local .mp4.</li>
+  <li><a href=\"/guides/transcribe-microsoft-teams-recording\">How to transcribe a Microsoft Teams meeting</a> — same flow, different host.</li>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label who said what</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month, no signup for the first one. <a href=\"/\">Paste a Zoom or Drive link</a> and go. <a href=\"/pricing\">Pricing</a> if you need more.</p>
 """,
     },
-    "youtube-transcript-generator": {
-        "title": "YouTube Transcript Generator \u2014 Get Clean Text From Any Video",
-        "description": "TranscriptX turns any YouTube video into clean, editable transcript text in minutes. Accurate AI transcription you can publish, repurpose, and share.",
-        "keywords": "youtube transcript generator, youtube transcript, transcript youtube, youtube to transcript",
-        "h1": "YouTube Transcript Generator \u2014 Clean Text From Any Video in Minutes",
-        "quick_answer": "Paste a YouTube URL into TranscriptX and get an accurate, editable transcript in minutes \u2014 ready to publish, repurpose, or share.",
+    "transcribe-tiktok-video": {
+        "title": "How to Get the Transcript of a TikTok Video",
+        "description": "Copy the share link from any public TikTok, paste it into TranscriptX, and you’ll have a clean transcript in about 20 seconds. Captions are not the same as a transcript.",
+        "keywords": "tiktok transcript, transcribe tiktok video, tiktok to text, tiktok captions export",
+        "h1": "How to Get the Transcript of a TikTok Video",
+        "quick_answer": "Tap Share on the TikTok → Copy link → paste on TranscriptX. Works on any public video. Private accounts, draft videos, and some region-locked videos won’t open from our servers.",
         "faq": [
             {
-                "q": "How does the TranscriptX YouTube transcript generator work?",
-                "a": "Paste a YouTube URL, TranscriptX extracts the audio and runs AI transcription, then returns clean editable text."
+                "q": "Isn’t this just the TikTok captions?",
+                "a": "No. TikTok auto-captions are often incomplete or mistimed. We run Whisper on the actual audio, which gives you the full spoken content — including parts TikTok skipped."
             },
             {
-                "q": "Is this more accurate than YouTube auto-captions?",
-                "a": "TranscriptX uses advanced our AI engine that handles noise, accents, and overlapping speech better than standard auto-captions."
+                "q": "Does it work on private videos?",
+                "a": "No. TikTok locks private videos behind login, and our servers don’t have an account. If it’s your own, flip it to public briefly."
             },
             {
-                "q": "Can I use the transcript for blog posts and articles?",
-                "a": "Yes. TranscriptX output is designed to be edited and published as articles, guides, social posts, and more."
+                "q": "What if the video is music with no speech?",
+                "a": "You’ll get an empty or near-empty transcript. Nothing to transcribe, and we don’t identify songs."
             },
             {
-                "q": "What if a YouTube video has no captions?",
-                "a": "TranscriptX does not depend on existing captions. It extracts audio and transcribes directly, so missing captions are not a problem."
-            },
-            {
-                "q": "How much does it cost?",
-                "a": "Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited."
-            },
-            {
-                "q": "Does it work with long YouTube videos?",
-                "a": "Yes, TranscriptX handles videos up to the audio size limit. Most standard YouTube content processes without issues."
-            },
+                "q": "Will it work on TikTok Shop videos?",
+                "a": "Usually yes — as long as the video is still live. Shop videos get pulled when products go out of stock."
+            }
         ],
         "body_html": """
-<p>Every day, millions of hours of valuable spoken content go live on YouTube. Tutorials, interviews, lectures, product reviews, earnings calls, podcasts \u2014 all of it locked inside video. If you need that content as text, your options have historically been limited: copy-paste from inconsistent auto-captions, hire a transcriptionist, or type it yourself.</p>
-
-<p>TranscriptX changes that equation. Paste a YouTube URL and get a clean, accurate transcript in minutes. Not a rough caption dump \u2014 actual structured text you can edit, publish, and repurpose immediately.</p>
-
-<h2>Why YouTube auto-captions are not enough</h2>
-
-<p>YouTube generates automatic captions using its own speech recognition, and for casual viewing they work reasonably well. But anyone who has tried to use auto-captions as source material for writing knows the frustration. Missing punctuation. Sentence boundaries that make no sense. Names and technical terms mangled beyond recognition. Background noise interpreted as speech.</p>
-
-<p>YouTube\u2019s own documentation acknowledges that automatic captions can vary in quality depending on mispronunciations, accents, dialects, and background noise. For quick reference while watching a video, that is fine. For content production, it creates more editing work than it saves.</p>
-
-<p>Worse, not every video even has captions available. If the creator disabled them, or if the audio conditions prevented auto-generation, the built-in transcript view simply does not appear. You are left with nothing.</p>
-
-<h2>How TranscriptX works</h2>
-
-<p>TranscriptX does not depend on YouTube\u2019s existing caption track. Instead, it extracts the actual audio from the video and runs it through advanced AI speech recognition built on our transcription engine \u2014 trained on hundreds of thousands of hours of diverse, multilingual web audio.</p>
-
-<p>The practical difference is significant. our transcription engine handles real-world audio conditions \u2014 background noise, varied accents, technical vocabulary, multiple languages \u2014 with substantially better accuracy than standard auto-caption systems. Research shows these engines make up to 50% fewer errors than models tuned for narrow benchmark conditions.</p>
-
-<p>Here is the workflow:</p>
-
-<p><strong>Step 1:</strong> Paste the YouTube video URL into TranscriptX.</p>
-<p><strong>Step 2:</strong> TranscriptX automatically extracts the audio. No downloads or file management on your end.</p>
-<p><strong>Step 3:</strong> AI transcription runs and returns clean, structured text \u2014 typically within minutes.</p>
-<p><strong>Step 4:</strong> Copy the transcript, edit it for your needs, and publish.</p>
-
-<p>That is the complete workflow. No software to install, no accounts to configure with third-party APIs, no audio files to juggle.</p>
-
-<h2>What you can do with the transcript</h2>
-
-<p>A clean transcript is not just text \u2014 it is a content asset with multiple downstream uses.</p>
-
-<p><strong>Blog posts and articles.</strong> One 15-minute video contains enough material for a 1,500-word article. Structure the transcript into sections, add an intro and conclusion, and you have a publishable page targeting search traffic you would never capture with video alone.</p>
-
-<p><strong>Social media content.</strong> Pull the strongest quotes, insights, or data points from the transcript. Each one becomes a standalone post, a thread, or a carousel slide. One video can fuel a week of social content.</p>
-
-<p><strong>Documentation and knowledge bases.</strong> Product demos, onboarding sessions, and internal presentations all become searchable reference material once transcribed. Teams stop asking \u201cwhat did we say in that meeting?\u201d and start finding answers instantly.</p>
-
-<p><strong>Accessibility.</strong> Transcripts make your content available to people who are deaf or hard of hearing, people who prefer reading, and people in environments where audio is not practical. Accessibility is not a feature \u2014 it is a responsibility.</p>
-
-<h2>Built for reliability, not just speed</h2>
-
-<p>Speed matters, but not if the tool breaks every other attempt. YouTube periodically changes how it serves content, and extraction tools that do not adapt fail silently. TranscriptX includes automatic retry logic, intelligent fallback handling, and clear error messaging when something upstream changes. You get a result or you get an honest explanation \u2014 never a blank screen.</p>
-
-<p>This operational resilience is invisible when everything works, but it is the difference between a tool you use once and a tool your team relies on weekly.</p>
-
-<h2>Pricing that makes sense</h2>
-
-<p>TranscriptX is built for creators and teams, not enterprise budgets. Free users get 3 transcripts per month with no signup. Starter gives you 50 transcripts for $2/month. Pro gives you unlimited for $4/month. Compare that to transcription services charging $1\u2013$2 per minute of audio, and the economics are not even close.</p>
-
-<h2>FAQ</h2>
-<h3>How does the TranscriptX YouTube transcript generator work?</h3>
-<p>Paste a YouTube URL, TranscriptX extracts the audio and runs AI transcription, then returns clean editable text.</p>
-<h3>Is this more accurate than YouTube auto-captions?</h3>
-<p>TranscriptX uses advanced our AI engine that handles noise, accents, and overlapping speech better than standard auto-captions.</p>
-<h3>Can I use the transcript for blog posts and articles?</h3>
-<p>Yes. TranscriptX output is designed to be edited and published as articles, guides, social posts, and more.</p>
-<h3>What if a YouTube video has no captions?</h3>
-<p>TranscriptX does not depend on existing captions. It extracts audio and transcribes directly, so missing captions are not a problem.</p>
-<h3>How much does it cost?</h3>
-<p>Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited.</p>
-<h3>Does it work with long YouTube videos?</h3>
-<p>Yes, TranscriptX handles videos up to the audio size limit. Most standard YouTube content processes without issues.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Ready to turn YouTube videos into publishable text?</strong></p>
-  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
-</div>
+<p>TikTok has auto-captions, but they’re not downloadable and they skip words. If you want the real transcript — for show notes, accessibility, or research — just paste the link.</p>
+<h2>The 20-second answer</h2>
+<p>Tap <strong>Share</strong> on the TikTok, tap <strong>Copy link</strong>, paste it on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Open the TikTok and tap Share</h3>
+<p>On the app or tiktok.com, tap the <strong>Share</strong> arrow (right side on mobile, below the video on desktop).</p>
+<p><em>[Screenshot: TikTok video with the Share panel open]</em></p>
+<h3>2) Tap Copy link</h3>
+<p>The link looks like <code>tiktok.com/@user/video/1234567890</code>. The short <code>vm.tiktok.com</code> format also works.</p>
+<h3>3) Paste into TranscriptX</h3>
+<p>Open <a href=\"/\">transcriptx.xyz</a>, paste, hit Transcribe. 20-30 seconds later you have the text.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Private or Friends-only videos.</strong> TikTok requires a login we don’t have. If it’s yours, flip it to public briefly.</li>
+  <li><strong>“Video unavailable in your region.”</strong> Our servers are in the US. Some videos are blocked outside the creator’s country.</li>
+  <li><strong>Music-only videos.</strong> No speech = no transcript. Expected.</li>
+  <li><strong>Live replays.</strong> These often aren’t shareable after the stream ends. If the replay is gone, it’s gone.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-instagram-reel-or-story\">How to transcribe an Instagram Reel</a> — same idea, different platform.</li>
+  <li><a href=\"/guides/transcribe-youtube-short\">How to transcribe a YouTube Short</a>.</li>
+  <li><a href=\"/guides/transcribe-facebook-video\">How to transcribe a Facebook video</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free TikToks a month, no signup for the first one. <a href=\"/\">Paste a link and go</a>.</p>
 """,
     },
-    "video-to-transcript": {
-        "title": "Video to Transcript \u2014 Turn Any Video Into Usable Text With TranscriptX",
-        "description": "Convert any video into clean, accurate transcript text with TranscriptX. Works with YouTube, TikTok, Instagram, and 1000+ platforms.",
-        "keywords": "video to transcript, transcript from video, transcript video, video transcript",
-        "h1": "Turn Any Video Into Clean, Publishable Transcript Text",
-        "quick_answer": "TranscriptX converts video from any supported platform into accurate transcript text in minutes \u2014 ready for editing, publishing, and repurposing.",
+    "transcribe-private-youtube-video": {
+        "title": "How to Transcribe a Private or Unlisted YouTube Video",
+        "description": "Unlisted YouTube videos work like normal — paste the link, get a transcript. Private videos need a login we don’t have. Here’s what works and what doesn’t.",
+        "keywords": "transcribe unlisted youtube video, private youtube transcript, unlisted youtube to text",
+        "h1": "How to Transcribe a Private or Unlisted YouTube Video",
+        "quick_answer": "Unlisted: copy the URL and paste it on TranscriptX — it works the same as a public video. Private: we can’t access it (YouTube requires login). Switch it to Unlisted, transcribe, switch back.",
         "faq": [
             {
-                "q": "What platforms does TranscriptX support?",
-                "a": "YouTube, TikTok, Instagram, X (Twitter), Facebook, and 1000+ other platforms with public video."
+                "q": "What’s the difference between Unlisted and Private?",
+                "a": "Unlisted = anyone with the link can watch, but it won’t show up in search or on your channel. Private = only specific Google accounts you invited can see it. Unlisted is the sweet spot for transcription."
             },
             {
-                "q": "How accurate is the video-to-transcript conversion?",
-                "a": "TranscriptX uses our AI engine trained on hundreds of thousands of hours of real-world audio. Accuracy is high for clear speech and strong even with background noise."
+                "q": "Can I flip to Unlisted, transcribe, then flip back to Private?",
+                "a": "Yes — that’s the standard workaround. Visibility changes instantly on YouTube; the link we used stops working the moment you switch back to Private."
             },
             {
-                "q": "Can I transcribe videos in languages other than English?",
-                "a": "Yes. TranscriptX supports multilingual transcription across dozens of languages."
+                "q": "Do age-restricted videos work?",
+                "a": "Usually no. YouTube requires a signed-in adult account, and we don’t have one."
             },
             {
-                "q": "How long does transcription take?",
-                "a": "Most videos are transcribed within minutes, depending on length and current demand."
-            },
-            {
-                "q": "Do I need to download the video first?",
-                "a": "No. Paste the URL and TranscriptX handles audio extraction automatically."
-            },
+                "q": "What about Members-only content?",
+                "a": "Same problem — paid auth wall. Not supported."
+            }
         ],
         "body_html": """
-<p>Video is everywhere. Your team records product demos. Your founder does podcast interviews. Your marketing lead goes live on Instagram. Your sales team runs webinars. All of that content has value beyond the moment it was spoken \u2014 but only if you can get it into text.</p>
-
-<p>TranscriptX turns video from any supported platform into clean transcript text in minutes. No file downloads, no audio conversion, no manual typing. Paste a URL and get text you can actually use.</p>
-
-<h2>The problem with video-only content</h2>
-
-<p>Video content has a discoverability problem. Search engines can crawl text, not speech. Social algorithms surface video briefly, then move on. Internal teams cannot search spoken words in a Zoom recording. The insight, the quote, the step-by-step explanation \u2014 all of it stays locked inside a media file that most people will never rewatch.</p>
-
-<p>Transcription unlocks that content. A single 10-minute video becomes a searchable document, a source for articles, a reference for your team, and an accessibility asset for audiences who prefer or need text. But traditional transcription \u2014 whether manual or through clunky desktop software \u2014 takes too long for teams publishing on a regular schedule.</p>
-
-<h2>How TranscriptX converts video to transcript</h2>
-
-<p>TranscriptX works with a URL. That is the starting point and, from your perspective, nearly the entire workflow.</p>
-
-<p>You paste a video URL from YouTube, TikTok, Instagram, X, Facebook, or any of 1000+ supported sources. TranscriptX extracts the audio track automatically behind the scenes. The audio is then processed through our speech recognition engine \u2014 AI trained on hundreds of thousands of hours of diverse, real-world audio spanning dozens of languages and conditions.</p>
-
-<p>Within minutes, you receive a clean transcript. Not a raw character dump \u2014 readable text with coherent sentence structure that you can immediately start editing for your target format.</p>
-
-<h2>What makes TranscriptX different</h2>
-
-<p><strong>Platform breadth.</strong> Most transcription tools are YouTube-only or require you to upload files. TranscriptX supports 1000+ sources because it handles audio extraction from URLs directly. If there is a public video at a URL, TranscriptX can likely transcribe it.</p>
-
-<p><strong>AI quality.</strong> Modern AI transcription engines are a meaningful leap over older systems. Unlike legacy tools that were trained on narrow, clean datasets, today's engines are trained on massive volumes of actual web audio \u2014 with all its imperfections. That is why TranscriptX handles background noise, accents, technical jargon, and multilingual content substantially better than older solutions.</p>
-
-<p><strong>Operational resilience.</strong> Platforms change. Extraction paths break. Request patterns get throttled. TranscriptX handles this with automatic retries, intelligent proxy fallback for YouTube, and clear error messaging. You get a transcript or you get a real explanation \u2014 not a spinning loader that never resolves.</p>
-
-<p><strong>Simplicity.</strong> No software to install. No audio files to manage. No API keys to configure. Paste a URL, click transcribe, get text. The complexity is handled for you.</p>
-
-<h2>What teams build from transcripts</h2>
-
-<p>The transcript is the starting material, not the final product. Here is what teams actually do with TranscriptX output:</p>
-
-<p><strong>Content marketing teams</strong> turn one video into an SEO article, 3\u20135 social posts, and a newsletter section. One recording session feeds an entire week of content distribution.</p>
-
-<p><strong>Product teams</strong> transcribe demo recordings and customer calls to build searchable knowledge bases, FAQ pages, and onboarding documentation.</p>
-
-<p><strong>Agency teams</strong> batch-transcribe client content to produce deliverables faster. When your clients produce video weekly and expect written assets in return, TranscriptX compresses the turnaround from days to hours.</p>
-
-<p><strong>Educators and researchers</strong> convert lectures, interviews, and conference talks into citable text documents. Transcripts become study materials, reference archives, and collaboration tools.</p>
-
-<h2>Pricing built for real usage</h2>
-
-<p>TranscriptX is not priced for enterprises with procurement departments. It is priced for creators and small teams who need reliable output at reasonable cost. Free gets you 3 transcripts/month. Starter is $2/month for 50. Pro is $4/month for unlimited. No per-minute billing, no hidden fees.</p>
-
-<h2>FAQ</h2>
-<h3>What platforms does TranscriptX support?</h3>
-<p>YouTube, TikTok, Instagram, X (Twitter), Facebook, and 1000+ other platforms with public video.</p>
-<h3>How accurate is the video-to-transcript conversion?</h3>
-<p>TranscriptX uses our AI engine trained on hundreds of thousands of hours of real-world audio. Accuracy is high for clear speech and strong even with background noise.</p>
-<h3>Can I transcribe videos in languages other than English?</h3>
-<p>Yes. TranscriptX supports multilingual transcription across dozens of languages.</p>
-<h3>How long does transcription take?</h3>
-<p>Most videos are transcribed within minutes, depending on length and current demand.</p>
-<h3>Do I need to download the video first?</h3>
-<p>No. Paste the URL and TranscriptX handles audio extraction automatically.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn your next video into publishable text.</strong></p>
-  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
-</div>
+<p>YouTube has three visibility settings. Two work with us. One doesn’t.</p>
+<h2>The 60-second answer</h2>
+<p><strong>Unlisted:</strong> paste the URL on <a href=\"/\">TranscriptX</a>. <strong>Private:</strong> flip to Unlisted for a minute, transcribe, flip back.</p>
+<h2>Which YouTube settings work</h2>
+<ul>
+  <li><strong>Public</strong> — works.</li>
+  <li><strong>Unlisted</strong> — works. Anyone with the link can watch, including us.</li>
+  <li><strong>Private</strong> — doesn’t work. Requires a Google login.</li>
+  <li><strong>Members-only</strong> — doesn’t work. Paid auth wall.</li>
+  <li><strong>Age-restricted</strong> — usually doesn’t work. Signed-in adult account required.</li>
+</ul>
+<h2>Step-by-step — Unlisted</h2>
+<p>On the video page, click <strong>Share</strong> and copy the URL. Paste it on <a href=\"/\">transcriptx.xyz</a>. No prompt, no sign-in.</p>
+<h2>Step-by-step — Private video you own</h2>
+<p>Open YouTube Studio. Find the video. Under <strong>Visibility</strong>, switch from Private to <strong>Unlisted</strong>. Save. Copy the link. Paste on TranscriptX. Once the transcript is done, flip visibility back to Private.</p>
+<p><em>[Screenshot: YouTube Studio Visibility dropdown with Unlisted selected]</em></p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>“Video unavailable” on an Unlisted video.</strong> The owner may have deleted it or switched back to Private.</li>
+  <li><strong>Age-restricted content.</strong> Login wall, even on Unlisted.</li>
+  <li><strong>Region-locked Unlisted.</strong> Rare but possible if the owner set it.</li>
+  <li><strong>Premiere hasn’t aired.</strong> Nothing to transcribe yet — come back after the premiere.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-youtube-short\">How to transcribe a YouTube Short</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a YouTube video into show notes</a>.</li>
+  <li><a href=\"/guides/transcribe-foreign-language-video\">How to transcribe a video in a different language</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month — <a href=\"/\">paste an unlisted link</a> and we’ll run it right now.</p>
 """,
     },
-    "download-youtube-transcript": {
-        "title": "Download YouTube Transcript \u2014 Get the Full Text Instantly",
-        "description": "Download the full transcript from any YouTube video with TranscriptX. Clean AI-generated text even when native captions are missing or unreliable.",
-        "keywords": "download youtube transcript, youtube transcript download, yt transcript, get transcript of youtube video",
-        "h1": "Download YouTube Transcript \u2014 Full Text, Any Video, Instantly",
-        "quick_answer": "TranscriptX lets you download a clean transcript from any YouTube video in minutes \u2014 even when native captions are unavailable or low-quality.",
+    "transcribe-instagram-reel-or-story": {
+        "title": "How to Transcribe an Instagram Reel or Story",
+        "description": "Reels work with a link paste. Stories are ephemeral and auth-gated, so you’ll need a screen recording. Here’s the honest version of both.",
+        "keywords": "transcribe instagram reel, instagram story transcript, reel to text",
+        "h1": "How to Transcribe an Instagram Reel or Story",
+        "quick_answer": "Reel: tap the paper-plane icon → Copy link → paste on TranscriptX. Any public Reel. Stories are harder — they expire in 24 hours and require login. Screen-record it from your phone, upload to Drive, paste the Drive link.",
         "faq": [
             {
-                "q": "Can I download a transcript from any YouTube video?",
-                "a": "Yes. TranscriptX extracts audio and generates its own transcript, so it works even when the video has no captions."
+                "q": "Why are Stories so hard?",
+                "a": "Two reasons: they’re behind the Instagram login wall, and they self-delete after 24 hours. Our servers don’t have an Instagram account, and by the time we tried, the Story would often be gone."
             },
             {
-                "q": "Is the downloaded transcript better than YouTube's auto-captions?",
-                "a": "In most cases, yes. TranscriptX uses our AI engine that handles noise, accents, and technical terms more accurately."
+                "q": "Does the paste flow work for Close Friends Stories?",
+                "a": "No — Close Friends Stories are locked to specific accounts. Screen-record from your own account."
             },
             {
-                "q": "What format is the transcript in?",
-                "a": "TranscriptX returns clean, readable text that you can copy, edit, and paste into any editor or CMS."
+                "q": "What about Instagram Live replays?",
+                "a": "If the creator saved the Live to their profile, yes — copy the URL from the saved post. Unsaved Lives disappear."
+            },
+            {
+                "q": "Will it work on a private account’s Reel?",
+                "a": "No. Private accounts require follower approval, and our servers aren’t followers."
+            }
+        ],
+        "body_html": """
+<p>Reels and Stories are both on Instagram, but technically they’re very different. One is easy to transcribe. One is genuinely hard.</p>
+<h2>The 30-second answer</h2>
+<p><strong>Reel:</strong> paper-plane icon → Copy link → paste on <a href=\"/\">TranscriptX</a>. <strong>Story:</strong> screen-record it from your phone, upload the recording to Google Drive, paste the Drive link.</p>
+<h2>Step-by-step — Instagram Reel</h2>
+<h3>1) Open the Reel and tap Share</h3>
+<p>On the app or instagram.com, tap the paper-plane icon below the Reel (mobile) or the share arrow (desktop).</p>
+<h3>2) Tap Copy link</h3>
+<p>The URL format is <code>instagram.com/reel/ABC123xyz/</code>.</p>
+<h3>3) Paste into TranscriptX</h3>
+<p>Open <a href=\"/\">transcriptx.xyz</a>, paste, hit Transcribe.</p>
+<h2>Step-by-step — Instagram Story (the harder case)</h2>
+<p>Stories don’t have shareable links outside Instagram. The reliable path:</p>
+<ul>
+  <li>iPhone: open Control Center → Screen Record. Save to Photos.</li>
+  <li>Android: pull down Quick Settings → Screen Recorder. Save to Gallery.</li>
+  <li>Upload the recording to <a href=\"/guides/transcribe-google-drive-video\">Google Drive</a>, share publicly, paste on TranscriptX.</li>
+</ul>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Private account Reels.</strong> Can’t get past the follower gate.</li>
+  <li><strong>Expired Stories.</strong> 24 hours and gone. Screen-record before you forget.</li>
+  <li><strong>Music-only Reels.</strong> No speech = no transcript.</li>
+  <li><strong>Collab Reels.</strong> Posted to two accounts at once. Either account’s link works, as long as it’s public.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-tiktok-video\">How to transcribe a TikTok</a>.</li>
+  <li><a href=\"/guides/transcribe-youtube-short\">How to transcribe a YouTube Short</a>.</li>
+  <li><a href=\"/guides/transcribe-iphone-video\">How to transcribe a video on your iPhone</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a Reel link</a> and we’ll have the text in 20 seconds.</p>
+""",
+    },
+    "transcribe-loom-video": {
+        "title": "How to Transcribe a Loom Video",
+        "description": "Loom has captions but no clean export. Paste the share link into TranscriptX and you’ll have a full, copyable transcript in under a minute.",
+        "keywords": "transcribe loom video, loom transcript, loom to text, export loom captions",
+        "h1": "How to Transcribe a Loom Video",
+        "quick_answer": "Click Share on the Loom → Copy link → paste on TranscriptX. Works on free and paid Loom, on public and workspace-visible videos — as long as access is set to Anyone with the link.",
+        "faq": [
+            {
+                "q": "Loom already shows captions. Why use TranscriptX?",
+                "a": "Loom captions don’t export cleanly — you’d have to copy them line-by-line. We give you the transcript as plain text, SRT, VTT, or whatever format you need."
+            },
+            {
+                "q": "Does it work on free-tier Loom videos?",
+                "a": "Yes. Free videos are fine while they’re live. Free tier cleans up older storage, so if a Loom is expired, it’s gone for us too."
+            },
+            {
+                "q": "Password-protected Loom?",
+                "a": "Our servers can’t type passwords. Remove the password temporarily, transcribe, and put it back."
+            },
+            {
+                "q": "Workspace-only Loom videos?",
+                "a": "Those require a member login. Switch the access to Anyone with the link for the duration of the transcription."
+            }
+        ],
+        "body_html": """
+<p>Loom is everywhere in remote work. The captions exist but exporting them is annoying. Skip that step.</p>
+<h2>The 30-second answer</h2>
+<p>Click <strong>Share</strong> on the Loom, <strong>Copy link</strong>, paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Open the Loom and click Share</h3>
+<p>On loom.com or the desktop app, click <strong>Share</strong> (top right).</p>
+<p><em>[Screenshot: Loom video page with the Share button highlighted]</em></p>
+<h3>2) Make sure it’s Anyone with the link</h3>
+<p>Under <strong>Who has access</strong>, set to <strong>Anyone with the link</strong>. Workspace-only won’t work — our servers aren’t in your workspace.</p>
+<h3>3) Copy link, paste on TranscriptX</h3>
+<p>URL format is <code>loom.com/share/HEXSTRING</code>. Drop it on <a href=\"/\">transcriptx.xyz</a>.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Workspace-only access.</strong> Switch to Anyone with the link, or you’ll get a 403.</li>
+  <li><strong>Password-protected.</strong> Remove the password for the duration.</li>
+  <li><strong>Deleted or expired Loom.</strong> Free tier cleans up after quota. If the link 404s, the video is gone.</li>
+  <li><strong>Embed-only share.</strong> Loom has an embed-only option that doesn’t produce a direct URL. Use the regular share link instead.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a>.</li>
+  <li><a href=\"/guides/transcribe-microsoft-teams-recording\">How to transcribe a Microsoft Teams meeting</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a recording into show notes</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free Looms a month, no signup needed. <a href=\"/\">Paste a Loom link</a> and go.</p>
+""",
+    },
+    "transcribe-vimeo-video": {
+        "title": "How to Transcribe a Vimeo Video (Public, Password-Protected, or Private)",
+        "description": "Three Vimeo privacy modes, three paths. Vimeo’s own captions are paywalled on Plus+ — here’s how to skip that.",
+        "keywords": "transcribe vimeo video, vimeo transcript, vimeo captions free, private vimeo transcript",
+        "h1": "How to Transcribe a Vimeo Video (Public, Password-Protected, or Private)",
+        "quick_answer": "Public or Unlisted Vimeo: paste the URL. Password-protected: remove the password for a minute, transcribe, then put it back. Domain-locked or Vimeo OTT: we can’t reach those.",
+        "faq": [
+            {
+                "q": "Isn’t Vimeo’s own captioning good enough?",
+                "a": "Only on Plus+ plans. On free Vimeo, captions aren’t available without paying. Whisper is comparable quality and costs a flat $3.99/mo."
+            },
+            {
+                "q": "How do I handle a password-protected video?",
+                "a": "Temporarily remove the password in Privacy settings, run the transcript, re-add the password."
+            },
+            {
+                "q": "Vimeo OTT or Showcase with a paywall?",
+                "a": "Can’t access those — they require an account and payment."
+            },
+            {
+                "q": "What’s the URL format?",
+                "a": "Public and Unlisted look the same: <code>vimeo.com/123456789</code>. Both work."
+            }
+        ],
+        "body_html": """
+<p>Vimeo has three privacy modes that matter. Two work cleanly.</p>
+<h2>The 30-second answer</h2>
+<p><strong>Public / Unlisted:</strong> paste the URL on <a href=\"/\">TranscriptX</a>. <strong>Password-protected:</strong> remove the password, transcribe, put it back. <strong>Domain-locked / OTT:</strong> not reachable.</p>
+<h2>Which privacy modes work</h2>
+<ul>
+  <li><strong>Public</strong> — works.</li>
+  <li><strong>Unlisted</strong> — works.</li>
+  <li><strong>Password-protected</strong> — works only if you remove the password temporarily.</li>
+  <li><strong>Private (only me)</strong> — doesn’t work.</li>
+  <li><strong>Embed-on-specific-domains</strong> — doesn’t work.</li>
+  <li><strong>Vimeo OTT (subscription)</strong> — doesn’t work.</li>
+</ul>
+<h2>Step-by-step — public or unlisted</h2>
+<p>Copy the video URL from the browser. Paste on <a href=\"/\">transcriptx.xyz</a>. Hit Transcribe.</p>
+<h2>Step-by-step — password-protected (if you own it)</h2>
+<p>Vimeo → your video → Settings → Privacy. Switch <strong>Who can watch</strong> to <strong>Anyone</strong>. Save. Transcribe. Switch the setting back.</p>
+<p><em>[Screenshot: Vimeo Privacy settings with “Who can watch” dropdown open]</em></p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Password wall.</strong> Remove it or we can’t open the page.</li>
+  <li><strong>“Unavailable in your region.”</strong> Rare, but possible on OTT or licensed content.</li>
+  <li><strong>Embed-only video.</strong> “Hide this video from vimeo.com” breaks the direct URL path.</li>
+  <li><strong>Multi-hour uploads.</strong> They work, but transcription time scales with length.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-private-youtube-video\">How to transcribe a private or unlisted YouTube video</a>.</li>
+  <li><a href=\"/guides/transcribe-loom-video\">How to transcribe a Loom video</a>.</li>
+  <li><a href=\"/guides/transcribe-webinar-for-blog\">How to transcribe a webinar for blog repurposing</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month — <a href=\"/\">paste a Vimeo link</a> now.</p>
+""",
+    },
+    "transcribe-microsoft-teams-recording": {
+        "title": "How to Transcribe a Microsoft Teams Meeting Recording",
+        "description": "Teams transcripts require admin enablement most users don’t have. Use the SharePoint or OneDrive share link instead — here’s the step-by-step.",
+        "keywords": "transcribe microsoft teams meeting, teams recording transcript, teams to text, sharepoint video transcript",
+        "h1": "How to Transcribe a Microsoft Teams Meeting Recording",
+        "quick_answer": "Teams recordings live in OneDrive (1:1s and group calls) or SharePoint (channel meetings). Open the recording, click Share, switch to Anyone with the link, paste the link on TranscriptX.",
+        "faq": [
+            {
+                "q": "Doesn’t Teams already transcribe my meetings?",
+                "a": "Only if your admin enabled transcription at the tenant level — many don’t. If there’s no Transcript tab on your recording, transcription was off during the meeting."
+            },
+            {
+                "q": "Where does Teams save recordings?",
+                "a": "Channel meetings → the SharePoint folder for that channel. 1:1s and group calls → the organizer’s OneDrive, in a folder called Recordings."
+            },
+            {
+                "q": "My tenant blocks external sharing.",
+                "a": "Then our servers can’t open the link. Download the recording, upload it to a personal cloud (Drive, Dropbox), and share that."
+            },
+            {
+                "q": "Teams recordings expire after 120 days?",
+                "a": "By default, yes. Your admin can change the retention policy."
+            }
+        ],
+        "body_html": """
+<p>Teams has built-in transcription, but only if your admin turned it on — and most didn’t. If you’re stuck with a recording and no transcript, this is the path.</p>
+<h2>The 60-second answer</h2>
+<p>Find the recording in <strong>OneDrive</strong> (1:1 or group call) or <strong>SharePoint</strong> (channel meeting). Click <strong>Share</strong>, change to <strong>Anyone with the link</strong>, copy, paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Find the recording</h3>
+<p>Channel meeting: open the channel → <strong>Files</strong> → <strong>Recordings</strong>. 1:1 / group: OneDrive → <strong>My files</strong> → <strong>Recordings</strong>.</p>
+<p><em>[Screenshot: OneDrive Recordings folder listing meeting videos]</em></p>
+<h3>2) Click Share</h3>
+<p>Hover the file, click the three-dot menu, pick <strong>Share</strong>.</p>
+<h3>3) Change access to Anyone with the link</h3>
+<p>If your tenant allows it, switch from “People in your organization” to <strong>Anyone with the link</strong>. Copy the link.</p>
+<p><em>[Screenshot: SharePoint Share dialog with Anyone with the link selected]</em></p>
+<h3>4) Paste on TranscriptX</h3>
+<p>Open <a href=\"/\">transcriptx.xyz</a>, paste, transcribe.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>“Your organization doesn’t allow external sharing.”</strong> IT locked it down. Download the .mp4 and upload to a personal cloud instead.</li>
+  <li><strong>Domain-restricted link.</strong> Some tenants force “anyone with the link at company.com”. Same fix — personal cloud workaround.</li>
+  <li><strong>Recording auto-deleted.</strong> Default retention is 120 days.</li>
+  <li><strong>Transcript tab exists but is empty.</strong> Audio issues during the meeting. Run our transcript on the recording directly.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a>.</li>
+  <li><a href=\"/guides/transcribe-google-drive-video\">How to transcribe a Google Drive video</a> — for the personal-cloud fallback.</li>
+  <li><a href=\"/guides/transcribe-sales-call-for-research\">How to transcribe a sales call</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a SharePoint or OneDrive link</a> now.</p>
+""",
+    },
+    "transcribe-facebook-video": {
+        "title": "How to Transcribe a Facebook Video or Live Stream",
+        "description": "Facebook has auto-captions but no clean export. Paste the post URL into TranscriptX — works on public videos, Watch, and saved Live broadcasts.",
+        "keywords": "transcribe facebook video, facebook live transcript, fb video to text",
+        "h1": "How to Transcribe a Facebook Video or Live Stream",
+        "quick_answer": "Open the video or Live on Facebook, copy the post URL from the browser, paste it on TranscriptX. Works on public posts, Pages, Watch, and saved Lives. Private groups and Messenger don’t work.",
+        "faq": [
+            {
+                "q": "Facebook has auto-captions. Why do I need this?",
+                "a": "Facebook doesn’t let you export the captions cleanly. We give you plain text, SRT, or VTT."
+            },
+            {
+                "q": "Does it work on Facebook Watch?",
+                "a": "Yes, as long as the Watch video is publicly visible. Age-gated or region-locked videos fail."
+            },
+            {
+                "q": "Facebook Reels?",
+                "a": "Yes, public Reels work the same way — copy URL, paste."
+            },
+            {
+                "q": "Messenger videos?",
+                "a": "No. Messenger content is behind your personal login."
+            }
+        ],
+        "body_html": """
+<p>Facebook auto-captions but won’t let you export them. Annoying. Paste the URL instead.</p>
+<h2>The 30-second answer</h2>
+<p>Click the timestamp on the post to open it as a standalone page. Copy the URL. Paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Open the Facebook video or Live</h3>
+<p>On facebook.com, open the post. Desktop is easier — mobile app URLs are harder to grab.</p>
+<h3>2) Copy the post URL</h3>
+<p>Click the timestamp under the post (e.g. “2h ago”) to open the standalone page, then copy from the browser bar. Or click <strong>Share</strong> → <strong>Copy link</strong>.</p>
+<p><em>[Screenshot: Facebook post with timestamp link highlighted]</em></p>
+<h3>3) Paste on TranscriptX</h3>
+<p>Drop it on <a href=\"/\">transcriptx.xyz</a>, hit Transcribe.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Private group videos.</strong> Gated behind membership. We can’t join groups.</li>
+  <li><strong>Friends-only posts.</strong> Require your personal login.</li>
+  <li><strong>Expired Lives.</strong> If the creator didn’t save the Live, it’s gone.</li>
+  <li><strong>Age-gated videos.</strong> Facebook requires login for 18+ content.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-instagram-reel-or-story\">How to transcribe an Instagram Reel</a>.</li>
+  <li><a href=\"/guides/transcribe-tiktok-video\">How to transcribe a TikTok</a>.</li>
+  <li><a href=\"/guides/transcribe-webinar-for-blog\">How to transcribe a webinar for blog repurposing</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month — <a href=\"/\">paste a Facebook video link</a> now.</p>
+""",
+    },
+    "transcribe-twitch-vod-or-clip": {
+        "title": "How to Transcribe a Twitch VOD or Clip",
+        "description": "VOD for reuploads, clip for highlights, both for copyright disputes — paste the Twitch URL, get a transcript in under a minute.",
+        "keywords": "transcribe twitch vod, twitch clip transcript, twitch to text, twitch stream transcript",
+        "h1": "How to Transcribe a Twitch VOD or Clip",
+        "quick_answer": "Copy the VOD URL (twitch.tv/videos/123456789) or the clip URL (clips.twitch.tv/SomeName), paste on TranscriptX.",
+        "faq": [
+            {
+                "q": "Why would I transcribe a stream?",
+                "a": "YouTube reuploads with captions, sponsor segment summaries, copyright dispute evidence, editing highlights into clips, and searchable archives."
+            },
+            {
+                "q": "How long do VODs last?",
+                "a": "Partners: 60 days. Affiliates: 14 days. Regular users: 7 days. After that, unless the creator exported to Highlights, it’s gone."
+            },
+            {
+                "q": "Subscriber-only VODs?",
+                "a": "Don’t work. Twitch requires an authenticated subscriber session."
+            },
+            {
+                "q": "Does it handle 6-hour streams?",
+                "a": "Yes. Longer streams take proportionally longer to process but Whisper handles them cleanly."
+            }
+        ],
+        "body_html": """
+<p>Twitch keeps VODs for a short window. If you need the transcript, do it now.</p>
+<h2>The 30-second answer</h2>
+<p>Copy the URL — VODs look like <code>twitch.tv/videos/...</code>, clips look like <code>clips.twitch.tv/...</code>. Paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Find the VOD or clip</h3>
+<p>twitch.tv → the channel → <strong>Videos</strong> (or <strong>Clips</strong>). Open the one you want.</p>
+<h3>2) Copy the URL from the browser</h3>
+<p>Regular streams become VODs automatically. Highlights and clips have permanent URLs.</p>
+<h3>3) Paste on TranscriptX</h3>
+<p>Long streams take a few minutes. Go grab coffee.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>VOD expired.</strong> 7 days for regular users, 14 for Affiliates, 60 for Partners.</li>
+  <li><strong>Subscriber-only stream.</strong> Paywall. We can’t subscribe for you.</li>
+  <li><strong>Stream muted for DMCA.</strong> Muted sections produce no transcript (silence).</li>
+  <li><strong>Game-audio-only chunks.</strong> If the streamer lets the game narrate, expect a thin transcript.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a stream into YouTube show notes</a>.</li>
+  <li><a href=\"/guides/transcribe-private-youtube-video\">How to transcribe a private or unlisted YouTube video</a>.</li>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label multiple speakers</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a Twitch link</a> and we’ll run it.</p>
+""",
+    },
+    "interview-transcript-to-quotes": {
+        "title": "How to Turn a 2-Hour Interview Into Quotes You Can Actually Use",
+        "description": "Recording interviews is the easy part. Finding the 3 quotes that matter is where most people stall — here’s the workflow that doesn’t take all day.",
+        "keywords": "interview transcript, podcast interview quotes, find quotes in transcript, interview workflow",
+        "h1": "How to Turn a 2-Hour Interview Into Quotes You Can Actually Use",
+        "quick_answer": "Transcribe the interview with TranscriptX. Ctrl-F the themes you care about. Copy the sentences you want with timestamps. Drop them into your doc. Whole thing is usually under 20 minutes, even on a 2-hour recording.",
+        "faq": [
+            {
+                "q": "What format should I export?",
+                "a": "Plain text is easiest to search. If you need to cite timestamps, export SRT or VTT and keep a second copy open."
+            },
+            {
+                "q": "How do I handle multiple speakers?",
+                "a": "Run the transcript, then add speaker names during your first read. AI diarization is ~80% right — which means 20% wrong, which is worse than taking 10 minutes yourself."
+            },
+            {
+                "q": "Should I edit the quotes for clarity?",
+                "a": "Yes, lightly. Remove filler (“um”, “like”) but keep the speaker’s cadence. Never add words they didn’t say."
+            },
+            {
+                "q": "How many quotes should I pull?",
+                "a": "Aim for 5-10 usable quotes per hour. More than that and you’re re-reporting. Fewer and you missed the substance."
+            }
+        ],
+        "body_html": """
+<p>Interviews are the raw material. Finding the 3 quotes that actually matter is the job.</p>
+<h2>The 60-second answer</h2>
+<p>Transcribe with <a href=\"/\">TranscriptX</a>. Open the text. Ctrl-F the themes you care about. Grab sentences with timestamps. Paste into your doc.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe the recording</h3>
+<p>Paste the recording link on <a href=\"/\">TranscriptX</a>. If the recording is local, <a href=\"/guides/transcribe-google-drive-video\">drop it into Google Drive first</a>.</p>
+<h3>2) Open the transcript in plain text</h3>
+<p>We export .txt, .srt, .vtt, .json. Plain text is easiest to grep.</p>
+<h3>3) Search for your themes</h3>
+<p>Before reading, list the 3-5 themes you expected to hear — pricing concerns, team size, a specific objection. Ctrl-F each one and skim the surrounding paragraphs.</p>
+<h3>4) Copy the quotes with timestamps</h3>
+<p>For each usable quote, copy the sentence + SRT timestamp. Paste as:</p>
+<pre><code>“This is the quote.” — Name, 00:23:14</code></pre>
+<h3>5) Do a second pass for surprises</h3>
+<p>Skim the sections you didn’t search for. Interviews usually have one line the person didn’t know they were going to say — that’s the quote you want.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Reading the whole transcript linearly.</strong> Waste of time. Search, don’t read.</li>
+  <li><strong>Trusting AI speaker labels.</strong> They’re 80% right. Correct as you go.</li>
+  <li><strong>Over-editing the quote.</strong> Remove filler. Keep the voice. Don’t smooth it into corporate.</li>
+  <li><strong>Losing the timestamp.</strong> Always include it. You’ll thank yourself when you need to verify.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-sales-call-for-research\">How to transcribe a sales call for product research</a>.</li>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label multiple speakers</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn an interview into show notes</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your interview link</a> and get to the quotes in under 20 minutes.</p>
+""",
+    },
+    "transcribe-lecture-for-study-notes": {
+        "title": "How to Transcribe a Lecture for Study Notes (and Turn It Into Flashcards)",
+        "description": "Turn a 60-minute lecture into searchable notes and Anki-ready flashcards in under 30 minutes. Works on Panopto, Echo360, Zoom, and YouTube recordings.",
+        "keywords": "transcribe lecture for study, lecture to notes, lecture transcript to flashcards, panopto transcript",
+        "h1": "How to Transcribe a Lecture for Study Notes (and Turn It Into Flashcards)",
+        "quick_answer": "Get the lecture’s shareable link (Panopto, Echo360, Zoom cloud, YouTube). Paste on TranscriptX. Skim the transcript for key terms, bold them, convert definitions to flashcards.",
+        "faq": [
+            {
+                "q": "My school uses Panopto or Echo360. Will this work?",
+                "a": "If your lecture has a shareable link (most do), yes. If it’s locked to your LMS login only, you’ll need to download first — ask the professor, or use screen recording."
+            },
+            {
+                "q": "How long does a 60-minute lecture take to transcribe?",
+                "a": "Usually 2-3 minutes of processing. Much faster than real-time."
+            },
+            {
+                "q": "Can I jump back to a specific moment from the transcript?",
+                "a": "Yes, if you use the SRT or VTT export — timestamps are included."
+            },
+            {
+                "q": "Will it handle heavy technical vocabulary (biochem, law)?",
+                "a": "Whisper is strong on domain terms. Expect 90%+ accuracy on most subjects. Spot-check proper nouns."
+            }
+        ],
+        "body_html": """
+<p>The painful way to study from a lecture is to watch it twice. The faster way is to read it once.</p>
+<h2>The 30-second answer</h2>
+<p>Get the lecture’s share link. Paste on <a href=\"/\">TranscriptX</a>. Skim. Bold key terms. Convert to flashcards.</p>
+<h2>Step-by-step</h2>
+<h3>1) Get the lecture link</h3>
+<p>Panopto / Echo360: right-click the video → Copy link. Zoom: the cloud-recording share link. YouTube: just the video URL.</p>
+<h3>2) Paste on TranscriptX</h3>
+<p>Drop the link on <a href=\"/\">transcriptx.xyz</a>. A 1-hour lecture takes 2-3 minutes.</p>
+<h3>3) Skim for key terms</h3>
+<p>Read fast. Bold every term the professor repeated or defined. Those are your flashcards.</p>
+<h3>4) Convert to flashcards</h3>
+<p>For each bolded term:</p>
+<pre><code>Front: What is [term]?
+Back: [definition in one sentence, lifted from the transcript]</code></pre>
+<p>Paste into Anki, Quizlet, or RemNote.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>LMS-only video.</strong> Requires your school login. Our servers can’t sign in. Look for a Panopto share, or ask the professor.</li>
+  <li><strong>Chalkboard / visual-heavy lectures.</strong> You’ll miss what’s on the board. Supplement with a photo or the slides.</li>
+  <li><strong>Thick accent or poor audio.</strong> Accuracy drops. Use the language-retry feature if auto-detect picks the wrong language.</li>
+  <li><strong>Proper nouns (people, papers).</strong> Always spot-check against the syllabus.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a> — for Zoom lectures.</li>
+  <li><a href=\"/guides/transcribe-private-youtube-video\">How to transcribe a private YouTube video</a> — for unlisted lecture uploads.</li>
+  <li><a href=\"/guides/transcribe-foreign-language-video\">How to transcribe a lecture in another language</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your lecture link</a> and start studying from text.</p>
+""",
+    },
+    "youtube-video-to-show-notes": {
+        "title": "How to Turn a YouTube Video Into Clean Show Notes With Timestamps",
+        "description": "Podcaster and YouTube creator workflow: transcribe the episode, pull chapter markers, write a bullet summary, publish with timestamps.",
+        "keywords": "youtube show notes, podcast show notes with timestamps, transcript to show notes, chapter markers from transcript",
+        "h1": "How to Turn a YouTube Video Into Clean Show Notes With Timestamps",
+        "quick_answer": "Transcribe the video with TranscriptX. Read the transcript, mark topic changes. Each topic becomes a chapter with an [HH:MM:SS] timestamp. One bullet per chapter. Publish.",
+        "faq": [
+            {
+                "q": "What format should I export?",
+                "a": "SRT or VTT, because they include timestamps. Skim the SRT, copy bullets to plain text for publishing."
+            },
+            {
+                "q": "How many chapter markers should I add?",
+                "a": "YouTube renders chapters if you have at least 3, each 10+ seconds long. 5-10 chapters per 30-minute episode feels right."
+            },
+            {
+                "q": "Do chapter timestamps have to start at 0:00?",
+                "a": "Yes — YouTube requires the first timestamp to be 00:00 for chapters to render."
+            },
+            {
+                "q": "Can I automate this?",
+                "a": "Partially. An LLM can draft bullet summaries from the transcript. A human pass is still what makes show notes readable."
+            }
+        ],
+        "body_html": """
+<p>Show notes are what your listeners actually read. Do them well and every episode becomes a findable page.</p>
+<h2>The 60-second answer</h2>
+<p>Transcribe on <a href=\"/\">TranscriptX</a>. Read once. Mark topic changes. Write each as a chapter. Bullet-summarize. Publish.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe in SRT format</h3>
+<p>Paste the YouTube URL on <a href=\"/\">transcriptx.xyz</a>. Export SRT — timestamps are what you need.</p>
+<h3>2) Read through and mark topic changes</h3>
+<p>Scan the SRT for natural transitions. Note the timestamp where each new topic starts.</p>
+<h3>3) Write the YouTube chapter list</h3>
+<p>Format is strict — each line starts with a timestamp, first one must be 00:00:</p>
+<pre><code>00:00 Intro and guest bio
+02:15 How they got started
+08:40 The first big mistake
+...</code></pre>
+<p>Paste this block into your YouTube video description. Chapters render on the scrubber automatically.</p>
+<h3>4) One bullet per chapter for the written notes</h3>
+<p>A bullet per chapter gives readers a map without spoiling the episode.</p>
+<h3>5) Add callouts</h3>
+<p>Names, tools, books, links mentioned — pull them into a “Mentioned in this episode” section.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>First chapter doesn’t start at 00:00.</strong> YouTube won’t render chapters. Always start at 00:00.</li>
+  <li><strong>Chapters shorter than 10 seconds.</strong> YouTube merges or ignores them.</li>
+  <li><strong>Too many chapters.</strong> 20+ on a 30-minute video reads like spam.</li>
+  <li><strong>Copy-pasting transcript without editing.</strong> Spoken language is messier than written. Do the light pass.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to turn an interview into quotes</a>.</li>
+  <li><a href=\"/guides/transcribe-webinar-for-blog\">How to transcribe a webinar for blog repurposing</a>.</li>
+  <li><a href=\"/guides/transcribe-private-youtube-video\">How to transcribe an unlisted YouTube video</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your video URL</a> and start writing show notes readers actually read.</p>
+""",
+    },
+    "transcribe-foreign-language-video": {
+        "title": "How to Transcribe a Video in a Different Language (and Translate It)",
+        "description": "Whisper auto-detects 90+ languages. If it guesses wrong, you can retry with the right language free. Then translate the output in one step.",
+        "keywords": "transcribe foreign language video, translate video transcript, whisper language detection, multilingual transcription",
+        "h1": "How to Transcribe a Video in a Different Language (and Translate It)",
+        "quick_answer": "Paste the link — Whisper auto-detects the language. If it comes back in the wrong language, use the “retry with different language” option (free) and pick the correct one. Then paste the result into Google Translate or DeepL.",
+        "faq": [
+            {
+                "q": "Which languages does Whisper handle?",
+                "a": "90+ languages — Spanish, French, German, Portuguese, Arabic, Mandarin, Japanese, Korean, Hindi, and many more. Accuracy is strongest on the top 20."
+            },
+            {
+                "q": "What if auto-detect picks the wrong language?",
+                "a": "Hit the language retry on the result screen. It’s free — we don’t charge a second credit for a language correction."
+            },
+            {
+                "q": "Can TranscriptX translate directly?",
+                "a": "Not yet — we return the transcript in the spoken language. Paste into Google Translate, DeepL, or ChatGPT for the translation step."
+            },
+            {
+                "q": "What about videos with mixed languages?",
+                "a": "Whisper handles one dominant language well. If a video switches mid-way, expect patchy results. Transcribe each section separately if you can."
+            }
+        ],
+        "body_html": """
+<p>Whisper speaks 90+ languages. The trick is getting it to pick the right one.</p>
+<h2>The 60-second answer</h2>
+<p>Paste the video URL on <a href=\"/\">TranscriptX</a>. If the output looks wrong (garbled, wrong script), click the language retry and pick the correct language. Free. Then translate.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe normally</h3>
+<p>Paste the URL. Let auto-detect do its thing.</p>
+<h3>2) Check the output</h3>
+<p>Does it match what you heard? If the video was Portuguese and the output is Spanish, auto-detect guessed wrong — common on similar-sounding languages.</p>
+<h3>3) Use the language retry</h3>
+<p>On the result screen, look for the “retry with different language” option. Pick the correct language. We rerun at no extra cost.</p>
+<h3>4) Translate if you need it</h3>
+<p>Paste the transcript into <a href=\"https://translate.google.com\" rel=\"nofollow\">Google Translate</a>, <a href=\"https://www.deepl.com\" rel=\"nofollow\">DeepL</a>, or an LLM. DeepL is usually cleaner for European languages.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Auto-detect picks a similar language.</strong> Portuguese → Spanish, Norwegian → Danish, Urdu → Hindi. Use the retry.</li>
+  <li><strong>Code-switching mid-video.</strong> Whisper struggles if the speaker swaps languages every minute.</li>
+  <li><strong>Heavy dialect.</strong> Accuracy drops on strong regional dialects. Still usable, spot-check.</li>
+  <li><strong>Idioms in translation.</strong> Any translator fumbles idioms. Cross-check phrases that feel literal.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label multiple speakers</a>.</li>
+  <li><a href=\"/guides/transcribe-lecture-for-study-notes\">How to transcribe a lecture</a>.</li>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to turn an interview into quotes</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month, retry language free. <a href=\"/\">Paste a link in any language</a> and go.</p>
+""",
+    },
+    "transcribe-multi-speaker-video": {
+        "title": "How to Transcribe a Video With Multiple Speakers and Label Who Said What",
+        "description": "AI speaker labeling (diarization) is ~80% accurate — good enough to start from, not good enough to publish. Here’s the 2-minute fix that gets you to 100%.",
+        "keywords": "multi-speaker transcript, diarization, label speakers in transcript, who said what transcript",
+        "h1": "How to Transcribe a Video With Multiple Speakers and Label Who Said What",
+        "quick_answer": "Transcribe the video. Do a 2-minute first-read and drop speaker names inline. It’s faster and more accurate than fixing AI labels — we intentionally don’t auto-label because the errors are worse than the help.",
+        "faq": [
+            {
+                "q": "Why not automate speaker labels?",
+                "a": "AI diarization is about 80% accurate under good conditions. On real recordings — overlapping speech, background noise, similar voices — it’s worse. Fixing wrong labels takes longer than labeling from scratch."
+            },
+            {
+                "q": "How do I label efficiently?",
+                "a": "Skim the transcript. Every time a new person starts talking, add a name. Usually 2-3 minutes for a 1-hour meeting."
+            },
+            {
+                "q": "Can I ask an LLM to add labels after the fact?",
+                "a": "Yes, and it helps for long interviews. Feed the transcript + a short description of each speaker (“A is the host, B is the guest CEO”) and it does a reasonable first pass."
+            },
+            {
+                "q": "Is there a format that makes this easier?",
+                "a": "Plain text with a line break between voice changes. Then you just prepend the name."
+            }
+        ],
+        "body_html": """
+<p>Labeling speakers sounds automatable. It isn’t — not reliably. This is a short human task that beats a long AI cleanup.</p>
+<h2>The 60-second answer</h2>
+<p>Transcribe the video on <a href=\"/\">TranscriptX</a>. First read-through, drop the speaker name at every voice change. Done.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe</h3>
+<p>Paste your meeting recording link on <a href=\"/\">transcriptx.xyz</a>.</p>
+<h3>2) Open the transcript with voice breaks visible</h3>
+<p>Our default export uses a blank line between voice changes.</p>
+<h3>3) Read fast, label inline</h3>
+<p>Prepend each block with the speaker’s name:</p>
+<pre><code>Sarah: We need to talk about the pricing page.
+Alex: Agreed. What’s the current conversion?
+Sarah: About 2.1% — lower than I thought.</code></pre>
+<h3>4) Optional — LLM-assisted pass</h3>
+<p>For longer interviews, paste the unlabeled transcript + a one-line speaker description into Claude or ChatGPT. Ask for labeled output. Not perfect but gets you to 90% on a 1-hour recording in seconds.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Trusting AI labels.</strong> Never publish them without a human check.</li>
+  <li><strong>Overlapping speech.</strong> Nothing handles it well. Pick the dominant speaker.</li>
+  <li><strong>Similar voices.</strong> Same-gender / same-accent confuses both AI and humans. Keep a short voice sample in mind.</li>
+  <li><strong>4+ people on voice-only recording.</strong> Hard. Record per-speaker audio channels next time.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to turn an interview into quotes</a>.</li>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a>.</li>
+  <li><a href=\"/guides/transcribe-sales-call-for-research\">How to transcribe a sales call</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a multi-person recording</a>.</p>
+""",
+    },
+    "transcribe-webinar-for-blog": {
+        "title": "How to Transcribe a Webinar or Conference Talk for Blog Repurposing",
+        "description": "Turn a 45-minute webinar into a blog post, a LinkedIn summary, and three clip captions in under 90 minutes. End-to-end workflow most marketing teams never wrote down.",
+        "keywords": "webinar to blog post, conference talk transcript, repurpose webinar, transcript for linkedin",
+        "h1": "How to Transcribe a Webinar or Conference Talk for Blog Repurposing",
+        "quick_answer": "Transcribe the webinar. Extract the 3-5 strongest points as the blog structure. Write each section in the speaker’s words. Reuse one punchy quote for LinkedIn. Grab timestamps for three short clips.",
+        "faq": [
+            {
+                "q": "How long should the blog post be?",
+                "a": "800-1,500 words covers a webinar without being a slog."
+            },
+            {
+                "q": "Should I credit the speaker as the author?",
+                "a": "If they wrote the talk, yes — and ask permission before publishing. Usually the company owns the recording, the speaker owns the ideas. Make that clear."
+            },
+            {
+                "q": "Can I run it through an LLM?",
+                "a": "For a first-draft skeleton, sure. For the final voice, a human edit is what makes the post sound like the speaker, not like ChatGPT."
+            },
+            {
+                "q": "How many clips should I pull?",
+                "a": "Three is a good target. One for LinkedIn, one for Twitter/X, one for Instagram or YouTube Shorts."
+            }
+        ],
+        "body_html": """
+<p>A webinar is a 45-minute asset your team produces once. Getting five pieces of content out of it is the job.</p>
+<h2>The 90-second answer</h2>
+<p>Transcribe the recording. 3-5 strongest points → blog structure. Rewrite each section in the speaker’s language. One quote → LinkedIn. Three timestamps → clips.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe the webinar recording</h3>
+<p>Paste the replay URL on <a href=\"/\">TranscriptX</a>. Export SRT — you’ll need the timestamps for the clip step.</p>
+<h3>2) Scan for 3-5 strongest points</h3>
+<p>First read: mark the 3-5 sentences that made you sit up. Those are your blog sections.</p>
+<h3>3) Write each section in the speaker’s words</h3>
+<p>The goal isn’t a pristine ghost-written post. It’s a reader feeling they heard the talk. Keep the speaker’s idioms. Remove only filler.</p>
+<h3>4) One quote → LinkedIn</h3>
+<p>Pick the single best line. Post it as a pull quote. Credit the speaker and the event.</p>
+<h3>5) Three clips → social</h3>
+<p>Using the SRT timestamps, note three 30-60 second segments. Export clips (Descript, iMovie, any editor) and caption with the transcript text.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Publishing a lightly-edited transcript as the blog post.</strong> Reads like a transcript. Do the editorial pass.</li>
+  <li><strong>Skipping speaker review.</strong> Especially external speakers. Send a draft.</li>
+  <li><strong>Generic headline.</strong> The headline should be the speaker’s most quotable line — not “Webinar recap.”</li>
+  <li><strong>Clipping without context.</strong> A 30-second clip without a setup line is useless. Show the question, then the payoff.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to write show notes with timestamps</a>.</li>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to find quotes in a transcript</a>.</li>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom webinar recording</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your webinar replay link</a> and start repurposing.</p>
+""",
+    },
+    "transcribe-sales-call-for-research": {
+        "title": "How to Transcribe a Sales Call or Customer Interview for Product Research",
+        "description": "Gong and Fathom are great and expensive. If you just need the transcript to pull themes, quotes, and evidence — the cheap version is this.",
+        "keywords": "transcribe sales call, customer interview transcript, product research, gong alternative free",
+        "h1": "How to Transcribe a Sales Call or Customer Interview for Product Research",
+        "quick_answer": "Transcribe the recording. Tag each section by theme (pricing, onboarding, churn reason). Copy the literal quotes as evidence. Product decisions point to timestamps, not your memory.",
+        "faq": [
+            {
+                "q": "Why not just use Gong or Fathom?",
+                "a": "Both are good. Both are $100+/seat/month. If you run a handful of calls a month, transcripts + a simple tagging doc is enough."
+            },
+            {
+                "q": "What themes should I tag for?",
+                "a": "Pick 4-6 that matter to your current decision. Starter set: pricing objection, onboarding friction, aha moment, churn reason, feature ask, competitor mentioned."
+            },
+            {
+                "q": "Should I share transcripts with engineering?",
+                "a": "Yes — with specific timestamps. “User said X at 14:23” beats a Slack summary. Engineers believe what they heard."
+            },
+            {
+                "q": "How do I respect privacy?",
+                "a": "Always get recording consent. Redact last names and company names when sharing outside the research team."
+            }
+        ],
+        "body_html": """
+<p>Sales calls and customer interviews are where product strategy gets real. You want the literal words, not a summary.</p>
+<h2>The 60-second answer</h2>
+<p>Transcribe with <a href=\"/\">TranscriptX</a>. Open a doc with theme columns. Copy the literal quotes into each theme with timestamps. Decisions cite the timestamps.</p>
+<h2>Step-by-step</h2>
+<h3>1) Transcribe the recording</h3>
+<p>Paste the Zoom, Teams, Gong, or Chorus recording link on <a href=\"/\">transcriptx.xyz</a>.</p>
+<h3>2) Set up your theme doc</h3>
+<p>Before reading, list the 4-6 themes you care about:</p>
+<pre><code>- Pricing objection
+- Onboarding friction
+- Aha moment
+- Churn reason
+- Competitor mentioned
+- Feature request</code></pre>
+<h3>3) Read and tag</h3>
+<p>As you skim, drop quotes into the matching theme column. Include timestamp and user name (or anonymized ID).</p>
+<h3>4) Summarize weekly</h3>
+<p>At week’s end, count how many times each theme showed up. That count is your signal — backed up with raw quotes.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Summarizing instead of quoting.</strong> Once you’re paraphrasing, decisions drift from what users said. Use the literal words.</li>
+  <li><strong>Skipping consent.</strong> Always confirm recording. Some jurisdictions require two-party consent.</li>
+  <li><strong>Raw transcripts in Slack.</strong> Personal data in persistent channels. Redact or share a controlled doc link.</li>
+  <li><strong>Waiting for 50 calls.</strong> 5 calls with clear theme patterns beats 50 that you didn’t tag until the end.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to turn an interview into quotes</a>.</li>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label multiple speakers</a>.</li>
+  <li><a href=\"/guides/transcribe-zoom-recording\">How to transcribe a Zoom recording</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your call recording link</a>.</p>
+""",
+    },
+    "transcribe-x-spaces-recording": {
+        "title": "How to Transcribe a Twitter/X Spaces Recording",
+        "description": "Spaces recordings are short-lived and buried inside the X app. Here’s the workflow for grabbing a transcript before the replay expires.",
+        "keywords": "transcribe x spaces, twitter spaces transcript, spaces recording to text",
+        "h1": "How to Transcribe a Twitter/X Spaces Recording",
+        "quick_answer": "Open the Space on x.com, copy the URL, paste on TranscriptX. If the host didn’t enable replay, you’ve missed it — the Space vanished when it ended.",
+        "faq": [
+            {
+                "q": "How long are Spaces recordings available?",
+                "a": "30 days if the host enabled replay. If they didn’t, the Space is gone when it ends."
             },
             {
                 "q": "Does it work on mobile?",
-                "a": "TranscriptX is a web app that works on any device with a browser."
+                "a": "Copy the link from the X app and open TranscriptX in a browser. Desktop is easier for grabbing the URL."
             },
             {
-                "q": "Is it free?",
-                "a": "Free users get 3 transcripts/month. Paid plans start at $2/month for 50 transcripts."
+                "q": "Can I transcribe a live Space?",
+                "a": "No — we need a completed recording. Wait until the Space ends and the replay is processed (usually a few minutes)."
             },
+            {
+                "q": "What if the host deleted the recording?",
+                "a": "Then it’s gone. X doesn’t restore deleted Spaces."
+            }
         ],
         "body_html": """
-<p>You found a YouTube video with exactly the information you need. Maybe it is a 45-minute conference talk, a product breakdown, or an interview with someone in your industry. You want the text. You go to click \u201cShow Transcript\u201d \u2014 and it is not there. Or it is there, but the auto-generated captions are a mess of garbled sentences and missing punctuation.</p>
-
-<p>This is the reality of downloading YouTube transcripts through native tools. It works sometimes. It fails often enough to be unreliable for anyone who depends on transcript output for real work.</p>
-
-<p>TranscriptX solves this by not depending on YouTube\u2019s caption system at all. Paste the video URL, and TranscriptX extracts the audio directly and runs its own AI transcription. You get a clean, accurate transcript every time \u2014 regardless of whether the original video has captions enabled.</p>
-
-<h2>Why native YouTube transcripts fall short</h2>
-
-<p>YouTube\u2019s built-in transcript feature is tied to the caption track. If captions exist, you can view and copy the text. If they do not, there is nothing to download. Even when auto-captions are available, they come with well-documented limitations.</p>
-
-<p>YouTube\u2019s own help documentation acknowledges that automatic captions may misrepresent content due to mispronunciations, accents, dialects, or background noise. For someone taking quick personal notes, that is acceptable. For someone creating published content, building documentation, or extracting precise quotes, it is not.</p>
-
-<p>There is also the formatting problem. YouTube caption text is segmented for display timing, not for reading. When you copy it, you get choppy fragments that need significant restructuring before they resemble readable paragraphs. What feels like a simple \u201cdownload\u201d turns into a full editing project.</p>
-
-<h2>How TranscriptX handles YouTube transcripts</h2>
-
-<p>TranscriptX bypasses the caption dependency entirely. When you paste a YouTube URL, it extracts the actual audio track from the video. That audio is processed through our speech recognition engine \u2014 an AI model trained on hundreds of thousands of hours of multilingual, real-world audio data.</p>
-
-<p>The result is a transcript generated from the spoken words themselves, not from a pre-existing caption file. This means you get output even when captions are disabled, missing, or auto-generated with poor quality.</p>
-
-<p>The output is clean, paragraph-structured text. Not timestamped caption fragments. Not raw speech-to-text noise. Actual readable text that you can copy into a document and start editing immediately.</p>
-
-<h2>What people actually use downloaded transcripts for</h2>
-
-<p><strong>Content repurposing.</strong> A downloaded transcript is the fastest path from someone else\u2019s insight to your own published commentary. Transcribe a conference talk, extract the key arguments, add your perspective, and publish an article that would have taken hours to write from scratch.</p>
-
-<p><strong>Research and citation.</strong> When you are writing about a topic and need to accurately quote or reference what someone said in a video, a transcript gives you searchable, citable text instead of scrubbing through a timeline.</p>
-
-<p><strong>Meeting and lecture notes.</strong> Recorded Zoom calls shared on YouTube, university lectures, and webinar replays all become far more useful as text. Your team can search, highlight, and reference specific points instead of rewatching entire recordings.</p>
-
-<p><strong>Accessibility and translation.</strong> Transcripts make video content available to people who are deaf or hard of hearing, and they provide a foundation for translation into other languages. If your audience is global, transcripts are not optional \u2014 they are infrastructure.</p>
-
-<h2>Reliability when YouTube makes it hard</h2>
-
-<p>Anyone who has worked with YouTube extraction at scale knows that the platform periodically changes how it serves content. Anti-bot checks, request throttling, and delivery pattern changes can break tools that worked yesterday. TranscriptX is built with this reality in mind.</p>
-
-<p>The system includes automatic retries with backoff, rotating proxy fallback for YouTube-specific anti-bot detection, and clear error messaging when issues occur. If a transcript cannot be generated, TranscriptX tells you why and what to try next. You are never stuck wondering why the screen is blank.</p>
-
-<h2>Simple pricing for regular use</h2>
-
-<p>If you download transcripts occasionally, the free tier gives you 3 per month with no signup required. If transcription is part of your regular workflow, Starter at $2/month gives you 50, and Pro at $4/month gives you unlimited. No per-minute charges, no surprise bills.</p>
-
-<h2>FAQ</h2>
-<h3>Can I download a transcript from any YouTube video?</h3>
-<p>Yes. TranscriptX extracts audio and generates its own transcript, so it works even when the video has no captions.</p>
-<h3>Is the downloaded transcript better than YouTube\u2019s auto-captions?</h3>
-<p>In most cases, yes. TranscriptX uses our AI engine that handles noise, accents, and technical terms more accurately.</p>
-<h3>What format is the transcript in?</h3>
-<p>TranscriptX returns clean, readable text that you can copy, edit, and paste into any editor or CMS.</p>
-<h3>Does it work on mobile?</h3>
-<p>TranscriptX is a web app that works on any device with a browser.</p>
-<h3>Is it free?</h3>
-<p>Free users get 3 transcripts/month. Paid plans start at $2/month for 50 transcripts.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Download your first YouTube transcript now.</strong></p>
-  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
-</div>
+<p>Twitter/X Spaces are ephemeral. If you want the transcript, grab it before the replay expires.</p>
+<h2>The 30-second answer</h2>
+<p>Open the Space on <a href=\"https://x.com\" rel=\"nofollow\">x.com</a>, copy the URL, paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Find the Space on X</h3>
+<p>Go to the host’s profile. If replay is on, the Space appears pinned near the top or in their posts.</p>
+<h3>2) Copy the URL</h3>
+<p>URL format is <code>x.com/i/spaces/SPACEID</code>.</p>
+<h3>3) Paste on TranscriptX</h3>
+<p>Drop the link on <a href=\"/\">transcriptx.xyz</a>. Long Spaces (2-3 hours is common) take proportionally longer.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>No replay enabled.</strong> Some hosts turn off replay. No recovery.</li>
+  <li><strong>Replay expired.</strong> 30 days and the URL 404s.</li>
+  <li><strong>Protected account host.</strong> We can’t follow anyone.</li>
+  <li><strong>Overlapping speakers.</strong> Common on Spaces with 5+ active speakers. Expect some garbled patches.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-multi-speaker-video\">How to label multiple speakers</a>.</li>
+  <li><a href=\"/guides/transcribe-webinar-for-blog\">How to turn a Space into a blog post</a>.</li>
+  <li><a href=\"/guides/interview-transcript-to-quotes\">How to pull quotes from a Space</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste an X Spaces link</a> now.</p>
 """,
     },
-    "audio-to-transcript": {
-        "title": "Audio to Transcript \u2014 Convert Any Recording to Editable Text",
-        "description": "TranscriptX converts audio from any video source into clean, structured transcript text. Ready in minutes.",
-        "keywords": "audio to transcript, transcript audio, audio transcription, convert audio to text",
-        "h1": "Audio to Transcript \u2014 From Raw Recording to Publishable Text",
-        "quick_answer": "TranscriptX extracts audio from any video URL and delivers an accurate, editable transcript in minutes \u2014 no uploads, no installs, no waiting.",
+    "transcribe-whatsapp-voice-memo": {
+        "title": "How to Transcribe a WhatsApp Voice Memo or Voice Note",
+        "description": "That 6-minute voice note from your aunt? Get it to text in 30 seconds. Works for personal memos, legal evidence, and journalism source files.",
+        "keywords": "transcribe whatsapp voice note, voice memo transcript, voice note to text, whatsapp audio transcript",
+        "h1": "How to Transcribe a WhatsApp Voice Memo or Voice Note",
+        "quick_answer": "Long-press the voice note in WhatsApp → Share → save to your phone. Upload the file to Google Drive, make the link public, paste on TranscriptX.",
         "faq": [
             {
-                "q": "Does TranscriptX work with audio-only content like podcasts?",
-                "a": "TranscriptX works with any URL that contains audio or video. If your podcast episode is hosted at a public URL, it can be transcribed."
+                "q": "Why upload to Drive first?",
+                "a": "WhatsApp voice notes live locally on your phone — no direct share link. Drive is the fastest path to a URL we can fetch."
             },
             {
-                "q": "What happens with poor audio quality?",
-                "a": "our AI engine is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy."
+                "q": "Can I transcribe iPhone Voice Memos the same way?",
+                "a": "Yes. Voice Memos are .m4a by default. Share to Drive, paste on TranscriptX."
             },
             {
-                "q": "Can I transcribe audio in multiple languages?",
-                "a": "Yes. TranscriptX supports dozens of languages and can handle mixed-language audio."
+                "q": "What about Android voice messages?",
+                "a": "Same idea. Long-press → Share → save to Files → upload to Drive."
             },
             {
-                "q": "How is this different from dictation software?",
-                "a": "Dictation software converts live speech in real time. TranscriptX converts recorded audio into polished transcript text for editing and publishing."
-            },
-            {
-                "q": "What can I do with the transcript?",
-                "a": "Edit it into articles, guides, social posts, documentation, show notes, or any text format your workflow requires."
-            },
+                "q": "Is this legal for recording conversations?",
+                "a": "Transcribing a voice memo sent to you is fine. Recording someone secretly depends on local laws (one-party vs two-party consent). Check before you record."
+            }
         ],
         "body_html": """
-<p>Audio content is one of the most underused assets in content production. Podcasts, interviews, webinars, voice memos, earnings calls, customer conversations \u2014 all of them contain spoken material that could become searchable, publishable, shareable text. But it stays locked in audio because the conversion step has traditionally been painful.</p>
-
-<p>Manual transcription is slow. Desktop software is clunky. Most online tools require you to download audio files, convert formats, and upload them somewhere. By the time you have a transcript, the publishing window has passed or your team has moved on to the next thing.</p>
-
-<p>TranscriptX removes that friction. It extracts audio from any supported video URL and converts it into clean, editable transcript text using our AI engine \u2014 all within minutes, entirely in your browser.</p>
-
-<h2>Why audio transcription still matters</h2>
-
-<p>In a world that increasingly produces content in audio and video formats, text remains the backbone of discoverability. Search engines index text. Knowledge bases store text. Teams collaborate in documents, not audio files. Social platforms may favor video, but the ideas inside that video reach further when they also exist as written words.</p>
-
-<p>For creators, this means every podcast episode is also a potential article. Every webinar is a potential guide. Every interview is a potential quote bank for weeks of social content. But only if the audio becomes text quickly enough to act on it.</p>
-
-<p>For teams, audio transcription turns ephemeral conversations into searchable records. Customer calls become training material. Strategy sessions become reference documents. The institutional knowledge that currently lives in recordings becomes accessible to everyone, not just the people who were in the room.</p>
-
-<h2>How TranscriptX converts audio to transcript</h2>
-
-<p>The process is built around one principle: you should not have to think about audio files. TranscriptX handles extraction and conversion behind the scenes.</p>
-
-<p>You paste a URL \u2014 from YouTube, TikTok, Instagram, or any of 1000+ supported platforms. TranscriptX identifies and extracts the audio track. That audio is processed through our AI engine speech recognition, a model trained on hundreds of thousands of hours of real-world audio spanning dozens of languages and recording conditions.</p>
-
-<p>You receive clean text output. Not timestamped fragments. Not raw speech-to-text noise. Structured, readable text that reflects what was actually said, with the coherence and sentence structure needed for editing.</p>
-
-<h2>Why audio quality is not the dealbreaker it used to be</h2>
-
-<p>Older transcription systems were trained on clean, studio-quality recordings. That made them brittle. Background noise, overlapping speakers, room echo, phone-quality microphones \u2014 any of these could degrade output to the point of uselessness.</p>
-
-<p>Modern speech-recognition models are different because their training data is different. They were trained on massive volumes of actual web audio with all its imperfections. That broad training base gives them substantially better robustness to real recording conditions. Research indicates these models produce up to 50% fewer errors than systems trained on narrow benchmark datasets.</p>
-
-<p>Does that mean perfect transcripts from terrible audio? No. Physics still applies \u2014 a recording with constant construction noise and three people talking at once will challenge any system. But for the vast majority of real content \u2014 podcast interviews, conference talks, product demos, customer calls \u2014 the output is immediately usable with minimal editing.</p>
-
-<h2>From transcript to finished content</h2>
-
-<p>The transcript is your raw material. What you build from it depends on your goal.</p>
-
-<p><strong>Podcast show notes.</strong> Pull key topics, timestamps, and guest quotes from the transcript. Publish structured show notes that give listeners a reason to bookmark your episode page \u2014 and give search engines text to index.</p>
-
-<p><strong>Long-form articles.</strong> A 30-minute conversation easily yields 4,000+ words of raw material. Extract the strongest arguments, add context and structure, and publish an article that would have taken a full day to write from scratch.</p>
-
-<p><strong>Internal documentation.</strong> Customer call recordings become searchable support references. Onboarding sessions become training guides. Strategy conversations become decision logs. Transcripts turn audio archives into operational assets.</p>
-
-<p><strong>Social content.</strong> Short, quotable moments from audio make excellent social posts. Transcripts let you find these moments by reading instead of re-listening, cutting production time dramatically.</p>
-
-<h2>What TranscriptX costs</h2>
-
-<p>TranscriptX is priced for real usage, not theoretical enterprise scale. Free users get 3 transcripts per month. Starter is $2/month for 50 transcripts. Pro is $4/month for unlimited. That is less than the cost of a single freelance transcription job.</p>
-
-<h2>FAQ</h2>
-<h3>Does TranscriptX work with audio-only content like podcasts?</h3>
-<p>TranscriptX works with any URL that contains audio or video. If your podcast episode is hosted at a public URL, it can be transcribed.</p>
-<h3>What happens with poor audio quality?</h3>
-<p>our AI engine is trained on noisy real-world audio and handles imperfect recordings better than older transcription systems. Very poor audio may still reduce accuracy.</p>
-<h3>Can I transcribe audio in multiple languages?</h3>
-<p>Yes. TranscriptX supports dozens of languages and can handle mixed-language audio.</p>
-<h3>How is this different from dictation software?</h3>
-<p>Dictation software converts live speech in real time. TranscriptX converts recorded audio into polished transcript text for editing and publishing.</p>
-<h3>What can I do with the transcript?</h3>
-<p>Edit it into articles, guides, social posts, documentation, show notes, or any text format your workflow requires.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn your audio into content that works for you.</strong></p>
-  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
-</div>
+<p>Voice notes are great to receive and impossible to search. Transcription fixes that in under a minute.</p>
+<h2>The 30-second answer</h2>
+<p>Long-press the WhatsApp voice note → <strong>Share</strong> → save to your phone → upload to <a href=\"https://drive.google.com\" rel=\"nofollow\">Google Drive</a> → make link public → paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step — iPhone</h2>
+<h3>1) Long-press the voice note in WhatsApp</h3>
+<p>Tap <strong>Share</strong> → <strong>Save to Files</strong> (or share to the Drive app directly).</p>
+<h3>2) Upload to Drive, set sharing</h3>
+<p>Open Drive, upload the file, tap the file → Share → <strong>Anyone with the link</strong>.</p>
+<h3>3) Copy link, paste on TranscriptX</h3>
+<p><a href=\"/\">transcriptx.xyz</a> → paste → Transcribe.</p>
+<h2>Step-by-step — Android</h2>
+<p>Long-press the voice message → Share → pick Drive. Make the link public. Paste on TranscriptX.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Drive link Restricted.</strong> Switch to Anyone with the link.</li>
+  <li><strong>WhatsApp export failure.</strong> Very long voice notes can fail on older phones. Update WhatsApp.</li>
+  <li><strong>Multiple speakers in one note.</strong> Workflow still works, but you’ll want to label who said what.</li>
+  <li><strong>Thick accent or background noise.</strong> Accuracy drops. Try the language retry if auto-detect is off.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-google-drive-video\">How to transcribe a Google Drive video</a>.</li>
+  <li><a href=\"/guides/transcribe-iphone-video\">How to transcribe a video on your iPhone</a>.</li>
+  <li><a href=\"/guides/transcribe-foreign-language-video\">How to transcribe a voice note in another language</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste the Drive link</a>.</p>
 """,
     },
-    "youtube-video-to-transcript": {
-        "title": "YouTube Video to Transcript \u2014 From URL to Publishable Text",
-        "description": "Convert any YouTube video to a clean, editable transcript with TranscriptX. Paste the URL, get accurate text in minutes, publish everywhere.",
-        "keywords": "youtube video to transcript, youtube video transcript, transcript youtube video, youtube to transcript",
-        "h1": "YouTube Video to Transcript \u2014 Paste a URL, Get Clean Text",
-        "quick_answer": "TranscriptX converts any YouTube video into accurate, publication-ready transcript text in minutes. No captions required, no file downloads, no waiting.",
+    "transcribe-spotify-podcast": {
+        "title": "How to Transcribe a Podcast Episode From Spotify (When There’s No YouTube Version)",
+        "description": "Spotify blocks most scrapers. The fix: find the podcast’s RSS feed or Apple Podcasts listing, grab the direct MP3, paste that into TranscriptX.",
+        "keywords": "transcribe spotify podcast, spotify episode transcript, spotify to text, podcast transcript no youtube",
+        "h1": "How to Transcribe a Podcast Episode From Spotify (When There’s No YouTube Version)",
+        "quick_answer": "Spotify itself is locked. Find the episode on Apple Podcasts or the show’s own site — both usually link the raw MP3. Paste the MP3 URL on TranscriptX.",
         "faq": [
             {
-                "q": "How is this different from copying YouTube captions?",
-                "a": "TranscriptX generates its own transcript from the audio, producing cleaner text than YouTube auto-captions with better punctuation and accuracy."
+                "q": "Why can’t you transcribe Spotify links directly?",
+                "a": "Spotify requires authentication for almost every stream, and their DRM blocks bulk download. We’d need your login to play the audio, which we don’t want."
             },
             {
-                "q": "What happens if YouTube blocks the video download?",
-                "a": "TranscriptX includes retry logic and proxy fallback to handle YouTube anti-bot checks automatically."
+                "q": "What if the show is Spotify-exclusive?",
+                "a": "Then there’s no public MP3 and no legal workaround. You’d have to record playback yourself."
             },
             {
-                "q": "Can I turn the transcript into a blog post?",
-                "a": "Yes. TranscriptX output is designed to be edited and restructured into articles, guides, and any text format."
+                "q": "Where do I find the MP3 URL?",
+                "a": "Apple Podcasts pages, the show’s website, Overcast, Pocket Casts. Right-click the audio player and “Copy audio URL”."
             },
             {
-                "q": "Does it work with YouTube Shorts?",
-                "a": "Yes. Any YouTube URL with playable video content can be transcribed."
-            },
-            {
-                "q": "How many YouTube videos can I transcribe?",
-                "a": "Free: 3/month. Starter ($2/mo): 50. Pro ($4/mo): unlimited."
-            },
-            {
-                "q": "Is the transcript available in other languages?",
-                "a": "TranscriptX detects the spoken language automatically and supports dozens of languages."
-            },
+                "q": "Spotify podcast video episodes?",
+                "a": "Same limitation — Spotify’s video player requires auth. If the show also posts to YouTube (many do), use that."
+            }
         ],
         "body_html": """
-<p>YouTube is the largest library of spoken content on the internet. Tutorials, interviews, product reviews, conference keynotes, earnings calls, educational lectures \u2014 billions of hours of human knowledge and insight, all of it spoken, almost none of it available as clean text.</p>
-
-<p>That gap represents a massive content opportunity. Every YouTube video your team watches, references, or creates is potential written content that could be driving search traffic, fueling social posts, and building your knowledge base. But the gap only closes if you can get from video to usable text quickly and reliably.</p>
-
-<p>TranscriptX closes that gap. Paste a YouTube URL, get a clean transcript in minutes. No file downloads, no caption dependencies, no manual labor. Just text you can immediately edit and publish.</p>
-
-<h2>The caption problem</h2>
-
-<p>YouTube does offer a built-in transcript feature, and for casual use it works. But for anyone doing real content work, the limitations add up fast.</p>
-
-<p>Auto-captions are generated by YouTube\u2019s own speech recognition and are explicitly described by YouTube as variable in quality. Names get mangled. Technical terms become unrecognizable. Punctuation is inconsistent or missing entirely. The text is segmented for caption display timing, not for reading \u2014 so even accurate captions produce choppy, fragmented output when copied.</p>
-
-<p>And then there are the videos where captions simply do not exist. The creator disabled them, or the audio conditions prevented auto-generation, or the video is too new for captions to have processed. In those cases, YouTube\u2019s \u201cShow Transcript\u201d button does not appear at all. Your workflow hits a wall.</p>
-
-<p>TranscriptX does not have this dependency. It extracts audio directly from the video and generates its own transcript using our AI engine. Captions being present or absent on YouTube is irrelevant to the output you receive.</p>
-
-<h2>From YouTube URL to finished text</h2>
-
-<p>Here is what the actual workflow looks like in practice.</p>
-
-<p>You copy a YouTube video URL. You paste it into TranscriptX. Behind the scenes, TranscriptX downloads the audio track from the video. That audio is processed through speech recognition models trained on hundreds of thousands of hours of real-world, multilingual audio data. Within minutes, you have a clean transcript in your browser.</p>
-
-<p>The transcript is structured for readability: coherent sentences, proper casing, natural paragraph flow. You can copy the full text with one click and paste it into your editor, CMS, Google Doc, or wherever your content workflow lives.</p>
-
-<p>From there, the editorial work begins \u2014 but the hardest part is already done. Instead of staring at a blank page, you are reshaping existing substance. Instead of listening to a video at 1x speed with your fingers on a keyboard, you are scanning and editing text at the speed of reading.</p>
-
-<h2>What one YouTube transcript becomes</h2>
-
-<p>Think about the last time your team referenced a YouTube video in a meeting. Someone said \u201cthere is a great talk about this\u201d and shared a link. Two people watched part of it. Nobody had time to finish. The insight evaporated.</p>
-
-<p>Now imagine that same video transcribed and published as an internal reference document within the hour. The key arguments are extracted. The relevant data points are highlighted. Anyone on the team can search the text, quote it, and build on it without watching 45 minutes of video. That is the operational value of video-to-transcript conversion.</p>
-
-<p>For external content, the math is even more compelling. A single YouTube video can become a long-form article targeting a commercial keyword, a troubleshooting guide answering questions from the comments, a series of social posts pulling the best quotes, and an FAQ page addressing audience objections. One video, four assets, all indexable, all linkable, all working for you 24/7 while the original video\u2019s social visibility fades within days.</p>
-
-<h2>Reliability matters more than features</h2>
-
-<p>Anyone can build a transcription demo that works on a good day with a clean video. The real test is what happens on a bad day. YouTube changes delivery patterns. Anti-bot systems flag automated requests. Audio quality varies wildly across creators, devices, and environments.</p>
-
-<p>TranscriptX is designed for this reality. The system includes automatic retries with backoff timing, proxy fallback for YouTube anti-bot detection, and transparent error messaging. When something goes wrong, you know what happened and what to do about it. When things work \u2014 which is most of the time \u2014 you barely notice the complexity underneath.</p>
-
-<p>For teams that depend on transcription as part of a regular publishing workflow, this reliability is not a nice-to-have. It is the feature. A tool that works 70% of the time and fails silently the other 30% is worse than no tool at all, because you plan around it and then scramble when it breaks.</p>
-
-<h2>Pricing for real people</h2>
-
-<p>TranscriptX is priced so the decision is easy. Free users get 3 transcripts per month with no account required. Starter is $2/month for 50 transcripts with batch processing and export. Pro is $4/month for unlimited. That is less than a single cup of coffee for a tool that saves hours of manual work every month.</p>
-
-<h2>FAQ</h2>
-<h3>How is this different from copying YouTube captions?</h3>
-<p>TranscriptX generates its own transcript from the audio, producing cleaner text than YouTube auto-captions with better punctuation and accuracy.</p>
-<h3>What happens if YouTube blocks the video download?</h3>
-<p>TranscriptX includes retry logic and proxy fallback to handle YouTube anti-bot checks automatically.</p>
-<h3>Can I turn the transcript into a blog post?</h3>
-<p>Yes. TranscriptX output is designed to be edited and restructured into articles, guides, and any text format.</p>
-<h3>Does it work with YouTube Shorts?</h3>
-<p>Yes. Any YouTube URL with playable video content can be transcribed.</p>
-<h3>How many YouTube videos can I transcribe?</h3>
-<p>Free: 3/month. Starter ($2/mo): 50. Pro ($4/mo): unlimited.</p>
-<h3>Is the transcript available in other languages?</h3>
-<p>TranscriptX detects the spoken language automatically and supports dozens of languages.</p>
-
-<div style="margin-top:2rem;padding:1.5rem;background:#1a1a1a;border-radius:12px;text-align:center;">
-  <p style="color:#C4C5C7;margin:0 0 0.5rem;"><strong>Turn any YouTube video into text you can use today.</strong></p>
-  <a href="/" style="color:#F0A860;font-weight:700;">Try TranscriptX free \u2192</a>
-</div>
+<p>Spotify is a closed garden for podcasts. The transcript workflow routes around it.</p>
+<h2>The 60-second answer</h2>
+<p>Find the episode on <a href=\"https://podcasts.apple.com\" rel=\"nofollow\">Apple Podcasts</a>, the show’s website, or Overcast. Find the direct MP3. Paste that URL on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Identify the episode</h3>
+<p>Note the show name and episode title.</p>
+<h3>2) Find the MP3 URL</h3>
+<ul>
+  <li><strong>Apple Podcasts</strong> — the player often exposes the MP3 in page source.</li>
+  <li><strong>The show’s website</strong> — many embed the raw file.</li>
+  <li><strong>Overcast or Pocket Casts</strong> — both often show the direct file URL.</li>
+</ul>
+<h3>3) Paste the MP3 URL on TranscriptX</h3>
+<p>Drop the URL on <a href=\"/\">transcriptx.xyz</a>. Podcast MP3s transcribe cleanly.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Spotify-exclusive show.</strong> No public MP3, no workaround.</li>
+  <li><strong>Paid/subscriber-only episode.</strong> Patreon or Substack gates. Download from your own account first.</li>
+  <li><strong>Geo-restricted podcast.</strong> Rare, but some CDNs block non-US access.</li>
+  <li><strong>Stitched ads.</strong> Dynamic ad insertion is common. Your transcript will include whatever ads the feed served.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-mp3-from-url\">How to transcribe an MP3 podcast from a direct URL</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a podcast into show notes</a>.</li>
+  <li><a href=\"/guides/transcribe-soundcloud-track\">How to transcribe a SoundCloud track</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste an MP3 URL</a>.</p>
+""",
+    },
+    "transcribe-iphone-video": {
+        "title": "How to Transcribe a Video on Your iPhone (Without an App)",
+        "description": "iPhone has built-in transcription for Voice Memos but nothing for video files. Here’s the no-app flow: share sheet → Drive → TranscriptX, in about 60 seconds.",
+        "keywords": "transcribe iphone video, iphone video to text, transcribe phone video",
+        "h1": "How to Transcribe a Video on Your iPhone (Without an App)",
+        "quick_answer": "Open the video in Photos, tap Share → Save to Files or Drive, upload to Google Drive with a public link, paste the link on TranscriptX. No app install.",
+        "faq": [
+            {
+                "q": "Doesn’t iPhone have built-in transcription?",
+                "a": "Voice Memos does. Photos (for video) doesn’t. That’s why you route through Drive."
+            },
+            {
+                "q": "What file sizes work?",
+                "a": "As long as Drive accepts it (effectively no limit for most users), we can transcribe it."
+            },
+            {
+                "q": "Can I use iCloud Drive instead of Google Drive?",
+                "a": "Usually no — iCloud public links gate heavily and often require an Apple ID to open. Google Drive’s “Anyone with the link” is more reliable."
+            },
+            {
+                "q": "What about Dropbox?",
+                "a": "Dropbox works. Share a public link with “Can view” access and paste on TranscriptX."
+            }
+        ],
+        "body_html": """
+<p>iPhone records great video and gives you zero built-in options for transcribing it. The workaround is quick.</p>
+<h2>The 60-second answer</h2>
+<p>Video in Photos → <strong>Share</strong> → <strong>Save to Files</strong> (or Drive app) → upload to Google Drive → public link → paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Open the video in Photos</h3>
+<p>Tap the video → <strong>Share</strong> (bottom-left).</p>
+<h3>2) Save to Files or Drive</h3>
+<p>Scroll the share sheet → tap <strong>Save to Files</strong>, or tap the <strong>Drive</strong> app. Drive is faster if you have it.</p>
+<h3>3) In Drive, make the link public</h3>
+<p>Long-press the file → Share → <strong>Anyone with the link</strong> → Copy link.</p>
+<p><em>[Screenshot: Drive iOS Share dialog with Anyone with the link selected]</em></p>
+<h3>4) Paste on TranscriptX</h3>
+<p>Open Safari → <a href=\"/\">transcriptx.xyz</a> → paste → Transcribe.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Drive link Restricted.</strong> Flip to Anyone with the link.</li>
+  <li><strong>iCloud share link.</strong> iCloud often gates past non-Apple browsers. Use Google Drive.</li>
+  <li><strong>Huge video (multi-GB).</strong> Upload time is the bottleneck. Let Drive finish syncing first.</li>
+  <li><strong>HEIC or oddball codec.</strong> Standard iPhone .mov files work. Unusual re-encodes sometimes don’t.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-google-drive-video\">How to transcribe a Google Drive video</a>.</li>
+  <li><a href=\"/guides/transcribe-whatsapp-voice-memo\">How to transcribe a WhatsApp voice note</a>.</li>
+  <li><a href=\"/guides/transcribe-instagram-reel-or-story\">How to transcribe an Instagram Reel</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste your Drive link</a> from your iPhone.</p>
+""",
+    },
+    "transcribe-youtube-short": {
+        "title": "How to Transcribe a YouTube Short",
+        "description": "Shorts often have no captions because they’re too short to auto-caption. TranscriptX handles them the same as any YouTube URL — paste and go.",
+        "keywords": "transcribe youtube short, youtube shorts transcript, shorts to text",
+        "h1": "How to Transcribe a YouTube Short",
+        "quick_answer": "Copy the Short’s URL, paste on TranscriptX. Works the same as a regular YouTube video. Because Shorts are short, transcripts come back in under 10 seconds.",
+        "faq": [
+            {
+                "q": "Why don’t Shorts have captions like regular YouTube?",
+                "a": "YouTube often skips auto-captioning very short videos. And creators can’t easily export the ones that do get captioned."
+            },
+            {
+                "q": "Is the URL format different?",
+                "a": "Slightly — Shorts use <code>youtube.com/shorts/VIDEO_ID</code>. Paste as-is; we handle both formats."
+            },
+            {
+                "q": "Does it work on private Shorts?",
+                "a": "Same rules as any YouTube video: Public and Unlisted work, Private doesn’t."
+            },
+            {
+                "q": "Music-only Shorts?",
+                "a": "No speech, no transcript. Expected."
+            }
+        ],
+        "body_html": """
+<p>YouTube Shorts are a separate corner of YouTube with their own caption problems. The fix is the same paste-and-go.</p>
+<h2>The 15-second answer</h2>
+<p>Copy the Short URL, paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Copy the Short URL</h3>
+<p>Share → Copy link. URL format: <code>youtube.com/shorts/ABC123</code>.</p>
+<h3>2) Paste on TranscriptX</h3>
+<p><a href=\"/\">transcriptx.xyz</a> → paste → Transcribe. Under 10 seconds for most.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Private Short.</strong> Same rule as any Private YouTube video.</li>
+  <li><strong>Age-restricted.</strong> Adult login required.</li>
+  <li><strong>Region-locked.</strong> Blocked outside the creator’s country.</li>
+  <li><strong>Music-only.</strong> No spoken content = empty transcript.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-private-youtube-video\">How to transcribe a private or unlisted YouTube video</a>.</li>
+  <li><a href=\"/guides/transcribe-tiktok-video\">How to transcribe a TikTok</a>.</li>
+  <li><a href=\"/guides/transcribe-instagram-reel-or-story\">How to transcribe an Instagram Reel</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a Short URL</a>.</p>
+""",
+    },
+    "transcribe-reddit-video": {
+        "title": "How to Transcribe a Reddit Video Post (v.redd.it)",
+        "description": "Reddit-hosted videos (v.redd.it URLs) are notoriously hard because audio and video live in separate files. Here’s the reliable path.",
+        "keywords": "transcribe reddit video, v.redd.it transcript, reddit video to text",
+        "h1": "How to Transcribe a Reddit Video Post (v.redd.it)",
+        "quick_answer": "Copy the Reddit post URL (the reddit.com/r/... one, not the v.redd.it one). Paste on TranscriptX. We handle Reddit’s split audio/video format behind the scenes.",
+        "faq": [
+            {
+                "q": "Why is Reddit video weird?",
+                "a": "Reddit stores video and audio as separate files on v.redd.it. Naive scrapers grab the silent video and miss the audio. We fetch and merge both."
+            },
+            {
+                "q": "Should I copy the post URL or the v.redd.it URL?",
+                "a": "Post URL is more reliable. It gives us the context needed to find the audio. v.redd.it URLs sometimes work, sometimes don’t."
+            },
+            {
+                "q": "Crossposts?",
+                "a": "Yes, if the original post still exists. If the original was deleted, the crosspost video may be inaccessible."
+            },
+            {
+                "q": "Private subreddit posts?",
+                "a": "No. Private subs require membership. Our servers aren’t members."
+            }
+        ],
+        "body_html": """
+<p>Reddit videos break a lot of transcript tools because Reddit splits audio and video into separate files. Ours doesn’t.</p>
+<h2>The 30-second answer</h2>
+<p>Copy the <strong>post URL</strong> (the <code>reddit.com/r/...</code> one), not the v.redd.it URL. Paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Get the post URL</h3>
+<p>Click the post’s timestamp or title. Copy the URL from the address bar. Format: <code>reddit.com/r/SUB/comments/ID/SLUG</code>.</p>
+<h3>2) Paste on TranscriptX</h3>
+<p><a href=\"/\">transcriptx.xyz</a> → paste. If the post has a v.redd.it video, we’ll fetch both tracks and merge.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Using the v.redd.it URL directly.</strong> Sometimes works, sometimes 403s. Use the post URL.</li>
+  <li><strong>Video without audio track.</strong> Screen recordings or GIFs repackaged as video are truly silent. No audio = empty transcript.</li>
+  <li><strong>Deleted post.</strong> If the post or video was removed, it’s gone.</li>
+  <li><strong>NSFW-gated community.</strong> Some subs require account-age or karma. We don’t have an account.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-tiktok-video\">How to transcribe a TikTok</a>.</li>
+  <li><a href=\"/guides/transcribe-youtube-short\">How to transcribe a YouTube Short</a>.</li>
+  <li><a href=\"/guides/transcribe-mp3-from-url\">How to transcribe from a direct audio URL</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a Reddit post URL</a>.</p>
+""",
+    },
+    "transcribe-mp3-from-url": {
+        "title": "How to Transcribe an MP3 Podcast File From a Direct URL",
+        "description": "If you have the raw MP3 URL — from a podcast RSS feed, Overcast, Pocket Casts, or the show’s website — you can transcribe it without downloading.",
+        "keywords": "transcribe mp3 url, podcast mp3 transcript, audio url to text, rss feed transcript",
+        "h1": "How to Transcribe an MP3 Podcast File From a Direct URL",
+        "quick_answer": "Paste the MP3 URL on TranscriptX. We fetch and transcribe — no download step. Works for any public .mp3 or .m4a URL.",
+        "faq": [
+            {
+                "q": "Where do I find the direct MP3 URL?",
+                "a": "RSS feeds, Apple Podcasts pages, Overcast, Pocket Casts, and most show websites."
+            },
+            {
+                "q": "Other audio formats?",
+                "a": "Yes — .m4a, .wav, .ogg, .opus. Anything Whisper can decode."
+            },
+            {
+                "q": "MP3s behind paywalls?",
+                "a": "If the URL requires authentication, we can’t fetch it. Download on your own account and upload to a public storage link."
+            },
+            {
+                "q": "File size limits?",
+                "a": "We transcribe multi-hour podcast files routinely. Processing time scales with length."
+            }
+        ],
+        "body_html": """
+<p>If you have the raw MP3 URL, you have the simplest transcription job possible. No UI to click through.</p>
+<h2>The 15-second answer</h2>
+<p>Paste the MP3 URL on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step — finding the MP3</h2>
+<ul>
+  <li><strong>Show’s RSS feed.</strong> Every open podcast has one. The <code>&lt;enclosure url=\"...\"&gt;</code> in each episode is the MP3.</li>
+  <li><strong>Apple Podcasts web page.</strong> Play the episode → right-click audio → Copy audio URL.</li>
+  <li><strong>Overcast / Pocket Casts.</strong> Share episode → copy the web link → inspect for the MP3.</li>
+  <li><strong>Show’s website.</strong> Many embed the player directly; right-click, copy the source URL.</li>
+</ul>
+<h2>Step-by-step — transcribing</h2>
+<p>Drop the URL on <a href=\"/\">transcriptx.xyz</a>. Hit Transcribe.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>URL behind auth.</strong> Patreon, Substack, premium feeds. Can’t fetch.</li>
+  <li><strong>Expired CDN URL.</strong> Some hosts expire direct links after a while. Grab a fresh one.</li>
+  <li><strong>Dynamic ad insertion.</strong> Your transcript will include whatever ads the feed served.</li>
+  <li><strong>DRM-protected audio.</strong> Audible and some commercial products. Not accessible.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-spotify-podcast\">How to transcribe a Spotify podcast</a>.</li>
+  <li><a href=\"/guides/transcribe-soundcloud-track\">How to transcribe a SoundCloud track</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a podcast into show notes</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste an MP3 URL</a>.</p>
+""",
+    },
+    "transcribe-soundcloud-track": {
+        "title": "How to Transcribe a SoundCloud Track or DJ Mix",
+        "description": "SoundCloud doesn’t export captions and their stream URLs are messy. Paste the track URL into TranscriptX — we handle the fetch. Good for DJ mixes, interview snippets, and liner notes.",
+        "keywords": "transcribe soundcloud, soundcloud to text, dj mix transcript, soundcloud track transcript",
+        "h1": "How to Transcribe a SoundCloud Track or DJ Mix",
+        "quick_answer": "Copy the SoundCloud track URL (soundcloud.com/artist/track-name), paste on TranscriptX. Works on public tracks and mixes. Private tracks with secret links usually work too.",
+        "faq": [
+            {
+                "q": "Why transcribe a DJ mix?",
+                "a": "Liner notes, track-ID from spoken intros, Boiler Room interview snippets. DJs and music journalists use this a lot."
+            },
+            {
+                "q": "Private tracks?",
+                "a": "Usually — if the track has a “secret link” you can share, we can fetch it. If it requires a SoundCloud login, we can’t."
+            },
+            {
+                "q": "SoundCloud Go+ paywalled tracks?",
+                "a": "Require a subscription. Preview-only URLs give you a short transcript of the preview."
+            },
+            {
+                "q": "Instrumental or lyric-heavy music?",
+                "a": "Instrumentals have nothing to transcribe. Lyric-heavy music works, but Whisper isn’t tuned for song lyrics — results are rougher than spoken word."
+            }
+        ],
+        "body_html": """
+<p>SoundCloud won’t export captions. DJ mixes and podcast-style shows are still a goldmine of spoken content if you can extract it.</p>
+<h2>The 30-second answer</h2>
+<p>Copy the track URL from SoundCloud, paste on <a href=\"/\">TranscriptX</a>.</p>
+<h2>Step-by-step</h2>
+<h3>1) Get the track URL</h3>
+<p>On soundcloud.com, open the track. Copy the URL from the browser. Format: <code>soundcloud.com/artist/track-name</code>.</p>
+<h3>2) Paste on TranscriptX</h3>
+<p><a href=\"/\">transcriptx.xyz</a>. DJ mixes and long episodes take proportionally longer.</p>
+<h2>Common things that break</h2>
+<ul>
+  <li><strong>Private track without a secret link.</strong> Can’t fetch.</li>
+  <li><strong>SoundCloud Go+ paywalled.</strong> Requires a subscription.</li>
+  <li><strong>Purely instrumental music.</strong> Nothing to transcribe.</li>
+  <li><strong>Lyrics over heavy beats.</strong> Whisper is tuned for speech, not lyrics. Expect rougher output on sung music.</li>
+</ul>
+<h2>Related guides</h2>
+<ul>
+  <li><a href=\"/guides/transcribe-mp3-from-url\">How to transcribe an MP3 from a direct URL</a>.</li>
+  <li><a href=\"/guides/transcribe-spotify-podcast\">How to transcribe a Spotify podcast</a>.</li>
+  <li><a href=\"/guides/youtube-video-to-show-notes\">How to turn a mix into show notes</a>.</li>
+</ul>
+<h2>Try it</h2>
+<p>3 free transcripts a month. <a href=\"/\">Paste a SoundCloud link</a>.</p>
 """,
     },
 }
