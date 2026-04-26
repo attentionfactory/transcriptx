@@ -154,7 +154,7 @@ from database import (
 )
 from transcribe import process_url, download_video_mp4, clip_video_segment, _sanitize_filename
 from routes_pages import register_page_routes
-from seo_catalog import current_lastmod, get_platform_pages, get_static_seo_paths
+from seo_catalog import CURATED_PLATFORM_OVERRIDES, current_lastmod, get_platform_pages, get_static_seo_paths
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production-" + uuid.uuid4().hex)
@@ -253,7 +253,16 @@ def sitemap_xml():
     ]
     rows.extend((path, "0.85") for path in sorted(get_static_seo_paths()))
     rows.extend((f"/guides/{slug}", "0.75") for slug in sorted(GUIDES_CONTENT.keys()))
-    rows.extend((f"/platform/{slug}-transcript-generator", "0.7") for slug in sorted(get_platform_pages().keys()))
+    # Long-tail /platform/* pages are noindex'd in routes_pages._platform_robots,
+    # so listing them here pollutes the sitemap quality signal (Google sees ~95%
+    # of advertised URLs as noindex). Restoring the full list once those pages
+    # are either deleted or promoted to real content (Track B / PLATFORM_GUIDES).
+    # rows.extend((f"/platform/{slug}-transcript-generator", "0.7") for slug in sorted(get_platform_pages().keys()))
+    rows.extend(
+        (f"/platform/{slug}-transcript-generator", "0.7")
+        for slug in sorted(get_platform_pages().keys())
+        if slug in CURATED_PLATFORM_OVERRIDES
+    )
 
     parts = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, priority in rows:
