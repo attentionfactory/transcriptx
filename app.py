@@ -1076,7 +1076,11 @@ def api_mcp_generate_token():
     if not user.get("logged_in"):
         return jsonify({"status": "error", "error": "Login required"}), 401
     result = generate_mcp_token(user["user_id"])
-    full_url = f"https://mcp.transcriptx.xyz/?token={result['token']}"
+    # Public host the user pastes into their AI client. Defaults to prod;
+    # staging Railway service overrides via MCP_PUBLIC_HOST so testers see
+    # the right URL.
+    public_host = os.environ.get("MCP_PUBLIC_HOST", "mcp.transcriptx.xyz")
+    full_url = f"https://{public_host}/?token={result['token']}"
     return jsonify({
         "status": "ok",
         "token": result["token"],
@@ -3779,7 +3783,10 @@ register_page_routes(
 # them at http://localhost:5000/ via the same Flask app for testing.
 from mcp_server import register_mcp_routes  # noqa: E402
 
-_MCP_SUBDOMAIN = "mcp"
+# MCP_SUBDOMAIN is configurable so prod and staging Railway services can
+# point at different hosts (mcp.transcriptx.xyz vs mcp-staging.transcriptx.xyz)
+# off the same code. Defaults to "mcp" for production.
+_MCP_SUBDOMAIN = os.environ.get("MCP_SUBDOMAIN", "mcp")
 if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("FLASK_PROD"):
     app.config["SERVER_NAME"] = os.environ.get("FLASK_SERVER_NAME", "transcriptx.xyz")
     register_mcp_routes(app, subdomain=_MCP_SUBDOMAIN)
