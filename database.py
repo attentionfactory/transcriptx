@@ -6,6 +6,7 @@ import sqlite3
 import os
 import json
 import secrets
+import hashlib
 from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 
@@ -96,6 +97,21 @@ def init_db():
         """)
         db.execute("CREATE INDEX IF NOT EXISTS idx_transcript_logs_user_time ON transcript_logs(user_id, created_at DESC)")
         db.execute("CREATE INDEX IF NOT EXISTS idx_transcript_logs_email_time ON transcript_logs(email, created_at DESC)")
+
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS mcp_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                token_prefix TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                last_used_at TEXT,
+                revoked_at TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+        db.execute("CREATE INDEX IF NOT EXISTS idx_mcp_tokens_user ON mcp_tokens(user_id)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_mcp_tokens_hash_active ON mcp_tokens(token_hash) WHERE revoked_at IS NULL")
 
         # Migrate existing users table — add new auth columns if missing
         _migrate_columns(db)
@@ -749,6 +765,114 @@ def set_transcript_rating(log_id, user_id, rating):
             (rating, datetime.utcnow().isoformat(), log_id, user_id),
         )
         return cur.rowcount > 0
+
+
+# ── MCP tokens (personal tokens for MCP server access) ────
+
+# Stripe-style prefix. Future-proof: tx_oauth_, tx_service_, etc. can coexist.
+_MCP_TOKEN_PREFIX = "tx_personal_"
+# 32 base32 chars after the prefix. ~160 bits of entropy. Safe for long-lived tokens.
+_MCP_TOKEN_RANDOM_LEN = 32
+# Unambiguous base32 alphabet — same idea as referral codes (no 0/O/1/I/L).
+_MCP_TOKEN_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def _hash_mcp_token(raw_token):
+    """SHA-256 hex of the raw token. We store this, not the raw value."""
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def _mcp_token_display_prefix(raw_token):
+    """The user-facing prefix shown in the settings UI: tx_personal_<first 4 of secret>."""
+    return raw_token[: len(_MCP_TOKEN_PREFIX) + 4]
+
+
+def generate_mcp_token(user_id):
+    """Generate a new MCP token for a user. Returns the raw token + DB id.
+
+    Token is shown once at creation. Only the hash is persisted. Caller must
+    surface the raw token to the user immediately and never store it.
+    """
+    random_part = "".join(secrets.choice(_MCP_TOKEN_ALPHABET) for _ in range(_MCP_TOKEN_RANDOM_LEN))
+    raw_token = _MCP_TOKEN_PREFIX + random_part
+    token_hash = _hash_mcp_token(raw_token)
+    prefix = _mcp_token_display_prefix(raw_token)
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO mcp_tokens (user_id, token_hash, token_prefix) VALUES (?, ?, ?)",
+            (int(user_id), token_hash, prefix),
+        )
+        token_id = cur.lastrowid
+    return {"token": raw_token, "token_id": token_id, "prefix": prefix}
+
+
+def validate_mcp_token(raw_token):
+    """Look up a raw token. Returns the user_id if valid + not revoked, else None.
+
+    Updates last_used_at on every successful validation so the UI can show
+    activity. No-op (returns None) for empty / malformed input.
+    """
+    if not raw_token or not isinstance(raw_token, str):
+        return None
+    raw_token = raw_token.strip()
+    if not raw_token.startswith(_MCP_TOKEN_PREFIX):
+        return None
+    token_hash = _hash_mcp_token(raw_token)
+    with get_db() as db:
+        row = db.execute(
+            "SELECT id, user_id FROM mcp_tokens WHERE token_hash = ? AND revoked_at IS NULL",
+            (token_hash,),
+        ).fetchone()
+        if not row:
+            return None
+        # Best-effort last_used update; failure to update should not block auth.
+        try:
+            db.execute(
+                "UPDATE mcp_tokens SET last_used_at = ? WHERE id = ?",
+                (datetime.utcnow().isoformat(), row["id"]),
+            )
+        except Exception:
+            pass
+        return int(row["user_id"])
+
+
+def revoke_mcp_token(token_id, user_id):
+    """Revoke a token by id, scoped to the owning user.
+
+    Returns True if the token was revoked here, False if not found / not the
+    user's / already revoked.
+    """
+    try:
+        token_id = int(token_id)
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return False
+    with get_db() as db:
+        cur = db.execute(
+            "UPDATE mcp_tokens SET revoked_at = ? WHERE id = ? AND user_id = ? AND revoked_at IS NULL",
+            (datetime.utcnow().isoformat(), token_id, user_id),
+        )
+        return cur.rowcount > 0
+
+
+def list_user_mcp_tokens(user_id):
+    """Return all of a user's tokens (active + revoked). Never includes hashes.
+
+    Caller (settings UI) typically filters to active. Including revoked makes
+    audit / "what happened to my old token?" support cases possible.
+    """
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return []
+    with get_db() as db:
+        rows = db.execute(
+            """SELECT id, token_prefix, created_at, last_used_at, revoked_at
+               FROM mcp_tokens WHERE user_id = ?
+               ORDER BY created_at DESC""",
+            (user_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
 
 # ── Credits (unified — works by user id) ──────────────────

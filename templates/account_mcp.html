@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP / AI Connector | TranscriptX</title>
+    <meta name="description" content="Connect TranscriptX to Claude Desktop, Cursor, ChatGPT, and other AI clients via MCP.">
+    <meta name="robots" content="noindex,nofollow">
+    <style>
+        :root { --bg:#050505; --grey:#C4C5C7; --orange:#F0A860; --ink:#0a0a0a; --green:#3a8d3a; --red:#b84b3f; --f-wide:"Michroma",sans-serif; --f-tech:"Space Mono",monospace; --radius:2rem; --bw:1.5px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.5; }
+        .layout { max-width:760px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+        .panel { background:var(--grey); border-radius:var(--radius); padding:1.8rem 2rem; }
+        h1 { font-family:var(--f-wide); font-size:clamp(1.2rem,2.2vw,1.6rem); line-height:1.15; margin-bottom:.6rem; }
+        h2 { font-family:var(--f-wide); font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin:1.4rem 0 .6rem; }
+        .kicker { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6; display:block; margin-bottom:.35rem; }
+        .lead { font-size:.85rem; opacity:.85; margin-bottom:.2rem; }
+        .lead a { color:var(--ink); text-decoration:underline; }
+        .token-row { background:rgba(255,255,255,0.3); padding:1rem 1.2rem; border-radius:12px; border:var(--bw) solid rgba(10,10,10,0.18); margin-bottom:.6rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+        .token-row.revoked { opacity:.45; }
+        .token-prefix { font-family:var(--f-tech); font-size:.85rem; font-weight:700; flex:1; min-width:0; word-break:break-all; }
+        .token-meta { font-size:.7rem; opacity:.65; flex:1; min-width:0; }
+        .button { background:var(--ink); color:var(--orange); border:none; cursor:pointer; padding:.55rem 1rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; border-radius:6px; font-family:var(--f-tech); }
+        .button:hover { background:#1a1a1a; }
+        .button.danger { background:var(--red); color:#fff; }
+        .button.danger:hover { background:#9a3e34; }
+        .button.ghost { background:transparent; color:var(--ink); border:var(--bw) solid var(--ink); }
+        .button.ghost:hover { background:rgba(0,0,0,0.05); }
+        .empty { font-size:.78rem; opacity:.7; font-style:italic; padding:.5rem 0 1rem; }
+        .new-token { background:#fff7e8; border:var(--bw) solid var(--orange); border-radius:12px; padding:1.1rem 1.2rem; margin-bottom:1rem; }
+        .new-token .warn { font-size:.78rem; font-weight:700; color:var(--red); margin-bottom:.6rem; }
+        .new-token label { font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin-top:.7rem; display:block; }
+        .copy-row { display:flex; gap:.4rem; margin-top:.25rem; }
+        .copy-row input { flex:1; min-width:0; font-family:var(--f-tech); font-size:.75rem; padding:.5rem .65rem; border:var(--bw) solid var(--ink); border-radius:6px; background:#fff; color:var(--ink); }
+        .copy-btn { padding:.5rem .8rem; font-size:.65rem; }
+        .help-line { font-size:.7rem; opacity:.7; margin-top:.6rem; }
+        .help-line a { color:var(--ink); }
+        .confirm-revoke { font-size:.75rem; padding:.7rem 1rem; background:rgba(184,75,63,0.08); border:var(--bw) solid var(--red); border-radius:8px; margin-top:.5rem; }
+        .confirm-revoke .actions { display:flex; gap:.5rem; margin-top:.6rem; }
+        .hidden { display:none; }
+        .toast { position:fixed; bottom:1rem; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--orange); padding:.7rem 1.2rem; border-radius:8px; font-size:.75rem; font-weight:700; opacity:0; transition:opacity .2s; pointer-events:none; }
+        .toast.on { opacity:1; }
+    </style>
+</head>
+<body>
+<main class="layout">
+    {% include "_site_nav.html" %}
+    <section class="panel">
+        <span class="kicker">Account &middot; MCP / AI Connector</span>
+        <h1>Use TranscriptX inside your AI</h1>
+        <p class="lead">
+            Generate a token, paste the URL into your AI client's MCP config, and say
+            <em>"transcribe this video"</em> inside Claude Desktop, Cursor, ChatGPT, or any
+            other MCP-compatible client. <a href="/mcp/setup">Setup guide for each client →</a>
+        </p>
+
+        <div id="newToken" class="new-token hidden">
+            <div class="warn">⚠  Save this now — we won't show it again.</div>
+            <label>Your full MCP URL</label>
+            <div class="copy-row">
+                <input id="newTokenUrl" type="text" readonly>
+                <button class="button copy-btn" onclick="copyEl('newTokenUrl', this)">Copy</button>
+            </div>
+            <label>Token only (if your client takes them separately)</label>
+            <div class="copy-row">
+                <input id="newTokenRaw" type="text" readonly>
+                <button class="button copy-btn" onclick="copyEl('newTokenRaw', this)">Copy</button>
+            </div>
+            <div class="help-line">Paste this into Claude Desktop, Cursor, or whichever client you use. <a href="/mcp/setup">Setup guide →</a></div>
+            <div style="margin-top:.9rem;">
+                <button class="button ghost" onclick="dismissNewToken()">I've saved it, close</button>
+            </div>
+        </div>
+
+        <h2>Active tokens</h2>
+        <div id="tokenList">
+            {% for t in tokens %}
+                {% if not t.revoked_at %}
+                <div class="token-row" data-token-id="{{ t.id }}">
+                    <div class="token-prefix">{{ t.token_prefix }}…</div>
+                    <div class="token-meta">
+                        Created {{ (t.created_at or '')[:10] }}{% if t.last_used_at %} · Last used {{ (t.last_used_at or '')[:10] }}{% else %} · Never used{% endif %}
+                    </div>
+                    <button class="button danger" onclick="askRevoke({{ t.id }})">Revoke</button>
+                </div>
+                {% endif %}
+            {% endfor %}
+            {% if tokens | selectattr('revoked_at', 'none') | list | length == 0 %}
+                <div id="emptyState" class="empty">No tokens yet. Generate one to get started.</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top:.6rem;">
+            <button class="button" onclick="generateToken()">+ Generate MCP token</button>
+        </div>
+
+        <p class="help-line" style="margin-top:1.4rem;">
+            Same monthly credit count as the web product — your free 3/month or unlimited Pro
+            tier covers MCP calls. Revoking a token immediately stops it from working;
+            your AI client will need a new one.
+        </p>
+    </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+{% include "_site_footer.html" %}
+
+<script>
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('on');
+        setTimeout(() => t.classList.remove('on'), 1500);
+    }
+
+    function copyEl(id, btn) {
+        const el = document.getElementById(id);
+        el.select();
+        navigator.clipboard.writeText(el.value);
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1000);
+    }
+
+    function dismissNewToken() {
+        const box = document.getElementById('newToken');
+        box.classList.add('hidden');
+        document.getElementById('newTokenUrl').value = '';
+        document.getElementById('newTokenRaw').value = '';
+    }
+
+    async function generateToken() {
+        try {
+            const r = await fetch('/api/mcp/generate-token', { method: 'POST' });
+            const d = await r.json();
+            if (d.status !== 'ok') { showToast(d.error || 'Failed'); return; }
+            // Show the once-only panel
+            document.getElementById('newTokenUrl').value = d.url;
+            document.getElementById('newTokenRaw').value = d.token;
+            document.getElementById('newToken').classList.remove('hidden');
+            // Add to active list
+            const list = document.getElementById('tokenList');
+            const empty = document.getElementById('emptyState');
+            if (empty) empty.remove();
+            const row = document.createElement('div');
+            row.className = 'token-row';
+            row.dataset.tokenId = d.token_id;
+            row.innerHTML = `
+                <div class="token-prefix">${d.prefix}…</div>
+                <div class="token-meta">Created just now · Never used</div>
+                <button class="button danger" onclick="askRevoke(${d.token_id})">Revoke</button>
+            `;
+            list.appendChild(row);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+            showToast('Network error');
+        }
+    }
+
+    function askRevoke(tokenId) {
+        const row = document.querySelector(`.token-row[data-token-id="${tokenId}"]`);
+        if (!row || row.querySelector('.confirm-revoke')) return;
+        const c = document.createElement('div');
+        c.className = 'confirm-revoke';
+        c.style.flex = '1 0 100%';
+        c.innerHTML = `
+            Revoking will immediately stop this token from working. Your AI clients will need a new one.
+            <div class="actions">
+                <button class="button ghost" onclick="cancelRevoke(${tokenId})">Cancel</button>
+                <button class="button danger" onclick="confirmRevoke(${tokenId})">Revoke now</button>
+            </div>
+        `;
+        row.appendChild(c);
+    }
+
+    function cancelRevoke(tokenId) {
+        const row = document.querySelector(`.token-row[data-token-id="${tokenId}"]`);
+        const c = row && row.querySelector('.confirm-revoke');
+        if (c) c.remove();
+    }
+
+    async function confirmRevoke(tokenId) {
+        try {
+            const r = await fetch('/api/mcp/revoke-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token_id: tokenId }),
+            });
+            const d = await r.json();
+            if (d.status !== 'ok') { showToast(d.error || 'Failed'); return; }
+            const row = document.querySelector(`.token-row[data-token-id="${tokenId}"]`);
+            if (row) row.remove();
+            showToast('Token revoked');
+            // If list is now empty, restore empty state
+            const remaining = document.querySelectorAll('#tokenList .token-row').length;
+            if (remaining === 0) {
+                document.getElementById('tokenList').insertAdjacentHTML('beforeend',
+                    '<div id="emptyState" class="empty">No tokens yet. Generate one to get started.</div>');
+            }
+        } catch (e) {
+            showToast('Network error');
+        }
+    }
+</script>
+</body>
+</html>
