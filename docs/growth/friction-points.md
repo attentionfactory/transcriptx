@@ -117,10 +117,14 @@ Each friction point: **what hurts → where it shows up → product fix → seve
 - **Severity:** low.
 
 ### F19. Spotify is unsupported but listed nowhere as such
-- **Friction:** users assume "1000+ sites" includes Spotify. It doesn't (Spotify blocks scrapers).
-- **Where:** [content-guides-backlog.md](content-guides-backlog.md) #20 admits the workaround.
-- **Fix:** explicit "Spotify isn't supported, here's how to find the same episode elsewhere" page. Honesty > confusion.
-- **Severity:** low.
+- **Friction:** users assume "1000+ sites" includes Spotify. It doesn't (Spotify blocks scrapers). Confirmed in the wild — a user pasted a Spotify episode link, it failed, no recovery path was shown.
+- **Where:** [content-guides-backlog.md](content-guides-backlog.md) #20 admits the workaround. No detection in [app.py](../../app.py) — Spotify URLs go through the normal pipeline and surface a generic failure.
+- **Known workaround that actually works:** find the same episode on [castro.fm](https://castro.fm), open the episode page, copy the direct episode link (e.g. `https://castro.fm/episode/...`), paste that into TranscriptX. Castro exposes a real audio URL that yt-dlp can resolve; Spotify does not.
+- **Fix (in order of effort):**
+  1. **Detect Spotify URLs at paste time** and inline-suggest the Castro workaround before the user even submits. Cheap, ships today.
+  2. **Auto-resolve:** when a Spotify URL is pasted, search for the same episode on Castro/Apple Podcasts/the show's RSS feed and offer the user a one-click "use this instead" button. Mid effort.
+  3. **Long term:** partner with podcast hosts that expose RSS (Transistor, Anchor, Buzzsprout) for a clean integration.
+- **Severity:** medium (was low — bumped after a confirmed real-user failure).
 
 ## Cross-cutting themes
 

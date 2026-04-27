@@ -13,6 +13,7 @@ import time
 import re
 from groq import Groq
 from error_classifier import classify_user_error
+from spotify_resolver import is_spotify_episode_url, resolve_spotify_url
 
 log = logging.getLogger(__name__)
 
@@ -281,6 +282,32 @@ def process_url(url, model="whisper-large-v3-turbo", language=None):
     """
     log.info("[pipeline] start url=%s model=%s lang=%s", url, model, language or "auto")
     t_total = time.time()
+
+    # Spotify blocks scrapers, so swap the URL for the same episode's public
+    # RSS audio before the rest of the pipeline runs. If the lookup fails,
+    # surface a Spotify-specific error instead of letting yt-dlp fail generically.
+    original_url = url
+    if is_spotify_episode_url(url):
+        resolved = resolve_spotify_url(url)
+        if resolved:
+            log.info("[pipeline] spotify url resolved via public RSS feed")
+            url = resolved
+        else:
+            log.warning("[pipeline] spotify url could not be resolved: %s", url)
+            return {
+                "url": original_url,
+                "status": "error",
+                "error": (
+                    "We can't transcribe this Spotify episode directly — "
+                    "Spotify blocks third-party tools from accessing audio. "
+                    "Try the same episode on Apple Podcasts, Castro, Overcast, "
+                    "or the show's own website and paste that link."
+                ),
+                "action": "Find this episode on another podcast app and paste that link",
+                "help_url": "/help/spotify-transcript",
+                "error_kind": "user_input",
+                "retry_after": 0,
+            }
 
     metadata_error = None
     meta = get_metadata(url)
