@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set up TranscriptX in your AI client | TranscriptX</title>
+    <meta name="description" content="Configure TranscriptX as an MCP server in Claude Desktop, Cursor, ChatGPT, Continue, or Cline.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://transcriptx.xyz/mcp/setup">
+    <style>
+        :root { --bg:#050505; --grey:#C4C5C7; --orange:#F0A860; --ink:#0a0a0a; --f-wide:"Michroma",sans-serif; --f-tech:"Space Mono",monospace; --radius:2rem; --bw:1.5px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--ink); font-family:var(--f-tech); line-height:1.55; }
+        .layout { max-width:820px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+        .panel { background:var(--grey); border-radius:var(--radius); padding:1.8rem 2rem; }
+        .kicker { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6; display:block; margin-bottom:.35rem; }
+        h1 { font-family:var(--f-wide); font-size:clamp(1.3rem,2.4vw,1.8rem); line-height:1.15; margin-bottom:.6rem; }
+        h2 { font-family:var(--f-wide); font-size:.85rem; text-transform:uppercase; letter-spacing:.04em; margin:1.6rem 0 .5rem; }
+        h3 { font-family:var(--f-wide); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; margin:1rem 0 .35rem; opacity:.85; }
+        p { font-size:.85rem; opacity:.9; margin-bottom:.7rem; }
+        p a { color:var(--ink); }
+        ul { padding-left:1.2rem; font-size:.85rem; }
+        ul li { margin-bottom:.3rem; }
+        pre { background:#1a1a1a; color:#e8e8e8; padding:.9rem 1rem; border-radius:8px; overflow:auto; font-size:.74rem; line-height:1.6; margin:.4rem 0 .8rem; position:relative; }
+        pre code { font-family:var(--f-tech); }
+        .cta { background:var(--ink); color:var(--orange); display:inline-block; padding:.6rem 1.1rem; border-radius:8px; text-decoration:none; font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; margin-top:.4rem; }
+        .cta:hover { background:#1a1a1a; }
+        .copy-pre { position:relative; }
+        .copy-pre button { position:absolute; top:.4rem; right:.4rem; background:#333; color:#fff; border:none; cursor:pointer; padding:.3rem .55rem; font-size:.6rem; font-weight:700; text-transform:uppercase; border-radius:4px; font-family:var(--f-tech); }
+        .copy-pre button:hover { background:#555; }
+        .lead { font-size:.9rem; opacity:.92; margin-bottom:.5rem; }
+        code.inline { background:rgba(0,0,0,0.08); padding:.05rem .35rem; border-radius:4px; font-size:.85em; }
+    </style>
+</head>
+<body>
+<main class="layout">
+    {% include "_site_nav.html" %}
+    <section class="panel">
+        <span class="kicker">Setup guide</span>
+        <h1>Use TranscriptX inside your AI client</h1>
+        <p class="lead">
+            TranscriptX is an MCP server. Generate a personal token, paste the URL into
+            your AI client's MCP config, and say <em>"transcribe this video"</em> inside
+            Claude Desktop, Cursor, ChatGPT, or any other MCP-compatible client.
+        </p>
+
+        <p>
+            <a class="cta" href="/account/mcp">Generate your token →</a>
+        </p>
+
+        <p style="margin-top:1.4rem;">
+            Replace <code class="inline">YOUR_TOKEN</code> below with the token from your account page. The
+            full URL form is <code class="inline">https://mcp.transcriptx.xyz/?token=YOUR_TOKEN</code>.
+        </p>
+
+        <h2>Claude Desktop</h2>
+        <p>
+            Open <code class="inline">~/Library/Application Support/Claude/claude_desktop_config.json</code>
+            on Mac, or <code class="inline">%APPDATA%\Claude\claude_desktop_config.json</code> on Windows.
+            Add to the <code class="inline">mcpServers</code> block:
+        </p>
+        <div class="copy-pre">
+            <pre><code>{
+  "mcpServers": {
+    "transcriptx": {
+      "url": "https://mcp.transcriptx.xyz/?token=YOUR_TOKEN"
+    }
+  }
+}</code></pre>
+            <button onclick="copyPre(this)">Copy</button>
+        </div>
+        <p>Restart Claude Desktop. Try: <em>"Transcribe this and pull out the three best quotes: &lt;YouTube URL&gt;"</em></p>
+
+        <h2>Cursor</h2>
+        <p>Settings → MCP → Add new server.</p>
+        <ul>
+            <li>Name: <code class="inline">TranscriptX</code></li>
+            <li>Type: <code class="inline">streamableHttp</code> (or <code class="inline">http</code> on older versions)</li>
+            <li>URL: <code class="inline">https://mcp.transcriptx.xyz/?token=YOUR_TOKEN</code></li>
+        </ul>
+
+        <h2>ChatGPT (with MCP support)</h2>
+        <p>
+            In ChatGPT's connector settings, add a new MCP server. URL:
+            <code class="inline">https://mcp.transcriptx.xyz/?token=YOUR_TOKEN</code>. Auth: None
+            (token is in the URL).
+        </p>
+
+        <h2>Continue.dev</h2>
+        <p>
+            In your Continue config (typically
+            <code class="inline">~/.continue/config.json</code>):
+        </p>
+        <div class="copy-pre">
+            <pre><code>{
+  "mcpServers": {
+    "transcriptx": {
+      "url": "https://mcp.transcriptx.xyz/?token=YOUR_TOKEN"
+    }
+  }
+}</code></pre>
+            <button onclick="copyPre(this)">Copy</button>
+        </div>
+
+        <h2>Cline</h2>
+        <p>Cline → MCP Servers settings:</p>
+        <div class="copy-pre">
+            <pre><code>{
+  "transcriptx": {
+    "url": "https://mcp.transcriptx.xyz/?token=YOUR_TOKEN"
+  }
+}</code></pre>
+            <button onclick="copyPre(this)">Copy</button>
+        </div>
+
+        <h2>Authorization header (alternative)</h2>
+        <p>
+            If your client doesn't accept the token in the URL, use:
+        </p>
+        <ul>
+            <li>URL: <code class="inline">https://mcp.transcriptx.xyz/</code></li>
+            <li>Header: <code class="inline">Authorization: Bearer YOUR_TOKEN</code></li>
+        </ul>
+        <p>Both are equivalent — same token, same DB lookup.</p>
+
+        <h2>What you can do once it's connected</h2>
+        <p>Three tools become available to your AI:</p>
+        <ul>
+            <li><code class="inline">transcribe_url</code> — transcribe any public video or audio URL</li>
+            <li><code class="inline">list_recent_transcripts</code> — your recent transcript history</li>
+            <li><code class="inline">get_transcript_by_id</code> — fetch metadata for a past transcript</li>
+        </ul>
+        <p>Try things like:</p>
+        <ul>
+            <li><em>"Transcribe this YouTube video and give me three pull quotes."</em></li>
+            <li><em>"Summarize this Loom in five bullets: &lt;URL&gt;"</em></li>
+            <li><em>"Translate this Spanish video transcript to English."</em></li>
+        </ul>
+
+        <h2>Common things that break</h2>
+        <ul>
+            <li><strong>"Connection refused" or 401.</strong> Token is wrong, expired, or revoked. Generate a new one.</li>
+            <li><strong>Tools don't appear, no error.</strong> Restart your AI client fully. Some clients cache the tool list per-session.</li>
+            <li><strong>"Credit limit reached."</strong> Same monthly cap as the web product. Upgrade to Pro for unlimited, or wait for the monthly reset.</li>
+            <li><strong>Transcript came back wrong language.</strong> Use the language retry on the web for now (<a href="/help/wrong-language-transcript">how it works</a>). The MCP-native retry tool ships in v0.5.</li>
+        </ul>
+
+        <p style="margin-top:1.4rem;">
+            Questions or a client we don't list? <a href="mailto:help@transcriptx.xyz">help@transcriptx.xyz</a>
+        </p>
+    </section>
+</main>
+{% include "_site_footer.html" %}
+
+<script>
+    function copyPre(btn) {
+        const code = btn.parentElement.querySelector('code').textContent;
+        navigator.clipboard.writeText(code);
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1000);
+    }
+</script>
+</body>
+</html>

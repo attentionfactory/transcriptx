@@ -145,6 +145,7 @@ from database import (
     add_bonus_credits, REFERRAL_REWARD_CREDITS,
     get_credits_for_user, use_credit_for_user, refund_credit_for_user,
     grant_credits,
+    generate_mcp_token, validate_mcp_token, revoke_mcp_token, list_user_mcp_tokens,
     link_polar_to_user,
     get_banner, set_config,
     claim_webhook_event,
@@ -1047,6 +1048,74 @@ def api_me_referral():
         return jsonify({"status": "error", "error": "Login required"}), 401
     stats = get_referral_stats(user["user_id"])
     return jsonify({"status": "ok", **stats})
+
+
+@app.route("/api/mcp/tokens", methods=["GET"])
+def api_mcp_list_tokens():
+    """List the current user's MCP tokens (active + revoked).
+
+    Never returns the raw token or its hash — just the prefix the user
+    can use to recognize which token is which in the UI.
+    """
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    tokens = list_user_mcp_tokens(user["user_id"])
+    return jsonify({"status": "ok", "tokens": tokens})
+
+
+@app.route("/api/mcp/generate-token", methods=["POST"])
+def api_mcp_generate_token():
+    """Create a new MCP token for the current user. Returned ONCE.
+
+    Caller must surface the raw token to the user immediately. We never
+    show the raw token again — the UI shows only the prefix on subsequent
+    visits.
+    """
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    result = generate_mcp_token(user["user_id"])
+    full_url = f"https://mcp.transcriptx.xyz/?token={result['token']}"
+    return jsonify({
+        "status": "ok",
+        "token": result["token"],
+        "token_id": result["token_id"],
+        "prefix": result["prefix"],
+        "url": full_url,
+    })
+
+
+@app.route("/api/mcp/revoke-token", methods=["POST"])
+def api_mcp_revoke_token():
+    """Revoke an MCP token by id. Scoped to the current user."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return jsonify({"status": "error", "error": "Login required"}), 401
+    data = request.get_json(silent=True) or {}
+    token_id = data.get("token_id")
+    if not token_id:
+        return jsonify({"status": "error", "error": "token_id required"}), 400
+    ok = revoke_mcp_token(token_id, user["user_id"])
+    if not ok:
+        return jsonify({"status": "error", "error": "Token not found or already revoked"}), 404
+    return jsonify({"status": "ok"})
+
+
+@app.route("/account/mcp")
+def account_mcp_page():
+    """Settings page for managing MCP tokens."""
+    user = _get_current_user()
+    if not user.get("logged_in"):
+        return redirect("/?login=1")
+    tokens = list_user_mcp_tokens(user["user_id"])
+    return render_template("account_mcp.html", user=user, tokens=tokens)
+
+
+@app.route("/mcp/setup")
+def mcp_setup_page():
+    """Public setup guide — no auth required. Per-client config snippets."""
+    return render_template("mcp_setup.html")
 
 
 @app.route("/api/featurebase-token")
@@ -3700,6 +3769,46 @@ register_page_routes(
     featurebase_app_id=FEATUREBASE_APP_ID,
     guides_content=GUIDES_CONTENT,
 )
+
+
+# ── MCP server ────────────────────────────────────────────────
+#
+# Subdomain mounting requires SERVER_NAME to be set so Flask knows what to
+# match against. We only set it in production (Railway sets PORT) — locally
+# we mount the MCP routes on the default host instead, which lets you hit
+# them at http://localhost:5000/ via the same Flask app for testing.
+from mcp_server import register_mcp_routes  # noqa: E402
+
+_MCP_SUBDOMAIN = "mcp"
+if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("FLASK_PROD"):
+    app.config["SERVER_NAME"] = os.environ.get("FLASK_SERVER_NAME", "transcriptx.xyz")
+    register_mcp_routes(app, subdomain=_MCP_SUBDOMAIN)
+else:
+    # Dev: mount on default host. Hit at http://localhost:5000/?token=...
+    # Note: this conflicts with the homepage route, so dev testing requires
+    # /etc/hosts mapping for mcp.transcriptx.local + FLASK_SERVER_NAME env var
+    # if you want a true subdomain-style local test. For quick smoke tests,
+    # set FLASK_PROD=1 and add `127.0.0.1 mcp.transcriptx.xyz` to /etc/hosts.
+    pass
+
+
+# ── Strip MCP tokens from access logs ─────────────────────────
+class _StripTokenFilter(logging.Filter):
+    """Werkzeug logs include the full URL including ?token=. Redact it."""
+    _re = re.compile(r"token=[^\s&\"'<>]+")
+    def filter(self, record):
+        if record.args:
+            record.args = tuple(
+                self._re.sub("token=***", a) if isinstance(a, str) else a
+                for a in record.args
+            )
+        if isinstance(record.msg, str):
+            record.msg = self._re.sub("token=***", record.msg)
+        return True
+
+
+_werkzeug_logger = logging.getLogger("werkzeug")
+_werkzeug_logger.addFilter(_StripTokenFilter())
 
 
 # ── Main Template ──────────────────────────────────────────
