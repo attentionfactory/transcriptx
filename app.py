@@ -3787,7 +3787,20 @@ from mcp_server import register_mcp_routes  # noqa: E402
 # point at different hosts (mcp.transcriptx.xyz vs mcp-staging.transcriptx.xyz)
 # off the same code. Defaults to "mcp" for production.
 _MCP_SUBDOMAIN = os.environ.get("MCP_SUBDOMAIN", "mcp")
-if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("FLASK_PROD"):
+
+# Decide whether to enable subdomain-based MCP routing. Triggers on:
+#   - FLASK_SERVER_NAME set (most explicit)
+#   - Any RAILWAY_* env var set (covers RAILWAY_ENVIRONMENT, the newer
+#     RAILWAY_ENVIRONMENT_NAME, RAILWAY_PROJECT_ID, etc.)
+#   - FLASK_PROD set (manual override for non-Railway hosts)
+# Without one of these, we don't know what the parent domain is, so we
+# stay in dev mode and skip subdomain mounting.
+_is_prod_env = (
+    bool(os.environ.get("FLASK_SERVER_NAME"))
+    or bool(os.environ.get("FLASK_PROD"))
+    or any(k.startswith("RAILWAY_") for k in os.environ)
+)
+if _is_prod_env:
     app.config["SERVER_NAME"] = os.environ.get("FLASK_SERVER_NAME", "transcriptx.xyz")
     register_mcp_routes(app, subdomain=_MCP_SUBDOMAIN)
 else:
